@@ -2,7 +2,7 @@
 
 using Flux: param, logloss, flip, stateless, broadcastto, ∘
 
-include("0-model.jl")
+include("0-data.jl")
 
 Nin = length(alphabet)
 Nhidden = 30
