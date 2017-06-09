@@ -1,6 +1,6 @@
 using Flux, Flux.Batches, CMUDict
 using Flux: onehot
-using Base.Iterators: partition
+using Flux.Batches: batches
 
 cd(@__DIR__)
 
@@ -25,16 +25,12 @@ rawbatch(tokenise("PHYLOGENY", alphabet))
 # Same for phoneme lists
 tokenise(CMUDict.dict["PHYLOGENY"], phones)
 
-# Finally, create iterators for our inputs and outputs.
-Xs = (Batch([xs...]) for xs in
-      partition((tokenise(word, alphabet)
-                 for word in keys(CMUDict.dict)),
-                Nbatch))
+# # Finally, create iterators for our inputs and outputs.
+Xs = batches((tokenise(word, alphabet) for word in keys(CMUDict.dict)),
+             Nbatch)
 
-Ys = (Batch([xs...]) for xs in
-      partition((tokenise(CMUDict.dict[word], phones)
-                 for word in keys(CMUDict.dict)),
-                Nbatch))
+Ys = batches((tokenise(CMUDict.dict[word], phones) for word in keys(CMUDict.dict)),
+             Nbatch)
 
 # Peek at the first batch
 first(Xs)
