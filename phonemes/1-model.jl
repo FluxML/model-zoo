@@ -35,15 +35,19 @@ end
 
 # Building the full model
 
+encoder, decoder = open(deserialize, "model.jls")
+
 model = @Chain(
   stateless(unroll(encoder, Nseq)),
   @net(x -> repeated(x, Nseq)),
   stateless(unroll(decoder, Nseq)))
 
-model = mxnet(Flux.SeqModel(model, Nseq))
+mxmodel = mxnet(Flux.SeqModel(model, Nseq))
 
-evalcb = () -> @show logloss(rawbatch(model(first(Xs))), rawbatch(first(Ys)))
+evalcb = () -> @show logloss(rawbatch(mxmodel(first(Xs))), rawbatch(first(Ys)))
 
-# Flux.train!(model, zip(Xs, Ys), η = 0.1,
+# @time Flux.train!(mxmodel, zip(Xs, Ys), η = 1e-3,
 #             loss = Flux.logloss,
 #             cb = [evalcb])
+
+# open(io -> serialize(io, (encoder, decoder)), "model.jls", "w")
