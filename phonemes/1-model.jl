@@ -20,34 +20,39 @@ align  = @net (s, t) -> alignnet(hcat(broadcastto(s, (Nbatch, 1)), t))
 # A recurrent model which takes a sequence of annotations, attends, and returns
 # a predicted output token.
 
-recur   = unroll1(LSTM(Nhidden, Nhidden)).model
+recur   = unroll1(LSTM(Nhidden+length(phones), Nhidden)).model
 state   = param(zeros(1, Nhidden))
 y       = param(zeros(1, Nhidden))
 toalpha = Affine(Nhidden, length(phones))
 
-decoder = @net function (tokens)
+decoder = @net function (tokens, phone)
   energies = map(token -> exp.(align(state{-1}, token)), tokens)
   weights = map(e -> e ./ sum(energies), energies)
   context = sum(map(∘, weights, tokens))
-  (y, state), _ = recur((y{-1},state{-1}), context)
+  (y, state), _ = recur((y{-1},state{-1}), hcat(phone, context))
   return softmax(toalpha(y))
 end
 
 # Building the full model
 
-encoder, decoder = open(deserialize, "model.jls")
+# encoder, decoder = open(deserialize, "model.jls")
 
-model = @Chain(
-  stateless(unroll(encoder, Nseq)),
-  @net(x -> repeated(x, Nseq)),
-  stateless(unroll(decoder, Nseq)))
+encoderu = stateless(unroll(encoder, Nseq))
+decoderu = stateless(unroll(decoder, Nseq))
+
+model = @net function (input)
+  x, y = input
+  tokens = encoderu(x)
+  decoderu(repeated(tokens, Nseq), y)
+end
 
 mxmodel = mxnet(Flux.SeqModel(model, Nseq))
 
-evalcb = () -> @show logloss(rawbatch(mxmodel(first(Xs))), rawbatch(first(Ys)))
+mxmodel((first(Xs), first(Yoffset)))
 
-# @time Flux.train!(mxmodel, zip(Xs, Ys), η = 1e-3,
-#             loss = Flux.logloss,
-#             cb = [evalcb])
+evalcb = () -> @show logloss(rawbatch(mxmodel((first(Xs), first(Yoffset)))), rawbatch(first(Ys)))
+
+# @time Flux.train!(mxmodel, zip(zip(Xs, Yoffset), Ys), η = 1e-3,
+#                   loss = logloss, cb = [evalcb])
 
 # open(io -> serialize(io, (encoder, decoder)), "model.jls", "w")
