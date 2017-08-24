@@ -25,8 +25,8 @@ W = track(randn(1,13)/10)
 b = track([0.])
 
 predict(x) = W*x .+ b
-mse(ŷ, y) = sum((ŷ .- y).^2)/size(y, 2)
-loss(x, y) = mse(predict(x), y)
+meansquarederror(ŷ, y) = sum((ŷ .- y).^2)/size(y, 2)
+loss(x, y) = meansquarederror(predict(x), y)
 
 function update!(ps, η = .1)
   for w in ps
@@ -51,4 +51,4 @@ function grad(f, xs...)
   Tracker.grad.(xs)
 end
 
-grad((W, b) -> mse(W*x.+b, y), rand(1,13), rand(1))
+grad((W, b) -> meansquarederror(W*x.+b, y), rand(1,13), rand(1))
