@@ -1,5 +1,5 @@
 using Flux, Flux.Optimise, MNIST, Base.Iterators
-using Flux: onehot, mse
+using Flux: onehot, onecold, mse
 
 x, y = traindata()
 y = hcat(map(y -> onehot(y, 0:9), y)...)
@@ -11,6 +11,7 @@ m = Chain(
 
 loss(x, y) = mse(m(x), y)
 
-train!(loss, repeated((x,y), 100), sgd(m, 10))
+train!(loss, repeated((x,y), 1000), sgd(m, 1))
 
-m(x[:,1])
+# Check the prediction for the first digit
+onecold(Flux.Tracker.data(m(x[:,1])), 0:9) == onecold(y[:,1], 0:9)
