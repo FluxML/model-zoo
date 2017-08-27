@@ -7,7 +7,9 @@ using Flux.Tracker
 
 cd(@__DIR__)
 
-download("https://raw.githubusercontent.com/MikeInnes/notebooks/master/housing.data", "housing.data")
+isfile("housing.data") ||
+  download("https://raw.githubusercontent.com/MikeInnes/notebooks/master/housing.data",
+           "housing.data")
 
 data = readdlm("housing.data")'
 
