@@ -26,6 +26,9 @@ x = (x .- mean(x,2)) ./ std(x,2)
 W = track(randn(1,13)/10)
 b = track([0.])
 
+# using CuArrays
+# W, b, x, y = cu.((W, b, x, y))
+
 predict(x) = W*x .+ b
 meansquarederror(ŷ, y) = sum((ŷ .- y).^2)/size(y, 2)
 loss(x, y) = meansquarederror(predict(x), y)
