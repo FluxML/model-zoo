@@ -46,7 +46,7 @@ for i = 1:10
   @show loss(x, y)
 end
 
-Tracker.data(predict(x[:,1])) / y[1]
+predict(x[:,1]) / y[1]
 
 # It's also easy to replicate Knet's `grad` approach:
 
