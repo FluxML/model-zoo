@@ -7,7 +7,9 @@ using Flux.Tracker
 
 cd(@__DIR__)
 
-download("https://raw.githubusercontent.com/MikeInnes/notebooks/master/housing.data", "housing.data")
+isfile("housing.data") ||
+  download("https://raw.githubusercontent.com/MikeInnes/notebooks/master/housing.data",
+           "housing.data")
 
 data = readdlm("housing.data")'
 
@@ -23,6 +25,9 @@ x = (x .- mean(x,2)) ./ std(x,2)
 
 W = track(randn(1,13)/10)
 b = track([0.])
+
+# using CuArrays
+# W, b, x, y = cu.((W, b, x, y))
 
 predict(x) = W*x .+ b
 meansquarederror(ŷ, y) = sum((ŷ .- y).^2)/size(y, 2)
