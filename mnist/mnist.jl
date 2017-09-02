@@ -5,8 +5,8 @@ x, y = traindata()
 y = hcat(map(y -> onehot(y, 0:9), y)...)
 
 m = Chain(
-  Linear(28^2, 32, σ),
-  Linear(32, 10),
+  Dense(28^2, 32, σ),
+  Dense(32, 10),
   softmax)
 
 loss(x, y) = mse(m(x), y)
