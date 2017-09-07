@@ -1,9 +1,9 @@
 using Flux, MNIST
-using Flux: onehot, onecold, mse, params, throttle
+using Flux: onehotbatch, onecold, mse, throttle
 using Base.Iterators: repeated
 
 x, y = traindata()
-y = hcat(map(y -> onehot(y, 0:9), y)...)
+y = onehotbatch(y, 0:9)
 
 m = Chain(
   Dense(28^2, 32, σ),
