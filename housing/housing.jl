@@ -1,4 +1,4 @@
-using Flux.Tracker
+using Flux.Tracker: param, back!, data, grad
 
 # This replicates the housing data example from the Knet.jl readme. Although we
 # could have reused more of Flux (see the mnist example), the library's
@@ -11,20 +11,20 @@ isfile("housing.data") ||
   download("https://raw.githubusercontent.com/MikeInnes/notebooks/master/housing.data",
            "housing.data")
 
-data = readdlm("housing.data")'
+rawdata = readdlm("housing.data")'
 
 # The last feature is our target -- the price of the house.
 
-x = data[1:13,:]
-y = data[14:14,:]
+x = rawdata[1:13,:]
+y = rawdata[14:14,:]
 
 # Normalise the data
 x = (x .- mean(x,2)) ./ std(x,2)
 
 # The model
 
-W = track(randn(1,13)/10)
-b = track([0.])
+W = param(randn(1,13)/10)
+b = param([0.])
 
 # using CuArrays
 # W, b, x, y = cu.((W, b, x, y))
@@ -35,8 +35,9 @@ loss(x, y) = meansquarederror(predict(x), y)
 
 function update!(ps, η = .1)
   for w in ps
-    w.x .-= w.Δ .* η
-    w.Δ .= 0
+    x, Δ = data(w), grad(w)
+    x .-= Δ .* η
+    Δ .= 0
   end
 end
 
@@ -47,13 +48,3 @@ for i = 1:10
 end
 
 predict(x[:,1]) / y[1]
-
-# It's also easy to replicate Knet's `grad` approach:
-
-function grad(f, xs...)
-  xs = track.(xs)
-  back!(f(xs...))
-  Tracker.grad.(xs)
-end
-
-grad((W, b) -> meansquarederror(W*x.+b, y), rand(1,13), rand(1))
