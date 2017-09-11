@@ -20,10 +20,10 @@ nbatch = 50
 Xs = subseq(map(b -> onehotbatch(b, alphabet), batchseq(text, nbatch)), nseq)
 Ys = subseq(map(b -> onehotbatch(b, alphabet), batchseq(text[2:end], nbatch)), nseq)
 
-m = ChainSeq(
+m = Over(Chain(
   LSTM(N, 256),
   Dense(256, N),
-  softmax)
+  softmax))
 
 seqloss(f, xs, ys) = sum(f(x, y) for (x, y) in zip(xs.data, ys.data))
 
