@@ -1,5 +1,6 @@
 using Flux
-using Flux: onehotbatch, unstack, truncate!, throttle
+using Flux: onehotbatch, unstack, truncate!, throttle, logloss
+using Base.Iterators: partition
 
 cd(@__DIR__)
 
@@ -11,23 +12,20 @@ text = collect(readstring("input.txt"))
 alphabet = unique(text)
 
 batchseq(xs, n) = unstack(reshape(xs[1:length(xs)÷n*n], :, n), 1)
-subseq(xs, n) = [Seq(x) for x in Iterators.partition(xs, n)]
 
 N = length(alphabet)
 nseq = 50
 nbatch = 50
 
-Xs = subseq(map(b -> onehotbatch(b, alphabet), batchseq(text, nbatch)), nseq)
-Ys = subseq(map(b -> onehotbatch(b, alphabet), batchseq(text[2:end], nbatch)), nseq)
+Xs = partition(map(b -> onehotbatch(b, alphabet), batchseq(text, nbatch)), nseq) |> collect
+Ys = partition(map(b -> onehotbatch(b, alphabet), batchseq(text[2:end], nbatch)), nseq) |> collect
 
-m = Over(Chain(
+m = Chain(
   LSTM(N, 256),
   Dense(256, N),
-  softmax))
+  softmax)
 
-seqloss(f, xs, ys) = sum(f(x, y) for (x, y) in zip(xs.data, ys.data))
-
-loss(xs, ys) = seqloss(Flux.logloss, m(xs), ys)
+loss(xs, ys) = sum(logloss.(m.(xs), ys))
 
 evalcb = () -> @show loss(Xs[5], Ys[5])
 
