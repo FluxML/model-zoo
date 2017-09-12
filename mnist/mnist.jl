@@ -13,7 +13,7 @@ m = Chain(
 loss(x, y) = mse(m(x), y)
 
 dataset = repeated((x, y), 500)
-evalcb() = @show(loss(x, y))
+evalcb = () -> @show(loss(x, y))
 opt = SGD(params(m), 1)
 
 Flux.train!(loss, dataset, opt, cb = throttle(evalcb, 10))
