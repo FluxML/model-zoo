@@ -29,6 +29,6 @@ loss(xs, ys) = sum(logloss.(m.(xs), ys))
 
 evalcb = () -> @show loss(Xs[5], Ys[5])
 
-Flux.train!(loss, zip(Xs, Ys), SGD(params(m), 1e-3),
+Flux.train!(loss, zip(Xs, Ys), SGD(params(m), 0.1),
             cb = [() -> truncate!(m),
                   throttle(evalcb, 2)])
