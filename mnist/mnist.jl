@@ -12,8 +12,11 @@ m = Chain(
 
 loss(x, y) = mse(m(x), y)
 
-Flux.train!(loss, repeated((x,y), 1000), SGD(params(m), 0.1),
-            cb = throttle(() -> @show(loss(x, y)), 5))
+dataset = repeated((x, y), 500)
+evalcb() = @show(loss(x, y))
+opt = SGD(params(m), 1)
+
+Flux.train!(loss, dataset, opt, cb = throttle(evalcb, 10))
 
 # Check the prediction for the first digit
 argmax(m(x[:,1]), 0:9) == argmax(y[:,1], 0:9)
