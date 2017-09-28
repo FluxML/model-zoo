@@ -10,6 +10,10 @@ m = Chain(
   Dense(32, 10),
   softmax)
 
+# using CuArrays
+# x, y = cu(x), cu(y)
+# m = mapparams(cu, m)
+
 loss(x, y) = mse(m(x), y)
 
 dataset = repeated((x, y), 500)
