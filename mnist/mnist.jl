@@ -12,7 +12,7 @@ m = Chain(
 
 # using CuArrays
 # x, y = cu(x), cu(y)
-# m = mapparams(cu, m)
+# m = mapleaves(cu, m)
 
 loss(x, y) = mse(m(x), y)
 
