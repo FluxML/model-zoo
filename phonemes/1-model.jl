@@ -1,0 +1,49 @@
+# Based on https://arxiv.org/abs/1409.0473
+
+using Flux: combine, flip, logloss
+
+include("0-data.jl")
+
+Nin = length(alphabet)
+Nh = 30 # size of hidden layer
+
+# A recurrent model which takes a token and returns a context-dependent
+# annotation.
+
+forward  = LSTM(Nin, Nh÷2)
+backward = LSTM(Nin, Nh÷2)
+encode(tokens) = vcat.(forward.(tokens), flip(backward, tokens))
+
+alignnet = Dense(2Nh, 1)
+align(s, t) = alignnet(combine(t, s))
+
+# A recurrent model which takes a sequence of annotations, attends, and returns
+# a predicted output token.
+
+recur   = LSTM(Nh+length(phones), Nh)
+toalpha = Dense(Nh, length(phones))
+
+function asoftmax(xs)
+  xs = [exp.(x) for x in xs]
+  s = sum(xs)
+  return [x ./ s for x in xs]
+end
+
+function decode1(tokens, phone)
+  weights = asoftmax([align(recur.state[2], t) for t in tokens])
+  context = sum(map((a, b) -> a .* b, weights, tokens))
+  y = recur(vcat(phone, context))
+  return softmax(toalpha(y))
+end
+
+decode(tokens, phones) = [decode1(tokens, phone) for phone in phones]
+
+# Building the full model
+
+model(x, y) = decode(encode(x), y)
+
+loss(x, yo, y) = sum(logloss.(model(x, yo), y))
+
+state = (forward, backward, alignnet, recur, toalpha)
+
+loss(first(data)...)
