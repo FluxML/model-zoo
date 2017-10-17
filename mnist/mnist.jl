@@ -16,11 +16,17 @@ m = Chain(
 
 loss(x, y) = mse(m(x), y)
 
+accuracy(x, y) = mean(argmax(m(x), 0:9) .== argmax(y, 0:9))
+
 dataset = repeated((x, y), 200)
 evalcb = () -> @show(loss(x, y))
 opt = SGD(params(m), 0.1)
 
 Flux.train!(loss, dataset, opt, cb = throttle(evalcb, 5))
 
-# Check the prediction for the first digit
-argmax(m(x[:,1]), 0:9) == argmax(y[:,1], 0:9)
+accuracy(x, y)
+
+# Test set accuracy
+tx, ty = testdata()
+ty = onehotbatch(ty, 0:9)
+accuracy(tx, ty)
