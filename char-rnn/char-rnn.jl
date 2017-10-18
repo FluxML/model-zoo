@@ -21,8 +21,10 @@ Xs = collect(partition(batchseq(chunk(text, nbatch), stop), seqlen))
 Ys = collect(partition(batchseq(chunk(text[2:end], nbatch), stop), seqlen))
 
 m = Chain(
-  LSTM(N, 256),
-  Dense(256, N),
+  LSTM(N, 128),
+  LSTM(128, 256),
+  LSTM(256, 128),
+  Dense(128, N),
   softmax)
 
 loss(xs, ys) = sum(crossentropy.(m.(xs), ys))
