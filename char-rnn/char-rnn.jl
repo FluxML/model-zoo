@@ -29,8 +29,10 @@ m = Chain(
 
 loss(xs, ys) = sum(crossentropy.(m.(xs), ys))
 
+opt = ADAM(params(m), η = 0.01)
+
 evalcb = () -> @show loss(Xs[5], Ys[5])
 
-Flux.train!(loss, zip(Xs, Ys), ADAM(params(m)),
+Flux.train!(loss, zip(Xs, Ys), opt,
             cb = [() -> truncate!(m),
-                  throttle(evalcb, 2)])
+                  throttle(evalcb, 10)])
