@@ -1,6 +1,6 @@
 # Based on https://arxiv.org/abs/1409.0473
 
-using Flux: combine, flip, logloss
+using Flux: combine, flip, crossentropy
 
 include("0-data.jl")
 
@@ -42,7 +42,7 @@ decode(tokens, phones) = [decode1(tokens, phone) for phone in phones]
 
 model(x, y) = decode(encode(x), y)
 
-loss(x, yo, y) = sum(logloss.(model(x, yo), y))
+loss(x, yo, y) = sum(crossentropy.(model(x, yo), y))
 
 state = (forward, backward, alignnet, recur, toalpha)
 
