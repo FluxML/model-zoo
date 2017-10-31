@@ -1,5 +1,5 @@
 using Flux
-using Flux: onehot, chunk, batchseq, truncate!, throttle, crossentropy
+using Flux: onehot, argmax, chunk, batchseq, truncate!, throttle, crossentropy
 using Base.Iterators: partition
 
 cd(@__DIR__)
@@ -36,3 +36,18 @@ evalcb = () -> @show loss(Xs[5], Ys[5])
 Flux.train!(loss, zip(Xs, Ys), opt,
             cb = [() -> truncate!(m),
                   throttle(evalcb, 10)])
+
+# Sampling
+
+function sample(m, alphabet, len)
+  Flux.reset!(m)
+  buf = IOBuffer()
+  s = onehot(rand(alphabet), alphabet)
+  for i = 1:len
+    write(buf, argmax(s, alphabet))
+    s = m(s)
+  end
+  return String(take!(buf))
+end
+
+sample(m, alphabet, 100)
