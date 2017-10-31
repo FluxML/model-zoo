@@ -42,8 +42,12 @@ decode(tokens, phones) = [decode1(tokens, phone) for phone in phones]
 
 model(x, y) = decode(encode(x), y)
 
-loss(x, yo, y) = sum(crossentropy.(model(x, yo), y))
-
 state = (forward, backward, alignnet, recur, toalpha)
 
-loss(first(data)...)
+loss(x, yo, y) = sum(crossentropy.(model(x, yo), y))
+
+evalcb = () -> @show loss(data[500]...)
+
+opt = ADAM(params(state))
+
+Flux.train!(loss, data, opt, cb = evalcb)

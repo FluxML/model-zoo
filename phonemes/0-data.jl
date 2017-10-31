@@ -29,4 +29,4 @@ Ys = batches([tokenise([cmudict[word]..., :end], phones) for word in words],
 Yo = batches([tokenise([:start, cmudict[word]...], phones) for word in words],
              onehot(:end, phones))
 
-data = zip(Xs, Yo, Ys)
+data = collect(zip(Xs, Yo, Ys))
