@@ -50,4 +50,5 @@ evalcb = () -> @show loss(data[500]...)
 
 opt = ADAM(params(state))
 
-Flux.train!(loss, data, opt, cb = evalcb)
+Flux.train!(loss, data, opt,
+            cb = Flux.throttle(evalcb, 10))
