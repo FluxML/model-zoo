@@ -1,4 +1,4 @@
-using Flux.Tracker: param, back!, data, grad
+using Flux.Tracker
 
 # This replicates the housing data example from the Knet.jl readme. Although we
 # could have reused more of Flux (see the mnist example), the library's
@@ -35,8 +35,7 @@ loss(x, y) = meansquarederror(predict(x), y)
 
 function update!(ps, η = .1)
   for w in ps
-    x, Δ = data(w), grad(w)
-    x .-= Δ .* η
+    w.data .-= w.grad .* η
     Δ .= 0
   end
 end
