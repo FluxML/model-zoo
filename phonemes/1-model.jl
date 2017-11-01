@@ -1,6 +1,6 @@
 # Based on https://arxiv.org/abs/1409.0473
 
-using Flux: combine, flip, crossentropy
+using Flux: combine, flip, crossentropy, reset!, throttle
 
 include("0-data.jl")
 
@@ -38,17 +38,20 @@ end
 
 decode(tokens, phones) = [decode1(tokens, phone) for phone in phones]
 
-# Building the full model
-
-model(x, y) = decode(encode(x), y)
+# The full model
 
 state = (forward, backward, alignnet, recur, toalpha)
+
+function model(x, y)
+  ŷ = decode(encode(x), y)
+  reset!(state)
+  return ŷ
+end
 
 loss(x, yo, y) = sum(crossentropy.(model(x, yo), y))
 
 evalcb = () -> @show loss(data[500]...)
-
 opt = ADAM(params(state))
 
 Flux.train!(loss, data, opt,
-            cb = Flux.throttle(evalcb, 10))
+            cb = throttle(evalcb, 10))
