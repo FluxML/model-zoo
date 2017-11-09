@@ -36,7 +36,7 @@ loss(x, y) = meansquarederror(predict(x), y)
 function update!(ps, η = .1)
   for w in ps
     w.data .-= w.grad .* η
-    Δ .= 0
+    w.grad .= 0
   end
 end
 
