@@ -29,7 +29,7 @@ m = Chain(
 
 loss(xs, ys) = sum(crossentropy.(m.(xs), ys))
 
-opt = ADAM(params(m), η = 0.01)
+opt = ADAM(params(m), 0.01)
 
 evalcb = () -> @show loss(Xs[5], Ys[5])
 
