@@ -1,8 +1,11 @@
 using Cascadia, Gumbo, Requests, AbstractTrees
 
 pages = Dict(
-  :en => ["Philosophy_of_science", "Osama_bin_Laden_(elephant)", "List_of_lists_of_lists", "Nanahuatzin", "Nine_Points_of_the_Law"],
-  :it => ["Philosophie_des_sciences", "The_View_(gruppo_musicale)", "Filosofia_della_scienza", "CERN"])
+  :en => ["Wikipedia", "Osama_bin_Laden_(elephant)", "List_of_lists_of_lists", "Nine_Points_of_the_Law"],
+  :it => ["Wikipedia", "Ludovico_Einaudi", "Filosofia_della_scienza", "Pizza"],
+  :fr => ["Wikipedia", "Philosophie_des_sciences"],
+  :es => ["Wikipedia", "Chorizo"],
+  :da => ["Wikipedia", "H.C._Andersen"])
 
 rawpage(url) = parsehtml(String(get(url))).root
 

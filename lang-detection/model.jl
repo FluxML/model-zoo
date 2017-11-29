@@ -29,10 +29,9 @@ end
 
 loss(x, y) = crossentropy(model(x), y)
 
-evalcb = () -> @show model(dataset[1][1])
-
 opt = ADAM(params(scanner, encoder))
+evalcb = () -> @show model(dataset[1][1])
 
 Flux.train!(loss, dataset, opt, cb = throttle(evalcb, 10))
 
-open(io -> serialize(io, (alphabet, scanner, encoder)), "model.jls", "w")
+open(io -> serialize(io, (langs, alphabet, scanner, encoder)), "model.jls", "w")
