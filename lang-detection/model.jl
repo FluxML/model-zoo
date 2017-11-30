@@ -20,9 +20,11 @@ unique(filter(x -> x ∉ alphabet, join(vcat(values(corpora)...))))
 dataset = [(onehotbatch(s, alphabet, '_'), onehot(l, langs))
            for l in langs for s in corpora[l]] |> shuffle
 
+train, test = dataset[1:end-100], dataset[end-99:end]
+
 N = 15
 
-scanner = Chain(Dense(length(alphabet, N), LSTM(N, N)))
+scanner = Chain(Dense(length(alphabet), N), LSTM(N, N))
 encoder = Dense(N, length(langs))
 
 function model(x)
@@ -33,8 +35,10 @@ end
 
 loss(x, y) = crossentropy(model(x), y)
 
+testloss() = mean(loss(t...) for t in test)
+
 opt = ADAM(params(scanner, encoder))
-evalcb = () -> @show model(dataset[1][1])
+evalcb = () -> @show testloss()
 
 Flux.train!(loss, dataset, opt, cb = throttle(evalcb, 10))
 
