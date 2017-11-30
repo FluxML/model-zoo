@@ -6,11 +6,13 @@ corpora = Dict()
 cd(@__DIR__)
 for file in readdir("corpus")
   lang = Symbol(match(r"(.*)\.txt", file).captures[1])
-  corpora[lang] = filter(!isempty, split(String(read("corpus/$file")), "."))
+  corpus = filter(!isempty, split(String(read("corpus/$file")), "."))
+  corpus = strip.(normalize_string.(corpus, casefold=true, stripmark=true))
+  corpora[lang] = corpus
 end
 
 langs = collect(keys(corpora))
-alphabet = ['A':'Z'; 'a':'z'; '0':'9'; ' '; '\n'; '_']
+alphabet = ['a':'z'; '0':'9'; ' '; '\n'; '_']
 
 # See which chars will be represented as "unknown"
 unique(filter(x -> x ∉ alphabet, join(vcat(values(corpora)...))))
@@ -18,8 +20,10 @@ unique(filter(x -> x ∉ alphabet, join(vcat(values(corpora)...))))
 dataset = [(onehotbatch(s, alphabet, '_'), onehot(l, langs))
            for l in langs for s in corpora[l]] |> shuffle
 
-scanner = LSTM(length(alphabet), 300)
-encoder = Dense(300, length(langs))
+N = 15
+
+scanner = Chain(Dense(length(alphabet, N), LSTM(N, N)))
+encoder = Dense(N, length(langs))
 
 function model(x)
   state = scanner.(x.data)[end]
