@@ -24,7 +24,7 @@ train, test = dataset[1:end-100], dataset[end-99:end]
 
 N = 15
 
-scanner = Chain(Dense(length(alphabet), N), LSTM(N, N))
+scanner = Chain(Dense(length(alphabet), N, σ), LSTM(N, N))
 encoder = Dense(N, length(langs))
 
 function model(x)
