@@ -16,7 +16,7 @@ m = Chain(
 
 loss(x, y) = mse(m(x), y)
 
-accuracy(x, y) = mean(argmax(m(x), 0:9) .== argmax(y, 0:9))
+accuracy(x, y) = mean(argmax(m(x)) .== argmax(y))
 
 dataset = repeated((x, y), 200)
 evalcb = () -> @show(loss(x, y))
