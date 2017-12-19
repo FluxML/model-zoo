@@ -1,5 +1,5 @@
 using Flux, MNIST
-using Flux: onehotbatch, argmax, mse, throttle
+using Flux: onehotbatch, argmax, crossentropy, throttle
 using Base.Iterators: repeated
 
 x, y = traindata()
@@ -14,13 +14,13 @@ m = Chain(
 # x, y = cu(x), cu(y)
 # m = mapleaves(cu, m)
 
-loss(x, y) = mse(m(x), y)
+loss(x, y) = crossentropy(m(x), y)
 
 accuracy(x, y) = mean(argmax(m(x)) .== argmax(y))
 
 dataset = repeated((x, y), 200)
 evalcb = () -> @show(loss(x, y))
-opt = SGD(params(m), 0.1)
+opt = ADAM(params(m))
 
 Flux.train!(loss, dataset, opt, cb = throttle(evalcb, 5))
 
