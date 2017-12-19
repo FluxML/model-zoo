@@ -41,5 +41,3 @@ opt = ADAM(params(scanner, encoder))
 evalcb = () -> @show testloss()
 
 Flux.train!(loss, train, opt, cb = throttle(evalcb, 10))
-
-open(io -> serialize(io, (langs, alphabet, scanner, encoder)), "model.jls", "w")
