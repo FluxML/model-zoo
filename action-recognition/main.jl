@@ -7,6 +7,9 @@ using ImageView
 using VideoIO
 using Flux
 
+isdir("data") ||
+  run(`git clone https://github.com/americast/actions-dataset.git data --depth 1`)
+
 files = []
 test_files = []
 
