@@ -11,7 +11,6 @@ isdir("data") ||
   run(`git clone https://github.com/americast/actions-dataset.git data --depth 1`)
 
 files = []
-test_files = []
 
 file = readdir("data/walk")
 map!(x -> "data/walk/$x",file)
@@ -27,12 +26,12 @@ append!(files,file)
 
 files = files[randperm(length(files))]
 
-file = readdir("data/test")
-map!(x -> "data/test/$x",file)
-append!(test_files,file)
-
+test_files = readdir("data/test")
+map!(x -> "data/test/$x",test_files)
 test_files = test_files[randperm(length(test_files))]
 
+
+# Local response normalisation
 function normalise(x; α = 10.0^(-4), β = 0.75, n = 5, k = 2)
     y = ones(size(x))
     for b in 1:size(x,4)
@@ -57,6 +56,7 @@ function normalise(x; α = 10.0^(-4), β = 0.75, n = 5, k = 2)
     return(param(y))
 end
 
+# Two similar models for context and fovea
 m_c = Chain(
   Conv2D((11,11), 3=>96, relu, stride=3),
   normalise,
@@ -89,12 +89,13 @@ m_f = Chain(
   x -> reshape(x, :, size(x,4)),
   Dense(4096, 4096,relu))
 
+# Single dense layer after concatenation of context and fovea
 dense = Chain(
     Dense(8192,NUM_CLASSES + 1),
     softmax)
 
+# Structure of the model
 function inference(data_c, data_f)
-
     data_c = convert(Array{Float64,4},data_c)
     data_f = convert(Array{Float64,4},data_f)
     dense_c = m_c(data_c)
@@ -109,6 +110,7 @@ end
 
 loss(x, y) = Flux.crossentropy(x, y)
 
+# Evaluation done with batch size fixed to 1
 function eval()
     loss_sum = 0
     counter = 0
@@ -131,7 +133,7 @@ function eval()
             ImageView.closeall()
             ImageView.imshow(img)
 
-            action_type = split(file,".")[1]
+            action_type = split(split(file,"/")[3],".")[1]
             label = 4
             if (action_type=="walk")
                 label = 1
@@ -172,7 +174,7 @@ end
 opt = ADAM(params(inference))
 
 for iter in 1:MAX_ITER
-    
+    println("Starting iteration $iter")
     for file in files
 
         io = VideoIO.open(file)
@@ -223,7 +225,7 @@ for iter in 1:MAX_ITER
             img_fovea = reshape(img_fovea,(89,89,3))
             append!(data_fovea,img_fovea)
 
-            action_type = split(file,"/")[1]
+            action_type = split(file,"/")[2]
             if (action_type=="walk")
                 push!(labels,1)
             elseif (action_type=="run")
@@ -237,4 +239,5 @@ for iter in 1:MAX_ITER
         end
     end
     eval()
+    println("Iteration $iter complete")
 end
