@@ -2,6 +2,8 @@ using Flux, MNIST
 using Flux: onehotbatch, argmax, crossentropy, throttle
 using Base.Iterators: repeated, partition
 
+# Classify MNIST digits with a convolutional network
+
 x, y = traindata()
 x = reshape(x, 28, 28, 1, :)
 y = onehotbatch(y, 0:9)
