@@ -2,6 +2,8 @@ using Flux, MNIST
 using Flux: onehotbatch, argmax, crossentropy, throttle
 using Base.Iterators: repeated
 
+# Classify MNIST digits with a simple multi-layer-perceptron
+
 x, y = traindata()
 y = onehotbatch(y, 0:9)
 
