@@ -1,5 +1,6 @@
 using Flux
 using Flux: onehot, argmax, chunk, batchseq, throttle, crossentropy
+using StatsBase: wsample
 using Base.Iterators: partition
 
 cd(@__DIR__)
@@ -46,7 +47,7 @@ function sample(m, alphabet, len; temp = 1)
   c = rand(alphabet)
   for i = 1:len
     write(buf, c)
-    c = argmax(m(onehot(c, alphabet)), alphabet)
+    c = wsample(alphabet, m(onehot(c, alphabet)).data)
   end
   return String(take!(buf))
 end
