@@ -1,11 +1,16 @@
-using Flux, MNIST
+using Flux, Flux.Data.MNIST
 using Flux: onehotbatch, argmax, crossentropy, throttle
 using Base.Iterators: repeated
 
 # Classify MNIST digits with a simple multi-layer-perceptron
 
-x, y = traindata()
-y = onehotbatch(y, 0:9)
+imgs = MNIST.images()
+# Stack images into one large batch
+X = hcat(float.(reshape.(imgs, :))...)
+
+labels = MNIST.labels()
+# One-hot-encode the labels
+Y = onehotbatch(labels, 0:9)
 
 m = Chain(
   Dense(28^2, 32, relu),
@@ -20,15 +25,15 @@ loss(x, y) = crossentropy(m(x), y)
 
 accuracy(x, y) = mean(argmax(m(x)) .== argmax(y))
 
-dataset = repeated((x, y), 200)
-evalcb = () -> @show(loss(x, y))
+dataset = repeated((X, Y), 200)
+evalcb = () -> @show(loss(X, Y))
 opt = ADAM(params(m))
 
-Flux.train!(loss, dataset, opt, cb = throttle(evalcb, 5))
+Flux.train!(loss, dataset, opt, cb = throttle(evalcb, 10))
 
-accuracy(x, y)
+accuracy(X, Y)
 
 # Test set accuracy
-tx, ty = testdata()
-ty = onehotbatch(ty, 0:9)
-accuracy(tx, ty)
+tX = hcat(float.(reshape.(MNIST.images(:test), :))...)
+tY = onehotbatch(MNIST.labels(:test), 0:9)
+accuracy(tX, tY)
