@@ -12,7 +12,7 @@ isfile("input.txt") ||
 text = collect(readstring("input.txt"))
 alphabet = [unique(text)..., '_']
 text = map(ch -> onehot(ch, alphabet), text)
-stop = onehot('_', alphabet)
+stop = onehot("_", alphabet)
 
 N = length(alphabet)
 seqlen = 50
