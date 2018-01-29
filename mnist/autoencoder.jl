@@ -19,7 +19,7 @@ m = Chain(
 
 loss(x) = mse(m(x), x)
 
-evalcb = throttle(() -> @show loss(data[1][1]), 5)
+evalcb = throttle(() -> @show(loss(data[1][1])), 5)
 opt = ADAM(params(m))
 
 @progress for i = 1:10
