@@ -54,3 +54,21 @@ evalcb = () -> @show loss(data[500]...)
 opt = ADAM(params(state))
 
 Flux.train!(loss, data, opt, cb = throttle(evalcb, 10))
+
+# Prediction
+
+using StatsBase: wsample
+
+function predict(s)
+  ts = encode(tokenise(s, alphabet))
+  ps = Any[:start]
+  for i = 1:50
+    dist = decode1(ts, onehot(ps[end], phones))
+    next = wsample(phones, Flux.Tracker.value(dist))
+    next == :end && break
+    push!(ps, next)
+  end
+  return ps[2:end]
+end
+
+predict("PHYLOGENY")
