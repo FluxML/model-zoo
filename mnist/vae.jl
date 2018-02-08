@@ -2,6 +2,9 @@ using Flux, Flux.Data.MNIST, PyPlot
 using Flux: throttle, params
 using Juno: @progress
 
+rng = MersenneTwister(1234567)
+
+# Add an iterator to simply run over the data set.
 struct MinibatchIterator{TX<:AbstractMatrix}
   X::TX
   M::Int
@@ -29,44 +32,38 @@ data = MinibatchIterator(X, M)
 
 ################################# Define Model #################################
 
-# Latent dimensionality, # hidden units, and minibatch sizes resp.
+# Latent dimensionality, # hidden units.
 Dz, Dh = 5, 500
-rng = MersenneTwister(1234567)
 
-# Recognition model / "decoder" MLP.
-g = Dense(28^2, Dh, tanh)
-μ, logσ = Dense(Dh, Dz), Dense(Dh, Dz)
+# Components of recognition model / "encoder" MLP.
+A, μ, logσ = Dense(28^2, Dh, tanh), Dense(Dh, Dz), Dense(Dh, Dz)
+g(X) = (h = A(X); (μ(h), logσ(h)))
 z(μ, logσ) = μ + exp(logσ) * randn(rng)
 
-# Generative model / "encoder" MLP.
+# Generative model / "decoder" MLP.
 f = Chain(Dense(Dz, Dh, tanh), Dense(Dh, 28^2, σ))
 
-# Compute ELBO.
-kl(μ, logσ) = 0.5 * sum(exp.(2 .* logσ) + μ.^2 - 1 .+ logσ.^2)
-L̂(X, Xpr) = sum(logpdf.(Bernoulli.(Xpr), X))
-function nveELBO(X)
-  h = g(X)
-  μ̂, logσ̂ = μ(h), logσ(h)
-  ẑ = z.(μ̂, logσ̂)
-  return -(L̂(X, f(ẑ)) - kl(μ̂, logσ̂)) / M
-end
 
+####################### Define ways of doing things with the model. #######################
 
-################################# Learn Parameters ##############################
+# KL-divergence between approximation posterior and N(0, 1) prior.
+kl_q_p(μ, logσ) = 0.5 * sum(exp.(2 .* logσ) + μ.^2 - 1 .+ logσ.^2)
 
-evalcb = throttle(() -> @show(nveELBO(X[:, rand(1:60000, M)])), 5)
-opt = ADAM(vcat(params(g), params(μ), params(logσ), params(f)))
-@progress for i = 1:10
-  info("Epoch $i")
-  Flux.train!(nveELBO, data, opt, cb=evalcb)
-end
+# logp(x|z) - conditional probability of data given latents.
+logp_x_z(x, z) = sum(logpdf.(Bernoulli.(f(z)), x))
 
-
-################################# Sample Images #################################
+# Monte Carlo estimator of mean ELBO using M samples.
+L̄(X) = ((μ̂, logσ̂) = g(X); (logp_x_z(X, z.(μ̂, logσ̂)) - kl_q_p(μ̂, logσ̂)) / M)
 
 # Sample from the learned model.
 sample(M::Int=1) = rand.(Bernoulli.(f(z.(zeros(Dz, M), zeros(Dz, M)))))
 
-# Get the parameters of the approximate posterior.
-encode(X) = (h = g(X); (μ(h), logσ(h)))
 
+################################# Learn Parameters ##############################
+
+evalcb = throttle(() -> @show(-L̄(X[:, rand(1:60000, M)])), 5);
+opt = ADAM(vcat(params(A), params(μ), params(logσ), params(f)));
+@progress for i = 1:10
+  info("Epoch $i")
+  Flux.train!(X->-L̄(X) + 0.5 * sum(x->sum(x.^2), params(f)), data, opt, cb=evalcb)
+end
