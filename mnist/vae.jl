@@ -63,7 +63,7 @@ sample(M::Int=1) = rand.(Bernoulli.(f(z.(zeros(Dz, M), zeros(Dz, M)))))
 
 evalcb = throttle(() -> @show(-L̄(X[:, rand(1:60000, M)])), 30);
 opt = ADAM(vcat(params(A), params(μ), params(logσ), params(f)));
-@progress for i = 1:15
+@progress for i = 1:20
   info("Epoch $i")
-  Flux.train!(X->-L̄(X) + 0.5 * sum(x->sum(x.^2), params(f)), data, opt, cb=evalcb)
+  Flux.train!(X->-L̄(X) + 0.01 * sum(x->sum(x.^2), params(f)), data, opt, cb=evalcb)
 end
