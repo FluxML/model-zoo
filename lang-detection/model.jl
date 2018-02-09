@@ -6,8 +6,9 @@ corpora = Dict()
 cd(@__DIR__)
 for file in readdir("corpus")
   lang = Symbol(match(r"(.*)\.txt", file).captures[1])
-  corpus = filter(!isempty, split(String(read("corpus/$file")), "."))
+  corpus = split(String(read("corpus/$file")), ".")
   corpus = strip.(normalize_string.(corpus, casefold=true, stripmark=true))
+  corpus = filter(!isempty, corpus)
   corpora[lang] = corpus
 end
 

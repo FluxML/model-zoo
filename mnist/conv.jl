@@ -1,18 +1,20 @@
-using Flux, MNIST
+using Flux, Flux.Data.MNIST
 using Flux: onehotbatch, argmax, crossentropy, throttle
 using Base.Iterators: repeated, partition
 
-x, y = traindata()
-x = reshape(x, 28, 28, 1, :)
-y = onehotbatch(y, 0:9)
+# Classify MNIST digits with a convolutional network
 
-# Partition into batches of size 1000
-train = [(x[:,:,:,i], y[:,i]) for i in partition(1:60_000, 1000)]
+imgs = MNIST.images()
 
-# Test set
-tx, ty = testdata()
-tx = reshape(tx, 28, 28, 1, :)
-ty = onehotbatch(ty, 0:9)
+labels = onehotbatch(MNIST.labels(), 0:9)
+
+# Partition into batches of size 1,000
+train = [(cat(4, float.(imgs[i])...), labels[:,i])
+         for i in partition(1:60_000, 1000)]
+
+# Prepare test set (first 1,000 images)
+tX = cat(4, float.(MNIST.images(:test)[1:1000])...)
+tY = onehotbatch(MNIST.labels(:test)[1:1000], 0:9)
 
 m = Chain(
   Conv2D((2,2), 1=>16, relu),
@@ -28,7 +30,7 @@ loss(x, y) = crossentropy(m(x), y)
 
 accuracy(x, y) = mean(argmax(m(x)) .== argmax(y))
 
-evalcb = throttle(() -> @show(accuracy(tx, ty)), 10)
+evalcb = throttle(() -> @show(accuracy(tX, tY)), 10)
 opt = ADAM(params(m))
 
 Flux.train!(loss, train, opt, cb = evalcb)

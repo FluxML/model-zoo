@@ -1,5 +1,6 @@
 using Flux
-using Flux: onehot, argmax, chunk, batchseq, truncate!, throttle, crossentropy
+using Flux: onehot, argmax, chunk, batchseq, throttle, crossentropy
+using StatsBase: wsample
 using Base.Iterators: partition
 
 cd(@__DIR__)
@@ -22,32 +23,38 @@ Ys = collect(partition(batchseq(chunk(text[2:end], nbatch), stop), seqlen))
 
 m = Chain(
   LSTM(N, 128),
-  LSTM(128, 256),
-  LSTM(256, 128),
+  LSTM(128, 128),
   Dense(128, N),
   softmax)
 
-loss(xs, ys) = sum(crossentropy.(m.(xs), ys))
+function loss(xs, ys)
+  l = sum(crossentropy.(m.(xs), ys))
+  Flux.truncate!(m)
+  return l
+end
 
 opt = ADAM(params(m), 0.01)
-
 evalcb = () -> @show loss(Xs[5], Ys[5])
 
 Flux.train!(loss, zip(Xs, Ys), opt,
-            cb = [() -> truncate!(m),
-                  throttle(evalcb, 10)])
+            cb = throttle(evalcb, 30))
 
 # Sampling
 
-function sample(m, alphabet, len)
+function sample(m, alphabet, len; temp = 1)
   Flux.reset!(m)
   buf = IOBuffer()
-  s = onehot(rand(alphabet), alphabet)
+  c = rand(alphabet)
   for i = 1:len
-    write(buf, argmax(s, alphabet))
-    s = m(s)
+    write(buf, c)
+    c = wsample(alphabet, m(onehot(c, alphabet)).data)
   end
   return String(take!(buf))
 end
 
-sample(m, alphabet, 100)
+sample(m, alphabet, 1000) |> println
+
+# evalcb = function ()
+#   @show loss(Xs[5], Ys[5])
+#   println(sample(deepcopy(m), alphabet, 100))
+# end
