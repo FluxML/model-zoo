@@ -1,35 +1,19 @@
-const BATCH_SIZE = 3
-const NUM_CLASSES = 3
-const MAX_ITER = 20000
+using Flux, Images, VideoIO
 
-using Images
-using ImageView
-using VideoIO
-using Flux
+cd(@__DIR__)
 
 isdir("data") ||
   run(`git clone https://github.com/americast/actions-dataset.git data --depth 1`)
 
-files = []
+const BATCH_SIZE = 3
+const NUM_CLASSES = 3
+const MAX_ITER = 20000
 
-file = readdir("data/walk")
-map!(x -> "data/walk/$x",file)
-append!(files,file)
+files(path) = joinpath.(path, readdir(path))
+files(paths...) = vcat(files.(paths)...)
 
-file = readdir("data/jump")
-map!(x -> "data/jump/$x",file)
-append!(files,file)
-
-file = readdir("data/run")
-map!(x -> "data/run/$x",file)
-append!(files,file)
-
-files = files[randperm(length(files))]
-
-test_files = readdir("data/test")
-map!(x -> "data/test/$x",test_files)
-test_files = test_files[randperm(length(test_files))]
-
+train = shuffle(files("data/walk", "data/jump", "data/run"))
+test = shuffle(files("data/test"))
 
 # Local response normalisation
 function normalise(x; α = 10.0^(-4), β = 0.75, n = 5, k = 2)
@@ -56,8 +40,7 @@ function normalise(x; α = 10.0^(-4), β = 0.75, n = 5, k = 2)
     return(param(y))
 end
 
-# Two similar models for context and fovea
-m_c = Chain(
+CNN() = Chain(
   Conv2D((11,11), 3=>96, relu, stride=3),
   normalise,
   x -> maxpool2d(x, 2),
@@ -71,23 +54,11 @@ m_c = Chain(
   Conv2D((3,3), 384=>256, relu, pad=2),
   x -> maxpool2d(x, 2),
   x -> reshape(x, :, size(x,4)),
-  Dense(4096, 4096,relu))
+  Dense(4096, 4096, relu))
 
-m_f = Chain(
-  Conv2D((11,11), 3=>96, relu, stride=3),
-  normalise,
-  x -> maxpool2d(x, 2),
-  Conv2D((5,5), 96=>256, relu, pad =2),
-  normalise,
-  x -> maxpool2d(x, 2),
-  Conv2D((3,3), 256=>384, relu, pad=2),
-  normalise,
-  x -> maxpool2d(x, 2),
-  Conv2D((3,3), 384=>384, relu, pad=2),
-  Conv2D((3,3), 384=>256, relu, pad=2),
-  x -> maxpool2d(x, 2),
-  x -> reshape(x, :, size(x,4)),
-  Dense(4096, 4096,relu))
+# Two similar models for context and fovea
+m_c = CNN()
+m_f = CNN()
 
 # Single dense layer after concatenation of context and fovea
 dense = Chain(
