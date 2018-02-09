@@ -13,9 +13,18 @@ data = [(float(hcat(vec.(imgs[i])...)),) for i in partition(1:60_000, 1000)]
 
 N = 32 # Size of the encoding
 
+# You can try to make the encoder/decoder network larger
+# Also, the output of encoder is a coding of the given input.
+# In this case, the input dimension is 28^2 and the output dimension of
+# encoder is 32. This implies that the coding is a compressed representation.
+# We can make lossy compression via this `encoder`.
+encoder = Dense(28^2, N, relu)
+decoder = Dense(N, 28^2, relu)
+
 m = Chain(
-  Dense(28^2, N, relu), # Encoder
-  Dense(N, 28^2, relu)) # Decoder
+  encoder,
+  decoder
+)
 
 loss(x) = mse(m(x), x)
 
