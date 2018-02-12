@@ -1,20 +1,8 @@
-using Flux, Flux.Data.MNIST, PyPlot
+using Flux, Flux.Data.MNIST, MLDataUtils
 using Flux: throttle, params
 using Juno: @progress
 
 rng = MersenneTwister(1234567)
-
-# Add an iterator to simply run over the data set.
-struct MinibatchIterator{TX<:AbstractMatrix}
-  X::TX
-  M::Int
-end
-Base.start(d::MinibatchIterator) = 1
-function Base.next(d::MinibatchIterator, p::Int)
-  p′ = min(p + d.M, size(d.X, 2))
-  return (view(d.X, :, p:p′-1),), p′
-end
-Base.done(d::MinibatchIterator, p::Int) = p == size(d.X, 2)
 
 # Extend distributions slightly to have a numerically stable logpdf for `p` close to 1 or 0.
 using Distributions
@@ -27,7 +15,7 @@ X[X .> 0.5] = 1
 X[X .< 1] = 0
 X = convert(Matrix{Bool}, X)
 N, M = size(X, 2), 100
-data = MinibatchIterator(X, M)
+data = batchview((X,), M)
 
 
 ################################# Define Model #################################
@@ -61,7 +49,7 @@ sample(M::Int=1) = rand.(Bernoulli.(f(z.(zeros(Dz, M), zeros(Dz, M)))))
 
 ################################# Learn Parameters ##############################
 
-evalcb = throttle(() -> @show(-L̄(X[:, rand(1:60000, M)])), 30);
+evalcb = throttle(() -> @show(-L̄(X[:, rand(1:N, M)])), 30);
 opt = ADAM(vcat(params(A), params(μ), params(logσ), params(f)));
 @progress for i = 1:20
   info("Epoch $i")
