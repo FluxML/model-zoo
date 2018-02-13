@@ -36,4 +36,6 @@ accuracy(X, Y)
 # Test set accuracy
 tX = hcat(float.(reshape.(MNIST.images(:test), :))...)
 tY = onehotbatch(MNIST.labels(:test), 0:9)
+# If CuArrays
+# tX, tY = cu(tX), cu(tY)
 accuracy(tX, tY)
