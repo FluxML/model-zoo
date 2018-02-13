@@ -1,4 +1,4 @@
-using Flux, Flux.Data.MNIST, MLDataUtils
+using Flux, Flux.Data.MNIST
 using Flux: throttle, params
 using Juno: @progress
 
@@ -10,12 +10,9 @@ import Distributions: logpdf
 logpdf(b::Bernoulli, y::Bool) = y * log(b.p + eps()) + (1 - y) * log(1 - b.p + eps())
 
 # Load data, binarise it, and partition into mini-batches of M.
-X = float(hcat(vec.(MNIST.images())...))
-X[X .> 0.5] = 1
-X[X .< 1] = 0
-X = convert(Matrix{Bool}, X)
+X = float.(hcat(vec.(MNIST.images())...)) .> 0.5
 N, M = size(X, 2), 100
-data = batchview((X,), M)
+data = [(X[:,i],) for i in Iterators.partition(1:N,M)]
 
 
 ################################# Define Model #################################
@@ -43,15 +40,28 @@ logp_x_z(x, z) = sum(logpdf.(Bernoulli.(f(z)), x))
 # Monte Carlo estimator of mean ELBO using M samples.
 L̄(X) = ((μ̂, logσ̂) = g(X); (logp_x_z(X, z.(μ̂, logσ̂)) - kl_q_p(μ̂, logσ̂)) / M)
 
+loss(X) = -L̄(X) + 0.01 * sum(x->sum(x.^2), params(f))
+
 # Sample from the learned model.
-sample(M::Int=1) = rand.(Bernoulli.(f(z.(zeros(Dz, M), zeros(Dz, M)))))
+modelsample() = rand.(Bernoulli.(f(z.(zeros(Dz), zeros(Dz)))))
 
 
 ################################# Learn Parameters ##############################
 
-evalcb = throttle(() -> @show(-L̄(X[:, rand(1:N, M)])), 30);
-opt = ADAM(vcat(params(A), params(μ), params(logσ), params(f)));
+evalcb = throttle(() -> @show(-L̄(X[:, rand(1:N, M)])), 30)
+opt = ADAM(params(A, μ, logσ, f))
 @progress for i = 1:20
   info("Epoch $i")
-  Flux.train!(X->-L̄(X) + 0.01 * sum(x->sum(x.^2), params(f)), data, opt, cb=evalcb)
+  Flux.train!(loss, data, opt, cb=evalcb)
 end
+
+
+################################# Sample Output ##############################
+
+using Images
+
+img(x) = Gray.(reshape(x, 28, 28))
+
+cd(@__DIR__)
+sample = hcat(img.([modelsample() for i = 1:10])...)
+save("sample.png", sample)
