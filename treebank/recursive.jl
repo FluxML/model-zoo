@@ -1,6 +1,6 @@
 using Flux
 using Flux: crossentropy, throttle
-using Flux.Batches: Tree, children, isleaf
+using Flux.Data: Tree, children, isleaf
 
 include("data.jl")
 

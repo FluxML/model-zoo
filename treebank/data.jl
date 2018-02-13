@@ -1,7 +1,7 @@
 using Flux
 using Flux: onehot
 using Flux.Data.Sentiment
-using Flux.Batches: Tree, leaves
+using Flux.Data: Tree, leaves
 
 traintrees = Sentiment.train()
 
