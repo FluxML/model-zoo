@@ -16,7 +16,7 @@ sentiment = Chain(Dense(N, 5), softmax)
 function forward(tree)
   if isleaf(tree)
     token, sent = tree.value
-    phrase = embedding * collect(token) # TODO: rm collect
+    phrase = embedding * token
     phrase, crossentropy(sentiment(phrase), sent)
   else
     _, sent = tree.value
