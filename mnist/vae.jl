@@ -2,8 +2,6 @@ using Flux, Flux.Data.MNIST
 using Flux: throttle, params
 using Juno: @progress
 
-rng = MersenneTwister(1234567)
-
 # Extend distributions slightly to have a numerically stable logpdf for `p` close to 1 or 0.
 using Distributions
 import Distributions: logpdf
@@ -23,7 +21,7 @@ Dz, Dh = 5, 500
 # Components of recognition model / "encoder" MLP.
 A, μ, logσ = Dense(28^2, Dh, tanh), Dense(Dh, Dz), Dense(Dh, Dz)
 g(X) = (h = A(X); (μ(h), logσ(h)))
-z(μ, logσ) = μ + exp(logσ) * randn(rng)
+z(μ, logσ) = μ + exp(logσ) * randn()
 
 # Generative model / "decoder" MLP.
 f = Chain(Dense(Dz, Dh, tanh), Dense(Dh, 28^2, σ))
