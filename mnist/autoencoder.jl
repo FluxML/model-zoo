@@ -36,6 +36,8 @@ opt = ADAM(params(m))
   Flux.train!(loss, data, opt, cb = evalcb)
 end
 
+# Sample output
+
 using Images
 
 img(x::Vector) = Gray.(reshape(clamp.(x, 0, 1), 28, 28))
