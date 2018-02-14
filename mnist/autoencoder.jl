@@ -21,10 +21,7 @@ N = 32 # Size of the encoding
 encoder = Dense(28^2, N, relu)
 decoder = Dense(N, 28^2, relu)
 
-m = Chain(
-  encoder,
-  decoder
-)
+m = Chain(encoder, decoder)
 
 loss(x) = mse(m(x), x)
 
