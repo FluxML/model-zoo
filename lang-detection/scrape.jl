@@ -1,4 +1,4 @@
-using Cascadia, Gumbo, Requests, AbstractTrees
+using Cascadia, Gumbo, HTTP, AbstractTrees
 
 pages = Dict(
   :en => ["Wikipedia", "Osama_bin_Laden_(elephant)", "List_of_lists_of_lists", "Josephine_Butler", "Canadian_football", "Judaism"],
@@ -7,7 +7,7 @@ pages = Dict(
   :es => ["Wikipedia", "Chorizo", "Historia_de_Barcelona", "Espana", "Las_Vegas_Strip", "Judaismo"],
   :da => ["Wikipedia", "H.C._Andersen", "L.A._Ring", "Jiangxi", "NATO", "Thomas_Edison", "Bangladesh"])
 
-rawpage(url) = parsehtml(String(get(url))).root
+rawpage(url) = parsehtml(String(HTTP.get(url).body)).root
 
 function innerText(dom)
   text = IOBuffer()
