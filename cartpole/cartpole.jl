@@ -1,15 +1,19 @@
-using PyCall
-using Flux
-using StatsBase
-@pyimport gym
+using Reinforce:CartPole, actions, reset!, Episode, finished
+import Reinforce.action
+using Flux, StatsBase, Plots
+
+gr()
+
+#Define custom policy for choosing action
+type CartPolePolicy <: Reinforce.AbstractPolicy end
 
 #Load game environment
-env = gym.make("CartPole-v1")
+env = CartPole()
 
 #Parameters
 EPISODES = 1000
-STATE_SIZE = env[:observation_space][:shape][1]
-ACTION_SIZE = env[:action_space][:n]
+STATE_SIZE = length(env.state)
+ACTION_SIZE = length(actions(env, env.state))
 MEM_SIZE = 2000
 BATCH_SIZE = 32
 γ = 0.95    # discount rate
@@ -33,12 +37,12 @@ function remember(state, action, reward, next_state, done)
     push!(memory, (state, action, reward, next_state, done))
 end
 
-function act(state)
+function action(policy::CartPolePolicy, reward, state, action)
     if rand() <= ϵ
-        return rand(0:ACTION_SIZE-1)
+        return rand(1:ACTION_SIZE)
     end
     act_values = model(state)
-    return Flux.argmax(act_values)[1] - 1  # returns action
+    return Flux.argmax(act_values)[1]  # returns action
 end
 
 function replay()
@@ -51,7 +55,7 @@ function replay()
             target += γ * maximum(model(next_state))
         end
         target_f = model(state).data
-        target_f[action + 1, 1] = target
+        target_f[action, 1] = target
         dataset = zip(state, target_f)
         fit_model(dataset)
     end
@@ -61,26 +65,27 @@ function replay()
     end
 end
 
-env[:_max_episode_steps] = 10000 #A large number
+#Render the environment
+on_step(env::CartPole, niter, sars) = gui(plot(env))
+
+function episode!(env, policy = RandomPolicy(); stepfunc = on_step, kw...)
+    ep = Episode(env, policy)
+    for sars in ep
+        stepfunc(ep.env, ep.niter, sars)
+        state, action, reward, next_state = sars
+        state = reshape(state, STATE_SIZE, 1)
+        next_state = reshape(next_state, STATE_SIZE, 1)
+        done = finished(ep.env, next_state) #check of game is over)
+        reward = !done ? reward : -10 #Penalty of -10 if game is over
+        remember(state, action, reward, next_state, done)
+    end
+    ep.total_reward
+end
 
 for e=1:EPISODES
-    state = env[:reset]()
-    state = reshape(state, STATE_SIZE, 1)
-    score = 0
-    done = false
-    while !done
-        env[:render]()
-        #Select action to perform
-        action = act(state)
-        #Perform action
-        next_state, reward, done, _ = env[:step](action)
-        reward = !done ? reward : -10 #Penalty of -10 if game is over
-        next_state = reshape(next_state, STATE_SIZE, 1)
-        remember(state, action, reward, next_state, done)
-        state = next_state
-        score += 1
-    end
-    println("Episode: $e/$EPISODES | Score: $score | ϵ: $ϵ")
+    reset!(env)
+    total_reward = episode!(env, CartPolePolicy())
+    println("Episode: $e/$EPISODES | Score: $total_reward | ϵ: $ϵ")
     if length(memory) >= BATCH_SIZE
         replay()
     end
