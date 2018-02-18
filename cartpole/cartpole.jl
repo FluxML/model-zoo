@@ -5,13 +5,13 @@ using Flux, StatsBase, Plots
 gr()
 
 #Define custom policy for choosing action
-type CartPolePolicy <: Reinforce.AbstractPolicy end
+mutable struct CartPolePolicy <: Reinforce.AbstractPolicy end
 
 #Load game environment
 env = CartPole()
 
 #Parameters
-EPISODES = 1000
+EPISODES = 3000
 STATE_SIZE = length(env.state)
 ACTION_SIZE = length(actions(env, env.state))
 MEM_SIZE = 2000
@@ -76,7 +76,7 @@ function episode!(env, policy = RandomPolicy(); stepfunc = on_step, kw...)
         state = reshape(state, STATE_SIZE, 1)
         next_state = reshape(next_state, STATE_SIZE, 1)
         done = finished(ep.env, next_state) #check of game is over)
-        reward = !done ? reward : -10 #Penalty of -10 if game is over
+        reward = !done ? reward : -1 #Penalty of -10 if game is over
         remember(state, action, reward, next_state, done)
     end
     ep.total_reward
