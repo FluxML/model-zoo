@@ -27,9 +27,14 @@ accuracy(x, y) = mean(argmax(m(x)) .== argmax(y))
 
 dataset = repeated((X, Y), 200)
 evalcb = () -> @show(loss(X, Y))
-opt = ADAM(params(m))
 
-Flux.train!(loss, dataset, opt, cb = throttle(evalcb, 10))
+include("./learn-strat.jl")
+
+opt = FluxModel(m, ADAM, throttle(evalcb, 1))
+# opt = ADAM(params(m))
+
+LearningStrategies.learn!(loss, opt, dataset)
+# Flux.train!(loss, dataset, opt, cb = throttle(evalcb, 10))
 
 accuracy(X, Y)
 
