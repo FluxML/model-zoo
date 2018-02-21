@@ -25,12 +25,14 @@ loss(x, y) = crossentropy(m(x), y)
 
 accuracy(x, y) = mean(argmax(m(x)) .== argmax(y))
 
-dataset = repeated((X, Y), 200)
+dataset = repeated((X, Y))
 evalcb = () -> @show(loss(X, Y))
 
 include("./learn-strat.jl")
 
-opt = FluxModel(m, ADAM, throttle(evalcb, 1))
+opt = strategy(
+  MaxIter(200),
+  FluxModel(m, ADAM, throttle(evalcb, 1)))
 # opt = ADAM(params(m))
 
 LearningStrategies.learn!(loss, opt, dataset)
