@@ -26,13 +26,19 @@ loss(x, y) = crossentropy(m(x), y)
 accuracy(x, y) = mean(argmax(m(x)) .== argmax(y))
 
 dataset = repeated((X, Y))
-evalcb = () -> @show(loss(X, Y))
+evalcb = (loss, i) -> @show(loss(X, Y))
 
 include("./learn-strat.jl")
 
+using LearningStrategies: strategy, MaxIter, Tracer
+
 opt = strategy(
   MaxIter(200),
-  FluxModel(m, ADAM, throttle(evalcb, 1)))
+  FluxModel(m, ADAM),  # maybe the `cb` field isn't necessary now.
+  Tracer(Flux.Tracker.TrackedReal, evalcb, 10)  # if we store this tracer object
+                                                # into a variable,
+                                                # we can plot the curve of error.
+  )
 # opt = ADAM(params(m))
 
 LearningStrategies.learn!(loss, opt, dataset)

@@ -3,7 +3,7 @@
 using Flux: back!
 using Flux.Optimise: runall
 
-using LearningStrategies: LearningStrategy, strategy
+using LearningStrategies: LearningStrategy, strategy, MaxIter, Verbose
 import LearningStrategies: setup!, hook, update!, finished
 
 struct FluxModel <: LearningStrategy
