@@ -1,25 +1,22 @@
 using Flux, Flux.Data.MNIST
 using Flux: onehotbatch, argmax, crossentropy, throttle
 using Base.Iterators: repeated
+# using CuArrays
 
 # Classify MNIST digits with a simple multi-layer-perceptron
 
 imgs = MNIST.images()
 # Stack images into one large batch
-X = hcat(float.(reshape.(imgs, :))...)
+X = hcat(float.(reshape.(imgs, :))...) |> gpu
 
 labels = MNIST.labels()
 # One-hot-encode the labels
-Y = onehotbatch(labels, 0:9)
+Y = onehotbatch(labels, 0:9) |> gpu
 
 m = Chain(
   Dense(28^2, 32, relu),
   Dense(32, 10),
-  softmax)
-
-# using CuArrays
-# x, y = cu(x), cu(y)
-# m = mapleaves(cu, m)
+  softmax) |> gpu
 
 loss(x, y) = crossentropy(m(x), y)
 
@@ -34,8 +31,7 @@ Flux.train!(loss, dataset, opt, cb = throttle(evalcb, 10))
 accuracy(X, Y)
 
 # Test set accuracy
-tX = hcat(float.(reshape.(MNIST.images(:test), :))...)
-tY = onehotbatch(MNIST.labels(:test), 0:9)
-# If CuArrays
-# tX, tY = cu(tX), cu(tY)
+tX = hcat(float.(reshape.(MNIST.images(:test), :))...) |> gpu
+tY = onehotbatch(MNIST.labels(:test), 0:9) |> gpu
+
 accuracy(tX, tY)
