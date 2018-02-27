@@ -12,7 +12,8 @@ file(x) = joinpath(@__DIR__, "..", x)
 
 models = [
   ("MNIST MLP","mnist/mlp.jl"),
-  ("MNIST Conv","mnist/conv.jl")]
+  ("MNIST Conv","mnist/conv.jl"),
+  ("MNIST Autoencoder","mnist/autoencoder.jl")]
 
 info("Testing CPU models")
 for (name, p) in models

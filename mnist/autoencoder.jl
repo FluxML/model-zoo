@@ -1,7 +1,8 @@
 using Flux, Flux.Data.MNIST
-using Flux: onehotbatch, argmax, mse, throttle
+using Flux: @epochs, onehotbatch, argmax, mse, throttle
 using Base.Iterators: partition
 using Juno: @progress
+# using CuArrays
 
 # Encode MNIST images as compressed vectors that can later be decoded back into
 # images.
@@ -9,7 +10,8 @@ using Juno: @progress
 imgs = MNIST.images()
 
 # Partition into batches of size 1000
-data = [(float(hcat(vec.(imgs[i])...)),) for i in partition(1:60_000, 1000)]
+data = [float(hcat(vec.(imgs)...)) for imgs in partition(imgs, 1000)]
+data = gpu.(data)
 
 N = 32 # Size of the encoding
 
@@ -18,20 +20,17 @@ N = 32 # Size of the encoding
 # In this case, the input dimension is 28^2 and the output dimension of
 # encoder is 32. This implies that the coding is a compressed representation.
 # We can make lossy compression via this `encoder`.
-encoder = Dense(28^2, N, relu)
-decoder = Dense(N, 28^2, relu)
+encoder = Dense(28^2, N, relu) |> gpu
+decoder = Dense(N, 28^2, relu) |> gpu
 
 m = Chain(encoder, decoder)
 
 loss(x) = mse(m(x), x)
 
-evalcb = throttle(() -> @show(loss(data[1][1])), 5)
+evalcb = throttle(() -> @show(loss(data[1])), 5)
 opt = ADAM(params(m))
 
-@progress for i = 1:10
-  info("Epoch $i")
-  Flux.train!(loss, data, opt, cb = evalcb)
-end
+@epochs 10 Flux.train!(loss, zip(data), opt, cb = evalcb)
 
 # Sample output
 
@@ -43,7 +42,7 @@ function sample()
   # 20 random digits
   before = [imgs[i] for i in rand(1:length(imgs), 20)]
   # Before and after images
-  after = img.(map(x -> m(float(vec(x))).data, before))
+  after = img.(map(x -> cpu(m)(float(vec(x))).data, before))
   # Stack them all together
   hcat(vcat.(before, after)...)
 end
