@@ -10,13 +10,21 @@ end
 
 file(x) = joinpath(@__DIR__, "..", x)
 
+models = [
+  ("MNIST MLP","mnist/mlp.jl"),
+  ("MNIST Conv","mnist/conv.jl")]
+
 info("Testing CPU models")
-info("MNIST MLP")
-include(file("mnist/mlp.jl"))
+for (name, p) in models
+  info(name)
+  include(file(p))
+end
 
 if Base.find_in_path("CuArrays") != nothing
   using CuArrays
   info("Testing GPU models")
-  info("MNIST MLP")
-  include(file("mnist/mlp.jl"))
+  for (name, p) in models
+    info(name)
+    include(file(p))
+  end
 end
