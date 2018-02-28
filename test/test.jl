@@ -20,6 +20,8 @@ for (name, p) in models
   info(name)
   include(file(p))
 end
+info("MNIST VAE")
+info("mnist/vae.jl")
 
 if Base.find_in_path("CuArrays") != nothing
   using CuArrays
