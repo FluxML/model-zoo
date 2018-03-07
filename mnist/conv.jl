@@ -17,10 +17,10 @@ tX = cat(4, float.(MNIST.images(:test)[1:1000])...)
 tY = onehotbatch(MNIST.labels(:test)[1:1000], 0:9)
 
 m = Chain(
-  Conv2D((2,2), 1=>16, relu),
-  x -> maxpool2d(x, 2),
-  Conv2D((2,2), 16=>8, relu),
-  x -> maxpool2d(x, 2),
+  Conv((2,2), 1=>16, relu),
+  x -> maxpool(x, (2, 2)),
+  Conv((2,2), 16=>8, relu),
+  x -> maxpool(x, (2, 2)),
   x -> reshape(x, :, size(x, 4)),
   Dense(288, 10), softmax)
 
