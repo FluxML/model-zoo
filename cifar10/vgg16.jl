@@ -39,7 +39,7 @@ conv5_3 = Conv((3,3), 512=>512, relu, pad=(1,1), stride=(1,1))
 # Building the model
 
 m = Chain(
-	conv1_1,
+    conv1_1,
     conv1_2,
     x -> maxpool(x, (2,2)),
     conv2_1,
