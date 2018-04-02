@@ -1,6 +1,7 @@
 using Flux, Flux.Data.MNIST
 using Flux: onehotbatch, argmax, crossentropy, throttle
 using Base.Iterators: repeated, partition
+# using CuArrays
 
 # Classify MNIST digits with a convolutional network
 
@@ -12,17 +13,19 @@ labels = onehotbatch(MNIST.labels(), 0:9)
 train = [(cat(4, float.(imgs[i])...), labels[:,i])
          for i in partition(1:60_000, 1000)]
 
+train = gpu.(train)
+
 # Prepare test set (first 1,000 images)
-tX = cat(4, float.(MNIST.images(:test)[1:1000])...)
-tY = onehotbatch(MNIST.labels(:test)[1:1000], 0:9)
+tX = cat(4, float.(MNIST.images(:test)[1:1000])...) |> gpu
+tY = onehotbatch(MNIST.labels(:test)[1:1000], 0:9) |> gpu
 
 m = Chain(
-  Conv2D((2,2), 1=>16, relu),
-  x -> maxpool2d(x, 2),
-  Conv2D((2,2), 16=>8, relu),
-  x -> maxpool2d(x, 2),
+  Conv((2,2), 1=>16, relu),
+  x -> maxpool(x, (2,2)),
+  Conv((2,2), 16=>8, relu),
+  x -> maxpool(x, (2,2)),
   x -> reshape(x, :, size(x, 4)),
-  Dense(288, 10), softmax)
+  Dense(288, 10), softmax) |> gpu
 
 m(train[1][1])
 

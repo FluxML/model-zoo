@@ -10,7 +10,7 @@ logpdf(b::Bernoulli, y::Bool) = y * log(b.p + eps()) + (1 - y) * log(1 - b.p + e
 # Load data, binarise it, and partition into mini-batches of M.
 X = float.(hcat(vec.(MNIST.images())...)) .> 0.5
 N, M = size(X, 2), 100
-data = [(X[:,i],) for i in Iterators.partition(1:N,M)]
+data = [X[:,i] for i in Iterators.partition(1:N,M)]
 
 
 ################################# Define Model #################################
@@ -50,7 +50,7 @@ evalcb = throttle(() -> @show(-L̄(X[:, rand(1:N, M)])), 30)
 opt = ADAM(params(A, μ, logσ, f))
 @progress for i = 1:20
   info("Epoch $i")
-  Flux.train!(loss, data, opt, cb=evalcb)
+  Flux.train!(loss, zip(data), opt, cb=evalcb)
 end
 
 
