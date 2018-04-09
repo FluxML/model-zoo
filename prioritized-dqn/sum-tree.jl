@@ -32,9 +32,6 @@ function update!(tree::SumTree, tree_idx::Int, p)
     while tree_idx != 0    # this method is faster than the recursive loop in the reference code
         tree_idx = div(tree_idx - 1, 2)
         tree.tree[tree_idx + 1] += change
-        if(tree.tree[tree_idx + 1] < 0)
-            println(tree.tree[tree_idx + 1])
-        end
     end
 end
 
