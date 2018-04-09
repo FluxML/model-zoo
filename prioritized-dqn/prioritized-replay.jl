@@ -26,7 +26,7 @@ BATCH_SIZE = 32
 ϵ_incr = 0.00005
 η = 0.005   #learning rate
 
-replace_target_iter = 50
+replace_target_iter = 500
 learn_step_counter = 0
 steps = 0
 
@@ -39,7 +39,7 @@ target_model = Chain(Dense(STATE_SIZE, 24, σ), Dense(24, 24, σ), Dense(24, ACT
 #Loss
 function loss(x, y, ISWeights)
     sq_diff = (x - y) .^ 2
-    cost = sum(sum(sq_diff, 1) .* ISWeights)
+    cost = mean(sq_diff * ISWeights')
     return cost
 end
 
