@@ -7,6 +7,7 @@ mutable struct SumTree
     function SumTree(cap::Int, state_size::Int)
         capacity = cap
         tree = zeros(2 * capacity - 1)
+        #Stores state, action, reward, next_state
         data = zeros(2 * state_size + 2, capacity)
         data_pointer = 0
         new(capacity, tree, data, data_pointer)
@@ -15,7 +16,7 @@ end
 
 function add!(tree::SumTree, p, data)
     tree_idx = tree.data_pointer + tree.capacity - 1
-    tree.data[tree.data_pointer + 1] = data
+    tree.data[:, tree.data_pointer + 1] = data
     update!(tree, tree_idx, p)  # update tree_frame
 
     tree.data_pointer += 1
@@ -29,8 +30,11 @@ function update!(tree::SumTree, tree_idx::Int, p)
     tree.tree[tree_idx + 1] = p
     # then propagate the change through tree
     while tree_idx != 0    # this method is faster than the recursive loop in the reference code
-        tree_idx = div(tree_idx, 2)
+        tree_idx = div(tree_idx - 1, 2)
         tree.tree[tree_idx + 1] += change
+        if(tree.tree[tree_idx + 1] < 0)
+            println(tree.tree[tree_idx + 1])
+        end
     end
 end
 
@@ -52,7 +56,7 @@ function get_leaf(tree::SumTree, v)
     end
 
     data_idx = leaf_idx - tree.capacity + 1
-    return leaf_idx, tree.tree[leaf_idx + 1], tree.data[data_idx + 1]
+    return leaf_idx, tree.tree[leaf_idx + 1], tree.data[:, data_idx + 1]
 end
 
 function total_p(tree::SumTree)

@@ -31,7 +31,7 @@ end
 
 function mem_sample(mem::Memory, n)
     b_idx = Array{Int32, 1}(n)
-    b_memory = Array{Float32, 2}(length(mem.tree.data[1]), n)
+    b_memory = Array{Float32, 2}(length(mem.tree.data[:, 1]), n)
     ISWeights = Array{Float64, 2}(1, n)
 
     pri_seg = total_p(mem.tree) / n       # priority segment

@@ -5,6 +5,7 @@ using Reinforce.CartPole
 import Reinforce.action
 using Flux, StatsBase, Plots
 using Flux: params
+
 gr()
 
 #Define custom policy for choosing action
@@ -23,7 +24,7 @@ BATCH_SIZE = 32
 ϵ = 0.  # exploration rate
 ϵ_max = 0.95
 ϵ_incr = 0.00005
-η = 0.001   #learning rate
+η = 0.005   #learning rate
 
 replace_target_iter = 50
 learn_step_counter = 0
@@ -46,16 +47,10 @@ end
 abs_errors(x, y) = sum(abs.(x - y), 1)
 
 #Optimizer
-opt = ADAM(params(model), η)
+opt = Flux.RMSProp(params(model), η)
 
 function replace_target_op()
-    #for i = 1:length(params(target_model))
-    #    for j = 1:prod(size(params(target_model)[i].data))
-    #        params(target_model)[i].data[j] = params(model)[i].data[j]
-    #        params(target_model)[i].grad[j] = params(model)[i].grad[j]
-    #    end
-    #end
-    copy!(target_model, model)
+    target_model = deepcopy(model)
 end
 
 function remember(state, action, reward, next_state, done)
@@ -66,7 +61,7 @@ end
 function action(policy::CartPolePolicy, reward, state, action)
     if rand() <= ϵ
         act_values = model(state)
-        return Flux.argmax(act_values)  # returns action
+        return Flux.argmax(act_values)[1]  # returns action
     end
     return rand(1:ACTION_SIZE)
 end
@@ -80,7 +75,7 @@ function learn()
         replace_target_op()
     end
 
-    (tree_idx, batch_memory, ISWeights) = mem_sample(memory, BATCH_SIZE)
+    tree_idx, batch_memory, ISWeights = mem_sample(memory, BATCH_SIZE)
 
     s_ = batch_memory[end - STATE_SIZE + 1:end, :]
     s = batch_memory[1:STATE_SIZE, :]
@@ -101,7 +96,7 @@ function learn()
 
     abs_error = abs_errors(q_curr, q_target).data
     batch_update!(memory, tree_idx, abs_error)     # update priority
-    ϵ =  ϵ < ϵ_max ? ϵ + ϵ_incr : ϵ_max
+    ϵ +=  ϵ < ϵ_max ? ϵ_incr : 0.
     learn_step_counter += 1
 end
 
@@ -110,22 +105,20 @@ function episode!(env, policy = RandomPolicy(); stepfunc = on_step, kw...)
     global steps
 
     for (s, a, r, s_) in ep
-        gui(plot(ep.env))
+        on_step(ep.env)
         state, action, reward, next_state = s, a, r, s_
 
-        #state = [state.position, state.velocity]
         state = reshape(state, STATE_SIZE, 1)
 
-        #next_state = [next_state.position, next_state.velocity]
         next_state = reshape(next_state, STATE_SIZE, 1)
 
         done = finished(ep.env, next_state) #check if game is over
         reward = done ? -10 : reward
         remember(state, action, reward, next_state, done)
         steps += 1
-        if steps > MEM_SIZE
-            learn()
-        end
+        #if steps > MEM_SIZE
+        learn()
+        #end
     end
     ep.total_reward
 end
