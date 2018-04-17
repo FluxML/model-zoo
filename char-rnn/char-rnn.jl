@@ -1,4 +1,6 @@
-using CuArrays
+# uncomment to run on gpu, if available
+#using CuArrays
+
 using Flux
 using Flux: onehot, argmax, chunk, batchseq, throttle, logitcrossentropy
 using StatsBase: wsample
