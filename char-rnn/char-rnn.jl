@@ -1,5 +1,6 @@
+using CuArrays
 using Flux
-using Flux: onehot, argmax, chunk, batchseq, throttle, crossentropy
+using Flux: onehot, argmax, chunk, batchseq, throttle, logitcrossentropy
 using StatsBase: wsample
 using Base.Iterators: partition
 
@@ -24,22 +25,25 @@ Ys = collect(partition(batchseq(chunk(text[2:end], nbatch), stop), seqlen))
 m = Chain(
   LSTM(N, 128),
   LSTM(128, 128),
-  Dense(128, N),
-  softmax)
+  Dense(128, N))
+
+m = gpu(m)
 
 function loss(xs, ys)
-  l = sum(crossentropy.(m.(xs), ys))
+  l = sum(logitcrossentropy.(m.(gpu.(xs)), gpu.(ys)))
   Flux.truncate!(m)
   return l
 end
 
 opt = ADAM(params(m), 0.01)
-evalcb = () -> @show loss(Xs[5], Ys[5])
+tx, ty = (gpu.(Xs[5]), gpu.(Ys[5]))
+evalcb = () -> @show loss(tx, ty)
 
 Flux.train!(loss, zip(Xs, Ys), opt,
             cb = throttle(evalcb, 30))
 
 # Sampling
+m = cpu(m)
 
 function sample(m, alphabet, len; temp = 1)
   Flux.reset!(m)
@@ -47,7 +51,7 @@ function sample(m, alphabet, len; temp = 1)
   c = rand(alphabet)
   for i = 1:len
     write(buf, c)
-    c = wsample(alphabet, m(onehot(c, alphabet)).data)
+    c = wsample(alphabet, softmax(m(onehot(c, alphabet)).data))
   end
   return String(take!(buf))
 end
