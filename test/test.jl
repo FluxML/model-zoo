@@ -20,6 +20,7 @@ for (name, p) in models
   info(name)
   include(file(p))
 end
+# No GPU support
 info("MNIST VAE")
 info("mnist/vae.jl")
 
