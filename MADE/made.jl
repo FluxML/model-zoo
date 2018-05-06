@@ -1,20 +1,22 @@
 #=
 Implements Masked AutoEncoder for Density Estimation, by Germain et al. 2015
 Re-implementation by Andrej Karpathy based on https://arxiv.org/abs/1502.03509
-Re-Re-implementation by Tejan Karmali using Flux.jl
+Re-Re-implementation by Tejan Karmali using Flux.jl ;)
 =#
 
 using Flux
-using Flux: glorot_uniform, back!
+using Flux: glorot_uniform, @epochs
+using NPZ
 
 # ------------------------------------------------------------------------------
 
 add_dims_r(a) = reshape(a, size(a)..., 1)
 add_dims_l(a) = reshape(a, 1, size(a)...)
 
+# ------------------------------------------------------------------------------
+
 struct MaskedDense{F,S,T,M}
   # same as Linear except has a configurable mask on the weights
-
   W::S
   b::T
   mask::M
@@ -25,28 +27,19 @@ function MaskedDense(in::Integer, out::Integer; σ = identity)
   return MaskedDense(param(glorot_uniform(out, in)), param(zeros(out)), ones(out, in), σ)
 end
 
+Flux.treelike(MaskedDense)
+
 function (a::MaskedDense)(x)
-  W, b, mask, σ = a.W, a.b, a.mask, a.σ
-  σ.(mask .* W * x .+ b)
+  a.σ.(a.mask .* a.W * x .+ a.b)
 end
 
 function set_mask(a::MaskedDense, mask)
   a.mask = mask
 end
 
-mutable struct MADE
-  #=
-    nin: integer; number of inputs
-    hidden sizes: a list of integers; number of units in hidden layers
-    nout: integer; number of outputs, which usually collectively parameterize some kind of 1D distribution
-          note: if nout is e.g. 2x larger than nin (perhaps the mean and std), then the first nin
-          will be all the means and the second nin will be stds. i.e. output dimensions depend on the
-          same input dimensions in "chunks" and should be carefully decoded downstream appropriately.
-          the output of running the tests for this file makes this a bit more clear with examples.
-    num_masks: can be used to train ensemble over orderings/connections
-    natural_ordering: force natural ordering of dimensions, don't use random permutations
-  =#
+# ------------------------------------------------------------------------------
 
+mutable struct MADE
   nin::Integer
   nout::Integer
   hidden_sizes::Array{Integer, 1}
@@ -61,12 +54,12 @@ mutable struct MADE
 
   function MADE(in::Integer, hs, out::Integer, nat_ord::Bool, num_masks = 1)
     # define a simple MLP neural net
-    hs = push!([in], hs..., out)
-    layers = [MaskedDense(hs[i], hs[i + 1]; σ = relu) for i = 1:length(hs) - 2]
+    hs = push!([in], hs...)
+    layers = [MaskedDense(hs[i], hs[i + 1]; σ = relu) for i = 1:length(hs) - 1]
 
-    net = Chain(layers..., MaskedDense(hs[end-1], hs[end]))
+    net = Chain(layers..., MaskedDense(hs[end], out))
 
-    new(in, out, hs[2:end-1], net, nat_ord, 1, 0, Dict())
+    new(in, out, hs[2:end], net, nat_ord, 1, 0, Dict())
   end
 end
 
@@ -107,47 +100,41 @@ end
 function (made::MADE)(x)
   made.net(x)
 end
+
 # ------------------------------------------------------------------------------
 
-#Main
+#Getting data. The data used here is binarized MNIST dataset
 
-# run a quick and dirty test for the autoregressive property
-D = 10
-rng = MersenneTwister(14)
-x = convert.(Float32, rand(rng, D, 1) .> 0.5)
-configs = [
-  (D, [], D, false),                 # test various hidden sizes
-  (D, [200], D, false),
-  (D, [200, 220], D, false),
-  (D, [200, 220, 230], D, false),
-  (D, [200, 220], D, true),          # natural ordering test
-  (D, [200, 220], 2 * D, true),      # test nout > nin
-  (D, [200, 220], 3 * D, false)      # test nout > nin
-  ]
+X = npzread("/path/to/your/data.npy")
+X = X'
 
-for (nin, hiddens, nout, natural_ordering) in configs
-  println("checking nin $nin, hiddens $hiddens, nout $nout, natural $natural_ordering")
-  model = MADE(nin, hiddens, nout, natural_ordering)
-  update_masks(model)
-  # run backpropagation for each dimension to compute what other
-  # dimensions it depends on.
-  res = []
-  for k = 1:nout
-    xtr = param(x)
-    xtrhat = model(xtr)
-    loss = xtrhat[k, 1]
-    back!(loss)
+B = 100 #batch size
+N = size(X)[2] #Number of images
 
-    depends = xtr.grad[1] .!= 0
-    depends_ix = find(depends)
-    isok = k % nin + 1 ∉ depends_ix
-    push!(res, (length(depends_ix), k, depends_ix, isok))
-  end
+model = MADE(size(X)[1], [500], size(X)[1], false, 1)
+loss(x) = Flux.mse(model(x), x) / B
+opt = ADAM(params(model.net))
 
-  # pretty print the dependencies
-  sort!(res, by = x -> x[2])
-  for (nl, k, ix, isok) in res
-    print("output $k depends on inputs: $ix : ")
-    println(isok ? "OK" : "NOTOK")
-  end
+#dividing data into batches
+data = [X[:, i:i + B - 1] for i = 1:B:N if i <= N - B + 1]
+
+@epochs 10 Flux.train!(loss, zip(data), opt, cb = ()->update_masks(model))
+
+# Sample output
+
+using Images
+
+img(x::Vector) = Gray.(reshape(clamp.(x, 0, 1), 28, 28))'
+
+function sample()
+  # 20 random digits
+  before = [X[:, i] for i in rand(1:N, 20)]
+  # Before and after images
+  after = img.(map(x -> cpu(m)(float(vec(x))).data, before))
+  # Stack them all together
+  hcat(vcat.(img.(before), after)...)
 end
+
+cd(@__DIR__)
+
+save("sample.png", sample())
