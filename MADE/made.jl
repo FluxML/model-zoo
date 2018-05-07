@@ -33,16 +33,12 @@ function (a::MaskedDense)(x)
   a.σ.(a.mask .* a.W * x .+ a.b)
 end
 
-function set_mask(a::MaskedDense, mask)
-  a.mask = mask
-end
-
 # ------------------------------------------------------------------------------
 
 mutable struct MADE
-  nin::Integer
-  nout::Integer
-  hidden_sizes::Array{Integer, 1}
+  nin::Int
+  nout::Int
+  hidden_sizes::Vector{Int}
   net::Chain
 
   # seeds for orders/connectivities of the model ensemble
@@ -50,7 +46,7 @@ mutable struct MADE
   num_masks
   seed::UInt  # for cycling through num_masks orderings
 
-  m::Dict
+  m::Dict{Int, Vector{Int}}
 
   function MADE(in::Integer, hs, out::Integer, nat_ord::Bool, num_masks = 1)
     # define a simple MLP neural net
@@ -59,7 +55,7 @@ mutable struct MADE
 
     net = Chain(layers..., MaskedDense(hs[end], out))
 
-    new(in, out, hs[2:end], net, nat_ord, 1, 0, Dict())
+    new(in, out, hs[2:end], net, nat_ord, 1, 0, Dict{Int, Vector{Int}}())
   end
 end
 
@@ -74,7 +70,7 @@ function update_masks(made::MADE)
   rng = MersenneTwister(made.seed)
   made.seed = (made.seed + 1) % made.num_masks
 
-  # sample the order of the inpdimensionsuts and the connectivity of all neurons
+  # sample the order of the inputs and the connectivity of all neurons
   made.m[0] = made.natural_ordering ? collect(1:made.nin) : randperm(rng, made.nin)
   for l = 1:L
     made.m[l] = rand(rng, minimum(made.m[l - 1]):made.nin - 2, made.hidden_sizes[l])
@@ -93,7 +89,7 @@ function update_masks(made::MADE)
 
   # set the masks in all MaskedLinear layers
   for (l, m) in zip(made.net, masks)
-    typeof(m) == MaskedDense ? set_mask(l, m) : continue
+    typeof(m) == MaskedDense ? l.mask = m : continue
   end
 end
 
@@ -105,8 +101,8 @@ end
 
 #Getting data. The data used here is binarized MNIST dataset
 
-X = npzread("/path/to/your/data.npy")
-X = X'
+X = npzread("/home/tejank10/Downloads/binarized_MNIST/train_data.npy")
+X = permutedims(X, [2, 1])
 
 B = 100 #batch size
 N = size(X)[2] #Number of images
