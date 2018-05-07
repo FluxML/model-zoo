@@ -129,7 +129,7 @@ function sample()
   after = img.(map(x -> cpu(model)(float(vec(x))).data, before))
   # Stack them all together
   hcat(vcat.(img.(before), after)...)
- end
+end
 
 cd(@__DIR__)
 
