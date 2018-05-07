@@ -10,12 +10,13 @@ Flux.treelike(ResidualBlock)
 
 # ResidualBlock Function allows us to define a Residual Block having any number of Convolution and Batch Normalization Layers
 function ResidualBlock(filters, kernels::Array{Tuple{Int,Int}}, pads::Array{Tuple{Int,Int}}, strides::Array{Tuple{Int,Int}}, shortcut = identity)
-    block = ResidualBlock([],[],shortcut)
+    local conv_layers = []
+    local norm_layers = []
     for i in 2:length(filters)
-        push!(block.conv_layers, Conv(kernels[i-1], filters[i-1]=>filters[i], pad = pads[i-1], stride = strides[i-1]))
-        push!(block.norm_layers, BatchNorm(filters[i]))
+        push!(conv_layers, Conv(kernels[i-1], filters[i-1]=>filters[i], pad = pads[i-1], stride = strides[i-1]))
+        push!(norm_layers, BatchNorm(filters[i]))
     end
-    block
+    ResidualBlock(Tuple(conv_layers),Tuple(norm_layers),shortcut)
 end
 
 # Function converts the Array of scalar kernel, pad and stride values to tuples
