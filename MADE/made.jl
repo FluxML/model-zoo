@@ -5,7 +5,7 @@ Re-Re-implementation by Tejan Karmali using Flux.jl ;)
 =#
 
 using Flux
-using Flux: glorot_uniform, @epochs
+using Flux: glorot_uniform, @epochs, binarycrossentropy
 using NPZ
 
 # ------------------------------------------------------------------------------
@@ -101,14 +101,14 @@ end
 
 #Getting data. The data used here is binarized MNIST dataset
 
-X = npzread("/home/tejank10/Downloads/binarized_MNIST/train_data.npy")
+X = npzread("/path/to/your/data.npy")
 X = permutedims(X, [2, 1])
 
 B = 100 #batch size
 N = size(X)[2] #Number of images
 
 model = MADE(size(X)[1], [500], size(X)[1], false, 1)
-loss(x) = Flux.mse(model(x), x) / B
+loss(x) = sum(binarycrossentropy.(σ.(model(x)), x)) / B
 opt = ADAM(params(model.net))
 
 #dividing data into batches
@@ -126,10 +126,10 @@ function sample()
   # 20 random digits
   before = [X[:, i] for i in rand(1:N, 20)]
   # Before and after images
-  after = img.(map(x -> cpu(m)(float(vec(x))).data, before))
+  after = img.(map(x -> cpu(model)(float(vec(x))).data, before))
   # Stack them all together
   hcat(vcat.(img.(before), after)...)
-end
+ end
 
 cd(@__DIR__)
 
