@@ -8,8 +8,7 @@ y_dim = 256
 net_size = 15
 net_depth = 12
 
-# weight initialisers
-init_wC = (dims...)->rand(Cauchy(0, 0.8), dims...)
+# weight initialiser
 init_wN = (dims...)->rand(Normal(0, 0.8), dims...)
 
 layers = []
@@ -35,6 +34,7 @@ end
 
 function showImg(z)
     imgg = Gray.(reshape(getImage(z), y_dim, x_dim))
+    save("sample.png", imgg)
     imgg
 end
 
