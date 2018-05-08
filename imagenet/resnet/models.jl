@@ -1,4 +1,4 @@
-include("residualblock.jl")
+include("../layers/residualblock.jl")
 include("standardresnet.jl")
 
 # Standard ResNet models for Imagenet as described in the Paper "Deep Residual Learning for Image Recognition"

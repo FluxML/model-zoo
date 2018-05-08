@@ -29,5 +29,5 @@ function (block::ResidualBlock)(input)
     for i in 1:length(block.conv_layers)-1
         value = relu.((block.norm_layers[i])((block.conv_layers[i])(value)))
     end
-    relu.(((block.norm_layers[end])((block.conv_layers[end])(value))) + block.shortcut(input))
+    relu.(((block.norm_layers[end])((block.conv_layers[end])(value)))  block.shortcut(input))
 end

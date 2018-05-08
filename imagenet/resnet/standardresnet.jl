@@ -1,4 +1,4 @@
-include("residualblock.jl")
+include("../layers/residualblock.jl")
 
 # Function to generate the residual blocks for ResNet18 and ResNet34
 function BasicBlock(filters::Int, downsample::Bool = false, res_top::Bool = false)
