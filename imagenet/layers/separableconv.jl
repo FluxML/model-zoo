@@ -38,7 +38,7 @@ end
 Flux.treelike(SeperableConv)
 
 function SeparableConv(k::NTuple{N,Integer}, chs::Pair{<:Integer,<:Integer}, depth_mul::Int = 1; stride::NTuple{N,Integer} = map(_->1,k), pad::NTuple{N,Integer} = map(_->0,k)) where N
-    SeperableConv(DepthwiseConv(k, chs[1], depth_mul, stride = stride, pad = pad), PointwiseConv(chs[1]*depth_mul=>chs[2]))
+    SeparableConv(DepthwiseConv(k, chs[1], depth_mul, stride = stride, pad = pad), PointwiseConv(chs[1]*depth_mul=>chs[2]))
 end
 
 function (c::SeparableConv)(x)
