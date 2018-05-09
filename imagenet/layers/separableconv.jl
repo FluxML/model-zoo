@@ -30,15 +30,15 @@ end
 
 PointwiseConv(chs, σ = relu) = Conv((1,1), chs, σ)
 
-struct SeperableConv
+struct SeparableConv
     depth
     point
 end
 
-function SeperableConv(k::NTuple{N,Integer}, chs::Pair{<:Integer,<:Integer}, depth_mul::Int = 1; stride::NTuple{N,Integer} = map(_->1,k), pad::NTuple{N,Integer} = map(_->0,k)) where N
+function SeparableConv(k::NTuple{N,Integer}, chs::Pair{<:Integer,<:Integer}, depth_mul::Int = 1; stride::NTuple{N,Integer} = map(_->1,k), pad::NTuple{N,Integer} = map(_->0,k)) where N
     SeperableConv(DepthwiseConv(k, chs[1], depth_mul, stride = stride, pad = pad), PointwiseConv(chs[1]*depth_mul=>chs[2]))
 end
 
-function (c::SeperableConv)(x)
+function (c::SeparableConv)(x)
     c.point(c.depth(x))
 end
