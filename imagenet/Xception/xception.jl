@@ -1,4 +1,3 @@
-include("../layers/resnetblock.jl")
 include("../layers/separableconv.jl")
 
 struct ResnetSeparableConv
