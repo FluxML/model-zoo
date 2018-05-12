@@ -35,7 +35,7 @@ struct SeparableConv
     point
 end
 
-Flux.treelike(SeperableConv)
+Flux.treelike(SeparableConv)
 
 function SeparableConv(k::NTuple{N,Integer}, chs::Pair{<:Integer,<:Integer}, depth_mul::Int = 1; stride::NTuple{N,Integer} = map(_->1,k), pad::NTuple{N,Integer} = map(_->0,k)) where N
     SeparableConv(DepthwiseConv(k, chs[1], depth_mul, stride = stride, pad = pad), PointwiseConv(chs[1]*depth_mul=>chs[2]))
