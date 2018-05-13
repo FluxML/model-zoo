@@ -18,9 +18,7 @@ STATE_SIZE = length(env.state)
 ACTION_SIZE = length(actions(env, env.state))
 η = 5e-3   #learning rate
 
-N_STEP_RETURN = 8
 γ = 0.99
-γᴺ = γ ^ N_STEP_RETURN
 
 ϵ_START = 0.4  # exploration rate
 ϵ_STOP = 0.15
@@ -30,7 +28,6 @@ cᵥ = 0.5			# v loss coefficient
 cₑ = 0.01 # entropy coefficient
 
 memory = []
-MEM_SIZE = 2000
 
 frames = 0
 
@@ -67,9 +64,9 @@ function loss(x)
   π = softmax(policy(base_out))
 
   v′ = value(base(s′))
-  rₜ = r + γᴺ .* v′ .* s_mask	# set v to 0 where s_ is terminal state
+  rₜ = r + γ .* v′ .* s_mask	# set v to 0 where s_ is terminal state
 
-  return mean(loss_π(π, v, a, rₜ) + lossᵥ(v, rₜ) + entropy(π))
+  mean(loss_π(π, v, a, rₜ) + lossᵥ(v, rₜ) + entropy(π))
 end
 
 # --------------------------- Training ----------------------------------------
@@ -94,9 +91,6 @@ end
 
 # stores the tuple of state, action, reward, next_state, and done
 function remember(state, action, reward, next_state, done)
-  if length(memory) == MEM_SIZE
-    deleteat!(memory, 1)
-  end
   push!(memory, [state, action, reward, next_state, done])
 end
 
@@ -122,16 +116,19 @@ function episode!(env, p = RandomPolicy(); stepfunc = on_step, kw...)
         stepfunc(ep.env, ep.niter, sars)
         state, action, reward, next_state = sars
         done = finished(ep.env, next_state) #check if game is over
-        reward = !done ? reward : -1 #Penalty of -1 if game is over
+        reward = !done ? reward : -10 #Penalty of -10 if game is over
         remember(state, action, reward, next_state, done)
-        frames += 1
+        frames += frames == 75000 ? 0 : 1
     end
     ep.total_reward
 end
 
-for e=1:EPISODES
+e = 1
+while true
     reset!(env)
     total_reward = episode!(env, CartPolePolicy())
-    println("Episode: $e/$EPISODES | Score: $total_reward | ϵ: $(get_ϵ())")
+    println("Episode: $e | Score: $total_reward | ϵ: $(get_ϵ())")
     train()
+    e += 1
+    memory = []
 end
