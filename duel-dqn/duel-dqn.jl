@@ -16,7 +16,7 @@ mutable struct PongPolicy <: Reinforce.AbstractPolicy
 end
 
 # ---------------------------- Parameters --------------------------------------
-EPISODES = 10000
+EPISODES = 1000
 STATE_SIZE = 80 * 80 # after preprocessing
 ACTION_SPACE = 2 # considering only up and down
 MEM_SIZE = 10000 # Size of replay buffer
@@ -24,9 +24,9 @@ BATCH_SIZE = 32 # Size of batch for replay
 γ = 0.95    # discount rate
 ϵ_START = 1.0  # exploration
 ϵ_STOP = 0.05
-ϵ_STEPS = 100000
+ϵ_STEPS = 10000
 η = 2.5e-4   #learning rate
-N_TARGET = 1000 # Update target model every N_TARGET steps
+N_TARGET = 200 # Update target model every N_TARGET steps
 
 timesteps = 0
 frames = 0
@@ -43,11 +43,11 @@ model = Chain(Dense(STATE_SIZE, 200, relu), x -> Q(x))
 
 model_target = deepcopy(model)
 
-loss(x, y) = Flux.mse(model(x), y)
+huber_loss(x, y) = mean(sqrt.(1 + (model(x) - y) .^ 2) - 1)
 
 opt() = RMSProp(params(model), η)
 
-fit_model(data) = Flux.train!(loss, data, opt)
+fit_model(data) = Flux.train!(huber_loss, data, opt)
 
 # ------------------------------- Helper Functions -----------------------------
 
@@ -115,12 +115,12 @@ function replay()
   end
 end
 
-function episode!(env, π = RandomPolicy(), train = true)
+function episode!(env, π = RandomPolicy())
   ep = Episode(env, π)
 
   for (s, a, r, s′) in ep
     OpenAIGym.render(env)
-    if train remember(π.prev_state, s, a - 1, r, s′, env.done) end
+    if π.train remember(π.prev_state, s, a - 1, r, s′, env.done) end
     π.prev_state = preprocess(s)
   end
 
@@ -128,21 +128,24 @@ function episode!(env, π = RandomPolicy(), train = true)
 end
 
 # ------------------------------ Training --------------------------------------
-for e = 1:EPISODES
+
+e = 1
+while e < EPISODES
   reset!(env)
   total_reward = episode!(env, PongPolicy())
-  println("Episode: $e | Score: $total_reward")
+  println("Episode: $e | Score: $total_reward | ϵ: $(get_ϵ())")
   if length(memory) >= BATCH_SIZE
     replay()
   end
+  e += 1
 end
 
 # -------------------------------- Testing -------------------------------------
-e = 1
+ee = 1
 
 while true
   reset!(env)
-  total_reward = episode!(env, PongPolicy(), false)
-  println("Episode: $e | Score: $total_reward")
-  e += 1
+  total_reward = episode!(env, PongPolicy(false))
+  println("Episode: $ee | Score: $total_reward")
+  ee += 1
 end
