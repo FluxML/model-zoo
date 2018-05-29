@@ -16,6 +16,6 @@ end
 run(`find -type f -name ".*" -delete`)
 
 include("augment.jl")
-# include("load_data.jl")
-# include("resnet.jl")
-# include("train.jl")
+include("load_data.jl")
+include("resnet.jl")
+include("train.jl")
