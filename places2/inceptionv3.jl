@@ -1,6 +1,8 @@
 using Flux
 using Base.Iterators: partition
 using CuArrays
+using Flux: @epochs
+using BSON: @save, @load
 
 struct InceptionBlock
     path_1
@@ -49,6 +51,10 @@ googlenet(num_classes = 365) =
 
 model = googlenet() |> gpu
 
+opt = ADAM(params(model))
+
+info("Model exported to GPU")
+
 model(rand(224, 224, 3, 10) |> gpu)
 
-
+info("Model works on random data")
