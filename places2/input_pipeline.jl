@@ -1,7 +1,7 @@
 using Images
 using Base.Iterators.partition
 
-include("inceptionv3.jl")
+include("googlenet.jl")
 
 read_from_path(img_path) = float.(channelview(load(img_path)))
 

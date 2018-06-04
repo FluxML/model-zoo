@@ -11,14 +11,16 @@ struct InceptionBlock
     path_4
 end
 
+Flux.treelike(InceptionBlock)
+
 ConvBlock(kernel, chs; stride = (1, 1), pad = (0, 0)) = Chain(Conv(kernel, chs, stride = stride, pad = pad),
-							      BatchNorm(chs[2])
+							      BatchNorm(chs[2]),
 							      x -> relu.(x))
 
 function InceptionBlock(in_chs, chs_1x1, chs_3x3_reduce, chs_3x3, chs_5x5_reduce, chs_5x5, pool_proj)
     path_1 = ConvBlock((1, 1), in_chs=>chs_1x1)
     path_2 = Chain(ConvBlock((1, 1), in_chs=>chs_3x3_reduce),
-		   ConvBlock((3, 3), chs_3x3_reduce=>chs_3x3), pad = (1, 1))
+		   ConvBlock((3, 3), chs_3x3_reduce=>chs_3x3, pad = (1, 1)))
     path_3 = Chain(ConvBlock((1, 1), in_chs=>chs_5x5_reduce),
 		   ConvBlock((5, 5), chs_5x5_reduce=>chs_5x5, pad = (1,1)))
     path_4 = Chain(x -> maxpool(x, (3,3), stride = (1, 1), pad = (1, 1)),
@@ -41,9 +43,9 @@ googlenet(num_classes = 365) =
       InceptionBlock(512, 160, 112, 224, 24, 64, 64),
       InceptionBlock(512, 128, 128, 256, 24, 64, 64),
       InceptionBlock(512, 112, 144, 288, 32, 64, 64),
-      InceptionBlock(528, 112, 144, 288, 32, 128, 128)
+      InceptionBlock(528, 112, 144, 288, 32, 128, 128),
       x -> maxpool(x, (3, 3), stride = (2, 2), pad = (1, 1)),
-      InceptionBlock(832, 256, 160, 320, 32, 128, 128),
+      InceptionBlock(656, 256, 160, 320, 32, 128, 128),
       InceptionBlock(832, 384, 192, 384, 48, 128, 128),
       x -> meanpool(x, (7, 7), stride = (1, 1), pad = (0, 0)),
       x -> reshape(x, :, size(x, 4)),
@@ -55,6 +57,6 @@ opt = ADAM(params(model))
 
 info("Model exported to GPU")
 
-model(rand(224, 224, 3, 10) |> gpu)
+model(rand(224, 224, 3, 1) |> gpu)
 
 info("Model works on random data")
