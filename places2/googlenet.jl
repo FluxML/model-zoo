@@ -22,7 +22,7 @@ function InceptionBlock(in_chs, chs_1x1, chs_3x3_reduce, chs_3x3, chs_5x5_reduce
     path_2 = Chain(ConvBlock((1, 1), in_chs=>chs_3x3_reduce),
 		   ConvBlock((3, 3), chs_3x3_reduce=>chs_3x3, pad = (1, 1)))
     path_3 = Chain(ConvBlock((1, 1), in_chs=>chs_5x5_reduce),
-		   ConvBlock((5, 5), chs_5x5_reduce=>chs_5x5, pad = (1,1)))
+		   ConvBlock((5, 5), chs_5x5_reduce=>chs_5x5, pad = (2, 2)))
     path_4 = Chain(x -> maxpool(x, (3,3), stride = (1, 1), pad = (1, 1)),
 		   ConvBlock((1, 1), in_chs=>pool_proj))
     InceptionBlock(path_1, path_2, path_3, path_4)
