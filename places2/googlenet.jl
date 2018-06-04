@@ -1,7 +1,7 @@
 using Flux
 using Base.Iterators: partition
 using CuArrays
-using Flux: @epochs
+using Flux: @epochs, argmax
 using BSON: @save, @load
 
 struct InceptionBlock
