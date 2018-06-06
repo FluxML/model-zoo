@@ -1,6 +1,8 @@
 using Flux
 using CuArrays
-using Flux: onehotbatch, argmax
+using Flux: onehotbatch, argmax, @epochs
+using Base.Iterators: partition
+using BSON: @save, @load
 
 function ConvBlock(kernel, chs; stride = (1, 1), pad = (0, 0)) =
     Chain(Conv(kernel, chs, stride = stride, pad = pad),

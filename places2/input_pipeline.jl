@@ -1,5 +1,4 @@
 using Images
-using Base.Iterators.partition
 
 include("googlenet.jl")
 
