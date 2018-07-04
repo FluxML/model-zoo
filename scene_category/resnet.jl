@@ -51,14 +51,6 @@ function Bottleneck(filters::Int, downsample::Bool = false, res_top::Bool = fals
     end
 end
 
-struct StandardResnet
-    top
-    residual
-    bottom
-end
-
-Flux.treelike(StandardResnet)
-
 # Function to build Standard Resnet models as described in the paper "Deep Residual Learning for Image Recognition"
 function StandardResnet(Block, layers, initial_filters::Int = 64, nclasses::Int = 160)
 
@@ -86,11 +78,7 @@ function StandardResnet(Block, layers, initial_filters::Int = 64, nclasses::Int 
     end
     push!(bottom, softmax)
 
-    StandardResnet(Chain(top...), Chain(residual...), Chain(bottom...))
-end
-
-function (model::StandardResnet)(input)
-    model.bottom(model.residual(model.top(input)))
+    Chain(top..., residual..., bottom...)
 end
 
 function ResNet(depth)
