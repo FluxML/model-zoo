@@ -113,14 +113,14 @@ opt = ADAM(Flux.params(model.net))
 
 #dividing data into batches
 data = [float(hcat(vec.(imgs)...)) for imgs in partition(imgs, 1000)]
-data = gpu.(data)
-@epochs 1 Flux.train!(loss, zip(data), opt, cb = ()->update_masks(model))
+#data = gpu.(data)
+@epochs 10 Flux.train!(loss, zip(data), opt, cb = ()->update_masks(model))
 
 # Sample output
 
 using Images
 
-img(x::Vector) = Gray.(reshape(clamp.(x, 0, 1), 28, 28))'
+img(x::Vector) = Gray.(reshape(clamp.(x, 0, 1), 28, 28))
 
 function sample()
   # 20 random digits
