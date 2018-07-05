@@ -87,7 +87,7 @@ function learn()
     reward = batch_memory[STATE_SIZE + 2, :]
 
     for i = 1:BATCH_SIZE
-        q_target[eval_act_index[i], i] = reward[i] + γ * maximum(q_next[:, i])
+        q_target[eval_act_index[i], i] = reward[i] + γ * maximum(q_next[:, i].data)
     end
 
     cost = loss(q_curr, q_target, ISWeights)
