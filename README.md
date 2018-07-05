@@ -8,5 +8,6 @@ This repository contains various demonstrations of the [Flux](http://fluxml.gith
 - **phonemes** implements a [sequence to sequence model with attention](https://arxiv.org/abs/1409.0473), using the [CMU pronouncing dictionary](http://www.speech.cs.cmu.edu/cgi-bin/cmudict) to predict the pronunciations of unknown words.
 - **lang-detection** implements a simple sequence-to-classification model, which recognises language (English, Danish etc.) from input characters.
 - **treebank** shows a recursive neural network with the Stanford Sentiment Treebank
+- **action-recognition** implements [Large-scale Video Classification with Convolutional Neural Networks](https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/42455.pdf)
 
 Note that these models are best run line-by-line, either in the REPL or Juno.
