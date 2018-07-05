@@ -4,10 +4,9 @@ Re-implementation by Andrej Karpathy based on https://arxiv.org/abs/1502.03509
 Re-Re-implementation by Tejan Karmali using Flux.jl ;)
 =#
 
-using Flux
+using Flux, Flux.Data.MNIST
 using Flux: glorot_uniform, @epochs, binarycrossentropy
-using NPZ
-
+using Base.Iterators: partition
 # ------------------------------------------------------------------------------
 
 add_dims_r(a) = reshape(a, size(a)..., 1)
@@ -55,7 +54,9 @@ mutable struct MADE
 
     net = Chain(layers..., MaskedDense(hs[end], out))
 
-    new(in, out, hs[2:end], net, nat_ord, 1, 0, Dict{Int, Vector{Int}}())
+    made = new(in, out, hs[2:end], net, nat_ord, num_masks, 0, Dict{Int, Vector{Int}}())
+    update_masks(made)
+    return made
   end
 end
 
@@ -89,7 +90,7 @@ function update_masks(made::MADE)
 
   # set the masks in all MaskedLinear layers
   for (l, m) in zip(made.net, masks)
-    typeof(m) == MaskedDense ? l.mask = m : continue
+    isa(l, MaskedDense) ? l.mask .= permutedims(m, [2, 1]) : continue
   end
 end
 
@@ -99,22 +100,21 @@ end
 
 # ------------------------------------------------------------------------------
 
-#Getting data. The data used here is binarized MNIST dataset
+# Getting data. The data used here is binarized MNIST dataset
 
-X = npzread("/path/to/your/data.npy")
-X = permutedims(X, [2, 1])
+imgs = MNIST.images()
 
-B = 100 #batch size
-N = size(X)[2] #Number of images
+B = 1000 #batch size
+N = size(imgs)[1] #Number of images
 
-model = MADE(size(X)[1], [500], size(X)[1], false, 1)
+model = MADE(784, [500, 500], 784, false, 2)
 loss(x) = sum(binarycrossentropy.(σ.(model(x)), x)) / B
-opt = ADAM(params(model.net))
+opt = ADAM(Flux.params(model.net))
 
 #dividing data into batches
-data = [X[:, i:i + B - 1] for i = 1:B:N if i <= N - B + 1]
-
-@epochs 10 Flux.train!(loss, zip(data), opt, cb = ()->update_masks(model))
+data = [float(hcat(vec.(imgs)...)) for imgs in partition(imgs, 1000)]
+data = gpu.(data)
+@epochs 1 Flux.train!(loss, zip(data), opt, cb = ()->update_masks(model))
 
 # Sample output
 
@@ -124,11 +124,11 @@ img(x::Vector) = Gray.(reshape(clamp.(x, 0, 1), 28, 28))'
 
 function sample()
   # 20 random digits
-  before = [X[:, i] for i in rand(1:N, 20)]
+  before = [imgs[i] for i in rand(1:N, 20)]
   # Before and after images
   after = img.(map(x -> cpu(model)(float(vec(x))).data, before))
   # Stack them all together
-  hcat(vcat.(img.(before), after)...)
+  hcat(vcat.(before, after)...)
 end
 
 cd(@__DIR__)
