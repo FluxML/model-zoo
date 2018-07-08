@@ -87,24 +87,25 @@ function train(x)
     opt_gen()
   end
   training_step += 1
+  @show training_step, D_loss
 end
 
-@epochs 1 [train(data[i]) for i = 1:60]
+@epochs 1 train(data[1])
 # Sample output
-#=
+
 using Images
 
-img(x::Vector) = Gray.(reshape(clamp.(x, 0, 1), 28, 28))
+img(x) = Gray.(clamp.(x, 0, 1))
 
 function sample()
   # 20 random digits
-  before = [imgs[i] for i in rand(1:length(imgs), 20)]
+  before = [rand(62, 1) for i=1:10]
   # Before and after images
-  after = img.(map(x -> cpu(m)(float(vec(x))).data, before))
+  after = img.(map(x -> generator(x).data, before))
   # Stack them all together
-  hcat(vcat.(before, after)...)
+  hcat(after...)
 end
 
 cd(@__DIR__)
 
-save("sample.png", sample())=#
+save("sample.png", sample())
