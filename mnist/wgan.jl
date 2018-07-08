@@ -1,5 +1,5 @@
 using Flux, Flux.Data.MNIST
-using Flux: @epochs, back!
+using Flux: @epochs, back!, testmode!
 using Base.Iterators: partition
 using Juno: @progress
 using NNlib: relu, leakyrelu
@@ -20,23 +20,24 @@ data = [float(cat(4, reshape(imgs, size(imgs)..., 1)...)) for imgs in partition(
 
 
 data_dim = size(data[1], 1)
-hidden_dim2 = 7 * 7 * 128
+channels = 2
+hidden_dim2 = 7 * 7 * channels
 
 ############################### WGAN Architecture ##############################
 ################################## Generator ###################################
 fc_gen = Chain(Dense(62, 1024), BatchNorm(1024, NNlib.relu),
             Dense(1024, hidden_dim2), BatchNorm(hidden_dim2, NNlib.relu))
-deconv_ = Chain(ConvTranspose((4,4), 128=>64;stride=(2,2),pad=(1,1)), BatchNorm(64, NNlib.relu),
+deconv_ = Chain(ConvTranspose((4,4), channels=>64;stride=(2,2),pad=(1,1)), BatchNorm(64, NNlib.relu),
                 ConvTranspose((4,4), 64=>1, tanh;stride=(2,2),pad=(1,1)))
 
-generator = Chain(fc_gen..., x->reshape(x, 7, 7, 128, :), deconv_...)
+generator = Chain(fc_gen..., x->reshape(x, 7, 7, channels, :), deconv_...)
 
 ################################## Discriminator ###############################
 fc_disc = Chain(Dense(hidden_dim2, 1024), BatchNorm(1024), x->leakyrelu.(x,0.2f0),
             Dense(1024, 1))
 conv_ = Chain(Conv((4,4), 1=>64;stride=(2,2),pad=(1,1)), x->leakyrelu.(x,0.2f0),
-             Conv((4,4), 64=>128;stride=(2,2),pad=(1,1)),
-             BatchNorm(128), x->leakyrelu.(x,0.2f0))
+             Conv((4,4), 64=>channels;stride=(2,2),pad=(1,1)),
+             BatchNorm(channels), x->leakyrelu.(x,0.2f0))
 
 discriminator = Chain(conv_..., x->reshape(x, hidden_dim2, :), fc_disc...)
 ################################################################################
@@ -90,19 +91,21 @@ function train(x)
   @show training_step, D_loss
 end
 
-@epochs 1 train(data[1])
+@epochs 1 train.(data)
 # Sample output
 
 using Images
 
-img(x) = Gray.(clamp.(x, 0, 1))
+img(x) = Gray.(clamp.(reshape(x, 28, 28), 0, 1))
 
 function sample()
   # 20 random digits
   before = [rand(62, 1) for i=1:10]
   # Before and after images
+  testmode!(generator)
   after = img.(map(x -> generator(x).data, before))
   # Stack them all together
+  testmode!(generator, false)
   hcat(after...)
 end
 
