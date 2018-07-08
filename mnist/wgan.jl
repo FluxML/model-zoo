@@ -9,13 +9,14 @@ using NNlib: relu, leakyrelu
 # images.
 BATCH_SIZE = 1000
 training_step = 0
+c = 0.01f0
 gen_update_frq = 5  # Updates generators every 5 training steps
 
 imgs = MNIST.images()
 
 # Partition into batches of size 1000
 data = [float(cat(4, reshape(imgs, size(imgs)..., 1)...)) for imgs in partition(imgs, BATCH_SIZE)]
-data = gpu.(data)
+#data = gpu.(data)
 
 
 data_dim = size(data[1], 1)
@@ -26,17 +27,16 @@ hidden_dim2 = 7 * 7 * 128
 fc_gen = Chain(Dense(62, 1024), BatchNorm(1024, NNlib.relu),
             Dense(1024, hidden_dim2), BatchNorm(hidden_dim2, NNlib.relu))
 deconv_ = Chain(ConvTranspose((4,4), 128=>64;stride=(2,2),pad=(1,1)), BatchNorm(64, NNlib.relu),
-                ConvTranspose((4,4), 64=>1;stride=(2,2),pad=(1,1)), BatchNorm(1, tanh))
+                ConvTranspose((4,4), 64=>1, tanh;stride=(2,2),pad=(1,1)))
 
 generator = Chain(fc_gen..., x->reshape(x, 7, 7, 128, :), deconv_...)
 
 ################################## Discriminator ###############################
-fc_disc = Chain(Dense(hidden_dim2, 1024), BatchNorm(1024), x->leakyrelu.(x,0.2),
+fc_disc = Chain(Dense(hidden_dim2, 1024), BatchNorm(1024), x->leakyrelu.(x,0.2f0),
             Dense(1024, 1))
-conv_ = Chain(Conv((4,4), 1=>64;stride=(2,2),pad=(1,1)),
-             BatchNorm(64), x->leakyrelu.(x,0.2),
+conv_ = Chain(Conv((4,4), 1=>64;stride=(2,2),pad=(1,1)), x->leakyrelu.(x,0.2f0),
              Conv((4,4), 64=>128;stride=(2,2),pad=(1,1)),
-             BatchNorm(128, tanh), x->leakyrelu.(x,0.2))
+             BatchNorm(128), x->leakyrelu.(x,0.2f0))
 
 discriminator = Chain(conv_..., x->reshape(x, hidden_dim2, :), fc_disc...)
 ################################################################################
@@ -91,7 +91,7 @@ end
 
 @epochs 1 [train(data[i]) for i = 1:60]
 # Sample output
-
+#=
 using Images
 
 img(x::Vector) = Gray.(reshape(clamp.(x, 0, 1), 28, 28))
@@ -107,4 +107,4 @@ end
 
 cd(@__DIR__)
 
-save("sample.png", sample())
+save("sample.png", sample())=#
