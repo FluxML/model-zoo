@@ -20,8 +20,8 @@ N = 32 # Size of the encoding
 # In this case, the input dimension is 28^2 and the output dimension of
 # encoder is 32. This implies that the coding is a compressed representation.
 # We can make lossy compression via this `encoder`.
-encoder = Dense(28^2, N, relu) |> gpu
-decoder = Dense(N, 28^2, relu) |> gpu
+encoder = Dense(28^2, N, leakyrelu) |> gpu
+decoder = Dense(N, 28^2, leakyrelu) |> gpu
 
 m = Chain(encoder, decoder)
 
