@@ -1,3 +1,9 @@
+# This is implementation of DeepMind paper 
+# "Understanding Synthetic Gradients and Decoupled Neural Interfaces"
+# (https://arxiv.org/pdf/1703.00522.pdf)
+# The implementation uses DNI on the MLP model used in mlp.jl and 
+# recreates similar results.
+
 using Flux, Flux.Data.MNIST
 using Flux: onehotbatch, argmax, crossentropy
 using CuArrays
