@@ -1,49 +1,44 @@
-using Distributions
 using Images
 using Flux
 
 z_dim = 2
-x_dim = 128
-y_dim = 128
+x_dim = 264
+y_dim = 264
 net_size = 15
-net_depth = 12
+net_depth = 5
+batch_size = 512
 n = x_dim * y_dim
 
-# weight initialiser
-init_wN = (dims...)->rand(Normal(0, 0.8), dims...)
+cast(x) = (collect(0:x-1) ./ x) .- 0.5
+
+xs, ys = cast(x_dim), cast(y_dim)
+xs = repeat(xs, inner=(y_dim))
+ys = repeat(ys, outer=(y_dim))
+rs = sqrt.(xs.^2 + ys.^2)
 
 layers = []
-push!(layers, Dense(3 + z_dim, net_size, tanh, initW=init_wN))
+push!(layers, Dense(3 + z_dim, net_size, tanh, initW=randn))
 for i=1:net_depth
-    push!(layers, Dense(net_size, net_size, tanh, initW=init_wN))
+    push!(layers, Dense(net_size, net_size, tanh, initW=randn))
 end
-push!(layers, Dense(net_size, 1, σ, initW=init_wN))
+push!(layers, Dense(net_size, 1, σ, initW=randn))
 
 model = Chain(layers...)
 
-getColorAt(x) = (model(x).data)
+getColorAt(x) = model(x).data
 
 function getImage(z)
-    # get color at each pixel
-    coords, img = [], []
-    for i=0:(x_dim -1), j=0:(y_dim - 1)
-        x, y = (i/x_dim - 0.5), (j/y_dim - 0.5)
-        push!(coords, x, y, sqrt(x^2 + y^2), z...)
-    end
-    # process batches
-    batch_size = 200
-    coords = reshape(coords, 3 + z_dim, n)
-    for i=1:batch_size:size(coords, 2)
-        j = min(i + batch_size - 1, size(coords, 2))
-        push!(img, getColorAt(coords[:, i:j])...)
-    end
-    img
+    z = repeat(reshape(z, 1, z_dim), outer=(n, 1))
+    coords = hcat(xs, ys, rs, z)'
+    coords = [coords[:, i:min(i + batch_size - 1, size(coords, 2))]
+        for i=1:batch_size:size(coords, 2)]
+    hcat(getColorAt.(coords)...)
 end
 
-function showImg(z)
-    imgg = Gray.(reshape(getImage(z), y_dim, x_dim))
-    save("sample.png", imgg)
+function showImg(z, image_path="sample.png")
+    imgg = Gray.(reshape([getImage(z)...], y_dim, x_dim))
+    save(image_path, imgg)
     imgg
 end
 
-showImg(rand(Normal(0, 0.8), z_dim))
+showImg(rand(z_dim))
