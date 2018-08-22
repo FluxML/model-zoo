@@ -34,7 +34,7 @@ end
 function decode1(tokens, phone)
   weights = asoftmax([align(recur.state[2], t) for t in tokens])
   context = sum(map((a, b) -> a .* b, weights, tokens))
-  y = recur(vcat(phone, context))
+  y = recur(vcat(Int32.(phone), context))
   return softmax(toalpha(y))
 end
 
