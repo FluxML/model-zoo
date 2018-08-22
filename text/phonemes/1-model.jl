@@ -66,7 +66,7 @@ function predict(s)
   ps = Any[:start]
   for i = 1:50
     dist = decode1(ts, onehot(ps[end], phones))
-    next = wsample(phones, Flux.Tracker.value(dist))
+    next = wsample(phones, dist.data)
     next == :end && break
     push!(ps, next)
   end
