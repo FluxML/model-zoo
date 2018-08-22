@@ -1,6 +1,6 @@
 # Based on https://arxiv.org/abs/1409.0473
 
-using Flux: combine, flip, crossentropy, reset!, throttle
+using Flux: flip, crossentropy, reset!, throttle, glorot_uniform
 
 include("0-data.jl")
 
@@ -14,9 +14,11 @@ forward  = LSTM(Nin, Nh÷2)
 backward = LSTM(Nin, Nh÷2)
 encode(tokens) = vcat.(forward.(tokens), flip(backward, tokens))
 
-alignnet = Dense(2Nh, 1)
-align(s, t) = alignnet(combine(t, s))
-
+Ws = param(glorot_uniform(1, Nh))
+Wt = param(glorot_uniform(1, Nh))
+b = param(zeros(1))
+align(s,t) = Ws*s .+ Wt*t .+ b
+    
 # A recurrent model which takes a sequence of annotations, attends, and returns
 # a predicted output token.
 
@@ -40,7 +42,7 @@ decode(tokens, phones) = [decode1(tokens, phone) for phone in phones]
 
 # The full model
 
-state = (forward, backward, alignnet, recur, toalpha)
+state = (forward, backward, recur, toalpha)
 
 function model(x, y)
   ŷ = decode(encode(x), y)
