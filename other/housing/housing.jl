@@ -1,4 +1,4 @@
-using Flux.Tracker
+using Flux.Tracker, Statistics, DelimitedFiles
 
 # This replicates the housing data example from the Knet.jl readme. Although we
 # could have reused more of Flux (see the mnist example), the library's
@@ -19,7 +19,7 @@ x = rawdata[1:13,:]
 y = rawdata[14:14,:]
 
 # Normalise the data
-x = (x .- mean(x,2)) ./ std(x,2)
+x = (x .- mean(x, dims = 2)) ./ std(x, dims = 2)
 
 # The model
 
