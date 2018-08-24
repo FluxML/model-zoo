@@ -45,9 +45,9 @@ version = "0.8.10"
 
 [[BinaryProvider]]
 deps = ["Libdl", "Pkg", "SHA", "Test"]
-git-tree-sha1 = "ffbf89cc49b073cffdb91381b7ee60557a03ec96"
+git-tree-sha1 = "b530fbeb6f41ab5a83fbe3db1fcbe879334bcd2d"
 uuid = "b99e7846-7c00-51b0-8f62-c81ae34c0232"
-version = "0.4.1"
+version = "0.4.2"
 
 [[CatIndices]]
 deps = ["CustomUnitRanges", "OffsetArrays", "Test"]
@@ -177,9 +177,9 @@ version = "0.5.2"
 
 [[Flux]]
 deps = ["AbstractTrees", "Adapt", "Colors", "DiffRules", "ForwardDiff", "GZip", "Juno", "LinearAlgebra", "MacroTools", "NNlib", "NaNMath", "Printf", "Random", "Reexport", "Requires", "SpecialFunctions", "Statistics", "StatsBase", "Test", "ZipFile"]
-git-tree-sha1 = "ded0cc792e7b589a7548c2dc3ff28c8f2a143ca7"
+git-tree-sha1 = "6c6fcfa0a7c123a8a9f84f3f846a40a847820c3d"
 uuid = "587475ba-b771-5e3f-ad9e-33799f191a9c"
-version = "0.6.4"
+version = "0.6.5"
 
 [[ForwardDiff]]
 deps = ["CommonSubexpressions", "DiffResults", "DiffRules", "InteractiveUtils", "LinearAlgebra", "NaNMath", "Pkg", "Random", "SparseArrays", "SpecialFunctions", "StaticArrays", "Test"]
@@ -231,9 +231,9 @@ version = "0.4.1"
 
 [[ImageMagick]]
 deps = ["BinaryProvider", "ColorTypes", "FileIO", "FixedPointNumbers", "ImageCore", "InteractiveUtils", "Libdl", "Pkg", "Random", "Test"]
-git-tree-sha1 = "975f06081b8fd6c404c31aacc856555be61ac688"
+git-tree-sha1 = "0e4cc77fb131061b3525a97fd7d483b253c3aaad"
 uuid = "6218d12a-5da1-5696-b52f-db25d2ecc6d1"
-version = "0.7.0"
+version = "0.7.1"
 
 [[ImageMetadata]]
 deps = ["AxisArrays", "ColorVectorSpace", "Colors", "Dates", "FixedPointNumbers", "ImageAxes", "ImageCore", "IndirectArrays", "Pkg", "Statistics", "Test"]
