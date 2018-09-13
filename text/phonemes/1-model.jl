@@ -1,6 +1,6 @@
 # Based on https://arxiv.org/abs/1409.0473
 
-using Flux: combine, flip, crossentropy, reset!, throttle
+using Flux: flip, crossentropy, reset!, throttle
 
 include("0-data.jl")
 
@@ -15,7 +15,7 @@ backward = LSTM(Nin, Nh÷2)
 encode(tokens) = vcat.(forward.(tokens), flip(backward, tokens))
 
 alignnet = Dense(2Nh, 1)
-align(s, t) = alignnet(combine(t, s))
+align(s, t) = alignnet(vcat(t, s .* trues(1, size(t, 2))))
 
 # A recurrent model which takes a sequence of annotations, attends, and returns
 # a predicted output token.
@@ -32,7 +32,7 @@ end
 function decode1(tokens, phone)
   weights = asoftmax([align(recur.state[2], t) for t in tokens])
   context = sum(map((a, b) -> a .* b, weights, tokens))
-  y = recur(vcat(phone, context))
+  y = recur(vcat(float(phone), context))
   return softmax(toalpha(y))
 end
 
@@ -64,7 +64,7 @@ function predict(s)
   ps = Any[:start]
   for i = 1:50
     dist = decode1(ts, onehot(ps[end], phones))
-    next = wsample(phones, Flux.Tracker.value(dist))
+    next = wsample(phones, vec(Tracker.data(dist)))
     next == :end && break
     push!(ps, next)
   end
