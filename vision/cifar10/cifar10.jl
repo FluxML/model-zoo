@@ -1,5 +1,5 @@
 using Flux, Metalhead
-using Flux: onehotbatch, argmax, crossentropy, throttle
+using Flux: onehotbatch, onecold, crossentropy, throttle
 using Metalhead: trainimgs
 using Base.Iterators: partition
 
@@ -108,7 +108,7 @@ m = vgg16()
 
 loss(x, y) = crossentropy(m(x), y)
 
-accuracy(x, y) = mean(argmax(m(x), 1:10) .== argmax(y, 1:10))
+accuracy(x, y) = mean(onecold(m(x), 1:10) .== onecold(y, 1:10))
 
 # Defining the callback and the optimizer
 

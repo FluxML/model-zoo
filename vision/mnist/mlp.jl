@@ -1,5 +1,5 @@
-using Flux, Flux.Data.MNIST
-using Flux: onehotbatch, argmax, crossentropy, throttle
+using Flux, Flux.Data.MNIST, Statistics
+using Flux: onehotbatch, onecold, crossentropy, throttle
 using Base.Iterators: repeated
 # using CuArrays
 
@@ -20,7 +20,7 @@ m = Chain(
 
 loss(x, y) = crossentropy(m(x), y)
 
-accuracy(x, y) = mean(argmax(m(x)) .== argmax(y))
+accuracy(x, y) = mean(onecold(m(x)) .== onecold(y))
 
 dataset = repeated((X, Y), 200)
 evalcb = () -> @show(loss(X, Y))

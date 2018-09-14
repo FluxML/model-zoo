@@ -1,4 +1,5 @@
-using Flux.Tracker
+using Flux.Tracker, Statistics, DelimitedFiles
+using Flux.Tracker: Params, gradient, update!
 
 # This replicates the housing data example from the Knet.jl readme. Although we
 # could have reused more of Flux (see the mnist example), the library's
@@ -19,7 +20,7 @@ x = rawdata[1:13,:]
 y = rawdata[14:14,:]
 
 # Normalise the data
-x = (x .- mean(x,2)) ./ std(x,2)
+x = (x .- mean(x, dims = 2)) ./ std(x, dims = 2)
 
 # The model
 
@@ -33,16 +34,14 @@ predict(x) = W*x .+ b
 meansquarederror(ŷ, y) = sum((ŷ .- y).^2)/size(y, 2)
 loss(x, y) = meansquarederror(predict(x), y)
 
-function update!(ps, η = .1)
-  for w in ps
-    w.data .-= w.grad .* η
-    w.grad .= 0
-  end
-end
+η = 0.1
+θ = Params([W, b])
 
 for i = 1:10
-  back!(loss(x, y))
-  update!((W, b))
+  g = gradient(() -> loss(x, y), θ)
+  for x in θ
+    update!(x, g[x]*η)
+  end
   @show loss(x, y)
 end
 

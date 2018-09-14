@@ -1,4 +1,4 @@
-using Flux, Flux.Data.MNIST
+using Flux, Flux.Data.MNIST, Statistics
 using Flux: throttle, params
 using Juno: @progress
 
@@ -30,7 +30,7 @@ f = Chain(Dense(Dz, Dh, tanh), Dense(Dh, 28^2, σ))
 ####################### Define ways of doing things with the model. #######################
 
 # KL-divergence between approximation posterior and N(0, 1) prior.
-kl_q_p(μ, logσ) = 0.5 * sum(exp.(2 .* logσ) + μ.^2 - 1 .+ logσ.^2)
+kl_q_p(μ, logσ) = 0.5 * sum(exp.(2 .* logσ) + μ.^2 .- 1 .+ logσ.^2)
 
 # logp(x|z) - conditional probability of data given latents.
 logp_x_z(x, z) = sum(logpdf.(Bernoulli.(f(z)), x))
@@ -49,7 +49,7 @@ modelsample() = rand.(Bernoulli.(f(z.(zeros(Dz), zeros(Dz)))))
 evalcb = throttle(() -> @show(-L̄(X[:, rand(1:N, M)])), 30)
 opt = ADAM(params(A, μ, logσ, f))
 @progress for i = 1:20
-  info("Epoch $i")
+  @info "Epoch $i"
   Flux.train!(loss, zip(data), opt, cb=evalcb)
 end
 

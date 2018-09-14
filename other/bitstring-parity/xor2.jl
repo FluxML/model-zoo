@@ -1,6 +1,6 @@
 include("data.jl")
-using Flux
-using Flux: onehot, onehotbatch, throttle, crossentropy, reset!, argmax
+using Flux, Statistics
+using Flux: onehot, onehotbatch, throttle, crossentropy, reset!, onecold
 
 const epochs = 30
 
@@ -34,7 +34,7 @@ tx = map(c -> onehotbatch(c, alphabet), [
     [true, false], # 10 -> 1
     [false, false], # 00 -> 0
     [true, true]]) # 11 -> 0
-[argmax(model(x)) - 1 for x in tx] |> println
+[onecold(model(x)) - 1 for x in tx] |> println
 
 # Try running the model on strings of length 50.
 #
