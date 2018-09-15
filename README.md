@@ -34,5 +34,5 @@ We welcome contributions of new models. They should be in a folder with a projec
   * [Recursive net on IMDB sentiment treebank](text/treebank)
 * Other
   * [BitString Parity Challenge](other/bitstring-parity)
-  * [MLP on housing data](other/housing) (low level API)
-  * [FizzBuzz](other/fizzbuzz)
+  * [MLP on housing data](other/housing/housing.jl) (low level API)
+  * [FizzBuzz](other/fizzbuzz/fizzbuzz.jl)
