@@ -35,3 +35,4 @@ We welcome contributions of new models. They should be in a folder with a projec
 * Other
   * [BitString Parity Challenge](other/bitstring-parity)
   * [MLP on housing data](other/housing) (low level API)
+  * [FizzBuzz](other/fizzbuzz)
