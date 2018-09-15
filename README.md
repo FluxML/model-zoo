@@ -9,7 +9,7 @@ The models are broadly categorised into the folders [vision](/vision) (e.g. larg
 Each folder is its own [Julia project](https://julialang.github.io/Pkg.jl/latest/#Using-someone-else's-project-1), which lists the packages you need to run the models. You can run the models by opening Julia in the project folder and running
 
 ```
-]activate .; instantiate
+using Pkg; Pkg.activate("."); Pkg.instantiate()
 ```
 
 to install all needed packages. Then you can run the model code with `include("script.jl")` or by running the script line-by-line. More details are available in the README for each model.
