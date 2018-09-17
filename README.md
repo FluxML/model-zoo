@@ -2,11 +2,37 @@
 
 This repository contains various demonstrations of the [Flux](http://fluxml.github.io/) machine learning library. Any of these may freely be used as a starting point for your own models.
 
-- **housing** implements the most basic model possible (a linear regression) on the [UCI housing data set](https://archive.ics.uci.edu/ml/machine-learning-databases/housing/). It's bare-bones and illustrates how to build a model from scratch.
-- **mnist** classifies digits from the [MNIST data set](https://en.wikipedia.org/wiki/MNIST_database), using a simple multi-layer perceptron and a convolutional network, as well as showing a simple autoencoder.
-- **char-rnn** implements a [character-level language model](http://karpathy.github.io/2015/05/21/rnn-effectiveness/). It comes with a Shakespeare dataset but can work with any text.
-- **phonemes** implements a [sequence to sequence model with attention](https://arxiv.org/abs/1409.0473), using the [CMU pronouncing dictionary](http://www.speech.cs.cmu.edu/cgi-bin/cmudict) to predict the pronunciations of unknown words.
-- **lang-detection** implements a simple sequence-to-classification model, which recognises language (English, Danish etc.) from input characters.
-- **treebank** shows a recursive neural network with the Stanford Sentiment Treebank
+The models are broadly categorised into the folders [vision](/vision) (e.g. large convnets), [text](/text) (e.g. various RNNs and NLP models), [games](/games) (reinforcement learning). See the READMEs of respective models for more information.
 
-Note that these models are best run line-by-line, either in the REPL or Juno.
+## Usage
+
+Each folder is its own [Julia project](https://julialang.github.io/Pkg.jl/latest/#Using-someone-else's-project-1), which lists the packages you need to run the models. You can run the models by opening Julia in the project folder and running
+
+```
+using Pkg; Pkg.activate("."); Pkg.instantiate()
+```
+
+to install all needed packages. Then you can run the model code with `include("script.jl")` or by running the script line-by-line. More details are available in the README for each model.
+
+## Contributing
+
+We welcome contributions of new models. They should be in a folder with a project and manifest file, to pin all relevant packages, as well as a README to explain what the model is about, how to run it, and what results it acheives (if applicable). If possible models should not depend directly on GPU functionality, but ideally should be CPU/GPU agnostic.
+
+## Model Listing
+
+* Vision
+  * MNIST
+    * [Simple multi-layer perceptron](vision/mnist/mlp.jl)
+    * [Simple ConvNet](vision/mnist/conv.jl)
+    * [Simple Auto-Encoder](vision/mnist/autoencoder.jl)
+    * [Variational Auto-Encoder](vision/mnist/vae.jl)
+  * [VGG 16/19 on CIFAR10](vision/cifar10)
+* Text
+  * [CharRNN](text/char-rnn)
+  * [Character-level language detection](text/lang-detection)
+  * [Seq2Seq phoneme detection on CMUDict](text/phonemes)
+  * [Recursive net on IMDB sentiment treebank](text/treebank)
+* Other
+  * [BitString Parity Challenge](other/bitstring-parity)
+  * [MLP on housing data](other/housing/housing.jl) (low level API)
+  * [FizzBuzz](other/fizzbuzz/fizzbuzz.jl)

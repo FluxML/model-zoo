@@ -1,6 +1,7 @@
 These examples are licensed under the MIT "Expat" License:
 
-> Copyright (c) 2017: Mike Innes & contributors.
+> Copyright (c) 2017 by Flux contributors;
+> https://github.com/FluxML/model-zoo/graphs/contributors
 >
 > Permission is hereby granted, free of charge, to any person obtaining a copy
 > of this software and associated documentation files (the "Software"), to deal
