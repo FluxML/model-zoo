@@ -27,6 +27,7 @@ We welcome contributions of new models. They should be in a folder with a projec
     * [Simple Auto-Encoder](vision/mnist/autoencoder.jl)
     * [Variational Auto-Encoder](vision/mnist/vae.jl)
   * [VGG 16/19 on CIFAR10](vision/cifar10)
+  * [CPPN](vision/cppn) ([Blog](http://blog.otoro.net/2016/03/25/generating-abstract-patterns-with-tensorflow/))
 * Text
   * [CharRNN](text/char-rnn)
   * [Character-level language detection](text/lang-detection)
