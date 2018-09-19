@@ -1,5 +1,5 @@
 using Flux, Flux.Data.MNIST
-using Flux: @epochs, onehotbatch, argmax, mse, throttle
+using Flux: @epochs, onehotbatch, mse, throttle
 using Base.Iterators: partition
 using Juno: @progress
 # using CuArrays
