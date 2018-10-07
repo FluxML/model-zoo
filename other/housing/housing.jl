@@ -34,7 +34,7 @@ predict(x) = W*x .+ b
 meansquarederror(ŷ, y) = sum((ŷ .- y).^2)/size(y, 2)
 loss(x, y) = meansquarederror(predict(x), y)
 
-η = 0.1
+η = -0.1
 θ = Params([W, b])
 
 for i = 1:10
