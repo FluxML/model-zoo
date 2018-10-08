@@ -40,7 +40,7 @@ loss(x, y) = meansquarederror(predict(x), y)
 for i = 1:10
   g = gradient(() -> loss(x, y), θ)
   for x in θ
-    update!(x, g[x]*η)
+    update!(x, -g[x]*η)
   end
   @show loss(x, y)
 end
