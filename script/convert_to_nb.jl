@@ -79,26 +79,28 @@ end
 
 function get_config(path_to_conf)
   confFile = TOML.parsefile(joinpath(path_to_conf, "Conf.toml"))
-  project = confFile["Project"][1]
-  root = project["root"]
-  confs = project["conf"]
-  for conf in confs
+  projects = confFile["Project"]
+  for project in projects
+    root = project["root"]
+    confs = project["conf"]
+    for conf in confs
 
-    # default behaviour is to take all files in dir
-    # as deps
-    deps = ["Project.toml", "Manifest.toml"]
-    if haskey(conf, "deps")
-      conf["deps"] = push!(deps, conf["deps"]...)
-    else
-      conf["deps"] = readdir(joinpath("..", root))
-    end
+      # default behaviour is to take all files in dir
+      # as deps
+      deps = ["Project.toml", "Manifest.toml"]
+      if haskey(conf, "deps")
+        conf["deps"] = push!(deps, conf["deps"]...)
+      else
+        conf["deps"] = readdir(joinpath("..", root))
+      end
 
-    # Literate.jl needs name of output file w/o extensions
-    if !haskey(conf, "name")
-      conf["name"] = conf["script"][1:end-3] # remove ".jl"
+      # Literate.jl needs name of output file w/o extensions
+      if !haskey(conf, "name")
+        conf["name"] = conf["script"][1:end-3] # remove ".jl"
+      end
     end
   end
-  root, confs
+  projects
 end
 
 # everytihng in output dir = nb + deps + extras
@@ -113,34 +115,36 @@ function main(output = "output")
   end
 
   @assert "Project.toml" in readdir(project_dir) && "Manifest.toml" in readdir(project_dir)
-  root, confs = get_config(project_dir)
+  projects = get_config(project_dir)
   cd("..")
 
-  keep = [] # keep track of files that need to be outputted
-  for conf in confs
+  for project in projects
+    root, confs = project["root"], project["conf"]
+    
+    keep = [] # keep track of files that need to be output
+    for conf in confs
+      
+      deps, script = conf["deps"], conf["script"]
+      push!(keep, deps...)
+      push!(keep, conf["name"] * ".ipynb")
+      activate_env(root)
 
-    deps, script = conf["deps"], conf["script"]
-    push!(keep, deps...)
-    push!(keep, conf["name"] * ".ipynb")
-    activate_env(root)
+      convert_to_nb(joinpath(root, script),
+                    joinpath(output, root);
+                    name = conf["name"])
 
-    convert_to_nb(joinpath(root, script),
-                  joinpath(output, root);
-                  name = conf["name"])
-
-    # copy deps
-    for dep in deps
-      src = joinpath(root, dep)
-      dest = joinpath(output, root * "/" * dep)
-      cp(src, dest, force = true)
+      # copy deps
+      for dep in deps
+        src = joinpath(root, dep)
+        dest = joinpath(output, root * "/" * dep)
+        cp(src, dest, force = true)
+      end
     end
 
+    # remove unnecessary files
+    output_files = readdir(joinpath(output, root))
+    foreach(x -> rm(joinpath(output, root, x)), filter(x -> !in(x, keep), output_files))
   end
-
-  # remove unnecessary files
-  output_files = readdir(joinpath(output, root))
-  foreach(x -> rm(joinpath(output, root, x)), filter(x -> !in(x, keep), output_files))
-  
 end
 
 main()
