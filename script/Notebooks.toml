@@ -1,3 +1,8 @@
 [MNIST]
 path = "vision/mnist"
 notebook = "mlp.jl"
+deps = ["vae.jl"]
+
+[CHAR-RNN]
+path = "text/char-rnn"
+notebook = "char-rnn.jl"

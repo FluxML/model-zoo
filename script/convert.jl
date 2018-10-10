@@ -12,6 +12,7 @@ for d in ["Project.toml", "Manifest.toml", ".gitignore"]
   isfile(joinpath(root, path, d)) && push!(deps, d)
 end
 
+mkpath(joinpath(root, "notebooks", path))
 for dep in deps
   cp(joinpath(root, path, dep), joinpath(root, "notebooks", path, dep), force = true)
 end
@@ -29,3 +30,11 @@ for script in scripts
                     joinpath(root, "notebooks", path),
                     credit = false)
 end
+
+scripts = map(x -> x[1:end - 3] * ".ipynb", scripts)
+keep = union(deps, scripts)
+files = readdir(joinpath(root, "notebooks", path))
+
+for r in files
+  r in keep || rm(joinpath(root, "notebooks", path, r))
+end 
