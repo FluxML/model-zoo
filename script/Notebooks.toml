@@ -3,6 +3,6 @@ path = "vision/mnist"
 notebook = "mlp.jl"
 deps = ["vae.jl"]
 
-[CHAR-RNN]
+[char-rnn]
 path = "text/char-rnn"
 notebook = "char-rnn.jl"
