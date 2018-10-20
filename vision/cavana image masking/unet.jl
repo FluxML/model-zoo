@@ -133,6 +133,7 @@ end
 
 logitbinarycrossentropy(logŷ, y) = (1 - y) * logŷ - logsig(logŷ)
 
+# NOTE: The loss only workd for GPU. This is an existing issue in CuArrays
 loss(x, y) = mean(logitbinarycrossentropy.(x, y))
 
 #-------Dataset Loading-------
@@ -177,7 +178,7 @@ function load_train_masks()
         push!(train_masks, loadmask(i))
         masks_loaded += 1
         if masks_loaded % 1000 == 0
-            @info "$imgs_loaded Masks have been loaded"
+            @info "$masks_loaded Masks have been loaded"
         end
     end
 end
@@ -207,8 +208,8 @@ function train_model(batch_size = 16, epochs = 10)
             if iters % 10 == 0
                 push!(losses, cpu(running_loss/iters))
                 push!(dices, cpu(dice_coeff(x, mask)))
-                @info "Loss after $iters = $(losses[end])"
-                @info "Dice Coefficient after $iters = $(dices[end])"
+                @info "Loss after $iters batches = $(losses[end])"
+                @info "Dice Coefficient after $iters batches = $(dices[end])"
             end
         end
         @info "Epoch $epoch complete. Loss = $(running_loss/iters)"
