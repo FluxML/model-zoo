@@ -6,8 +6,8 @@ function activate_env(path)
   "Project.toml" in files && Pkg.activate(path)
 end
 
-function convert_to_nb(input_script = "", 
-                      output_dest = "output"; 
+function convert_to_nb(input_script = "",
+                      output_dest = "output";
                       name = input_script[1:end-3])
   if input_script == ""
     return
@@ -29,14 +29,14 @@ end
 # 6.* Remove the unnecessary files
 # 7.* Ensure correct environment activates for the notebook while executing
 
-# Target File Structure: 
+# Target File Structure:
 
 # model-zoo:
 #           other
 #                 Project.toml
 #                 Manifest.toml
 #                 xor.jl
-          
+
 #           vision
 #                 cifar
 #                       Project.toml
@@ -120,10 +120,10 @@ function main(output = "output")
 
   for project in projects
     root, confs = project["root"], project["conf"]
-    
+
     keep = [] # keep track of files that need to be output
     for conf in confs
-      
+
       deps, script = conf["deps"], conf["script"]
       push!(keep, deps...)
       push!(keep, conf["name"] * ".ipynb")
