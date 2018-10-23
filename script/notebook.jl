@@ -1,9 +1,12 @@
-using Pkg.TOML
-meta = TOML.parsefile(joinpath(@__DIR__, "Notebooks.toml"))
+using Pkg
+Pkg.activate(@__DIR__)
 
-length(ARGS) > 0 && (meta = ARGS)
-meta isa Dict && (meta = keys(meta))
+using Pkg.TOML
+meta = length(ARGS) > 0 ? ARGS :
+  keys(TOML.parsefile(joinpath(@__DIR__, "Notebooks.toml")))
+
+convertjl = joinpath(@__DIR__, "convert.jl")
 
 for proj in meta
-  run(`julia convert.jl $proj`)
+  run(`$(Base.julia_cmd()) $convertjl $proj`)
 end
