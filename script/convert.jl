@@ -23,9 +23,8 @@ Pkg.activate(joinpath(root, "notebooks", path))
 using Literate
 
 function init_nb(content)
-	content = replace(content, "# using CuArrays" => "## using CuArrays")
-	content = replace(content, "#using CuArrays" => "## using CuArrays")
-	content = "using Pkg; Pkg.activate(\".\"); Pkg.instantiate();\n" * content
+	content = replace(content, r"#\s*using CuArrays" => "## using CuArrays")
+	content = "using Pkg; Pkg.activate(\".\"); Pkg.instantiate();\n\n" * content
 	return content
 end
 
@@ -44,4 +43,4 @@ files = readdir(joinpath(root, "notebooks", path))
 
 for r in files
   r in keep || rm(joinpath(root, "notebooks", path, r, force = true))
-end 
+end
