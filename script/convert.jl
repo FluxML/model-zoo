@@ -42,5 +42,5 @@ keep = union(deps, scripts)
 files = readdir(joinpath(root, "notebooks", path))
 
 for r in files
-  r in keep || rm(joinpath(root, "notebooks", path, r, force = true))
+  r in keep || rm(joinpath(root, "notebooks", path, r), force = true)
 end
