@@ -1,7 +1,8 @@
 # Flux: A 60 Minute Blitz
 # =====================
 
-# This is a quick intro to Flux based on [PyTorch's
+# This is a quick intro to [Flux](https://github.com/FluxML/Flux.jl) based on
+# [PyTorch's
 # tutorial](https://pytorch.org/tutorials/beginner/deep_learning_60min_blitz.html).
 # It introduces basic Julia programming, as well as Flux's automatic
 # differentiation (AD), which we'll use to build machine learning models. We'll
