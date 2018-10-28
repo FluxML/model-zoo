@@ -1,0 +1,9 @@
+name = "FramewiseSpeechNetwork"
+author = ["Matthew C. Kelley"]
+
+[deps]
+BSON = "fbb218c0-5317-5bc6-957e-2ee96dd4b1f0"
+Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
+MFCC = "ca7b5df7-6146-5dcc-89ec-36256279a339"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+WAV = "8149f6b0-98f6-5db9-b78f-408fbbb8ef88"

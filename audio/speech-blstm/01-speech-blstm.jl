@@ -6,12 +6,14 @@
 # Networks, 18(5-6), 602-610.]).
 
 using Flux
-using Flux: crossentropy, softmax, flip, sigmoid, LSTM
+using Flux: crossentropy, softmax, flip, sigmoid, LSTM, @epochs
 using BSON
+using Random
 
 # Paths to the training and test data directories
-traindir = "train"
-testdir = "test"
+const TRAINDIR = "train"
+const TESTDIR = "test"
+const EPOCHS = 20
 
 # Component layers of the bidirectional LSTM layer
 forward = LSTM(26, 93)
@@ -92,7 +94,7 @@ function readData(dataDir)
     print(string(i) * "/" * string(length(fnames)) * "\r")
     BSON.@load joinpath(dataDir, fname) x y
     x = [x[i,:] for i in 1:size(x,1)]
-    y = [y[i,:] for i in 1:size(y,1)]
+    y = [y[:,i] for i in 1:size(y,2)]
     push!(Xs, x)
     push!(Ys, y)
   end
@@ -118,54 +120,57 @@ correct predictions over the total number of predictions made
 function evaluateAccuracy(data)
   correct = Vector()
   for (x, y) in data
-    y = indmax.(y)
-    ŷ = indmax.(model(x))
+    y = argmax.(y)
+    ŷ = argmax.(model(x))
     Flux.reset!((forward, backward))
-    correct = vcat(correct,
-            [ŷ_n == y_n for (ŷ_n, y_n) in zip(ŷ, y)])
+    append!(correct, [ŷ_n == y_n for (ŷ_n, y_n) in zip(ŷ, y)])
   end
   sum(correct) / length(correct)
 end
 
-println("Loading files")
-Xs, Ys = readData(traindir)
-data = collect(zip(Xs, Ys))
+function main()
 
-val_data = data[1:189]
-data = data[190:length(data)]
+  println("Loading files")
+  Xs, Ys = readData(TRAINDIR)
+  data = collect(zip(Xs, Ys))
 
-# Begin training
-println("Beginning training")
+  valData = data[1:184]
+  data = data[185:end]
 
-opt = Momentum(params((forward, backward, output)), 10.0^-5; ρ=0.9)
-const epochs = 20
+  # Begin training
+  println("Beginning training")
 
-for i in 1:epochs
-  println("Epoch " * string(i) * "/" * string(epochs))
-  data = data[shuffle(1:length(data))]
-  val_data = val_data[shuffle(1:length(val_data))]
-  
-  Flux.train!(loss, data, opt)
-  
-  BSON.@save "model_epoch$(i).bson" forward backward output
+  opt = Momentum(params((forward, backward, output)), 10.0^-5; ρ=0.9)
 
-  print("Validating\r")
-  val_acc = evaluateAccuracy(val_data)
-  println("Val acc. " * string(val_acc))
+  @epochs EPOCHS begin
+#     println("Epoch " * string(i) * "/" * string(EPOCHS))
+    shuffle!(data)
+    valData = valData[shuffle(1:length(valData))]
+    
+    Flux.train!(loss, data, opt)
+    
+    BSON.@save "model_epoch$(i).bson" forward backward output
+
+    print("Validating\r")
+    val_acc = evaluateAccuracy(valData)
+    println("Val acc. " * string(val_acc))
+    println()
+  end
+
+  # Clean up some memory
+  valData = nothing
+  data = nothing
+  Xs = nothing
+  Ys = nothing
+  GC.gc()
+
+  # Test model
+  print("Testing\r")
+  Xs_test, Ys_test = readData(TESTDIR)
+  test_data = collect(zip(Xs_test, Ys_test))
+  test_acc = evaluateAccuracy(test_data)
+  println("Test acc. " * string(test_acc))
   println()
 end
 
-# Clean up some memory
-val_data = nothing
-data = nothing
-Xs = nothing
-Ys = nothing
-gc()
-
-# Test model
-print("Testing\r")
-Xs_test, Ys_test = readData(testdir)
-test_data = collect(zip(Xs_test, Ys_test))
-test_acc = evaluateAccuracy(test_data)
-println("Test acc. " * string(test_acc))
-println()
+main()
