@@ -1,5 +1,9 @@
-using Flux
+using Flux       # Main ML library
 using Flux: onehot, onehotbatch, crossentropy, reset!, throttle
+
+using Unicode    # For 'normalize'
+using Random     # for 'shuffle'
+using Statistics # for 'mean'
 
 corpora = Dict()
 
@@ -7,7 +11,7 @@ cd(@__DIR__)
 for file in readdir("corpus")
   lang = Symbol(match(r"(.*)\.txt", file).captures[1])
   corpus = split(String(read("corpus/$file")), ".")
-  corpus = strip.(normalize_string.(corpus, casefold=true, stripmark=true))
+  corpus = strip.(Unicode.normalize.(corpus, casefold=true, stripmark=true))
   corpus = filter(!isempty, corpus)
   corpora[lang] = corpus
 end

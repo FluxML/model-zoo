@@ -1,4 +1,7 @@
-using Cascadia, Gumbo, HTTP, AbstractTrees
+using Cascadia # For 'eachmatch' on HTMLElements and 'Selector' 
+using Gumbo    # For 'parsehtml' and 'PreOrderDFS'
+using HTTP     # For 'get'
+using AbstractTrees
 
 pages = Dict(
   :en => ["Wikipedia", "Osama_bin_Laden_(elephant)", "List_of_lists_of_lists", "Josephine_Butler", "Canadian_football", "Judaism"],
@@ -7,25 +10,26 @@ pages = Dict(
   :es => ["Wikipedia", "Chorizo", "Historia_de_Barcelona", "Espana", "Las_Vegas_Strip", "Judaismo"],
   :da => ["Wikipedia", "H.C._Andersen", "L.A._Ring", "Jiangxi", "NATO", "Thomas_Edison", "Bangladesh"])
 
-rawpage(url) = parsehtml(String(HTTP.get(url).body)).root
-
 function innerText(dom)
-  text = IOBuffer()
+  text = ""
   for elem in PreOrderDFS(dom)
-    elem isa HTMLText && print(text, elem.text)
+        if elem isa HTMLText
+            text = string(text, elem.text)
+        end
   end
-  return String(text)
+  return text
 end
 
-content(url) = join(innerText.(matchall(sel".mw-parser-output > p", rawpage(url))), "\n")
+rawpage(url) = parsehtml(String(HTTP.get(url).body)).root#parsehtml(String(HTTP.get(url).body)).root
+content(url) = join(innerText.(eachmatch(Selector(".mw-parser-output > p"), rawpage(url) )))
 
 cd(@__DIR__)
 mkpath("corpus")
 
 for (lang, ps) in pages
-  open("corpus/$lang.txt", "w") do io
+  open("corpus/$(lang).txt", "w") do io
     for p in ps
-      write(io, content("https://$lang.wikipedia.org/wiki/$p"))
+      write(io, content("https://$(lang).wikipedia.org/wiki/$(p)"))
     end
   end
 end
