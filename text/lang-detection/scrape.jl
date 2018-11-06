@@ -21,7 +21,7 @@ function innerText(dom)
 end
 
 rawpage(url) = parsehtml(String(HTTP.get(url).body)).root
-content(url) = join(innerText.(eachmatch(Selector(".mw-parser-output > p"), rawpage(url) )))
+content(url) = join(innerText.(eachmatch(Selector(".mw-parser-output > p"), rawpage(url) )), "\n")
 
 cd(@__DIR__)
 mkpath("corpus")
