@@ -20,7 +20,7 @@ function innerText(dom)
   return text
 end
 
-rawpage(url) = parsehtml(String(HTTP.get(url).body)).root#parsehtml(String(HTTP.get(url).body)).root
+rawpage(url) = parsehtml(String(HTTP.get(url).body)).root
 content(url) = join(innerText.(eachmatch(Selector(".mw-parser-output > p"), rawpage(url) )))
 
 cd(@__DIR__)
