@@ -27,9 +27,9 @@ cd(@__DIR__)
 mkpath("corpus")
 
 for (lang, ps) in pages
-  open("corpus/$(lang).txt", "w") do io
+  open("corpus/$lang.txt", "w") do io
     for p in ps
-      write(io, content("https://$(lang).wikipedia.org/wiki/$(p)"))
+      write(io, content("https://$lang.wikipedia.org/wiki/$p"))
     end
   end
 end
