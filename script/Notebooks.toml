@@ -29,10 +29,10 @@ deps = ["data.jl"]
 path = "other/diffeq"
 notebook = "diffeq.jl"
 
-[bitstring-parity]
-path = "other/bitstring-parity"
-notebook = ["xor1.jl", "xor2.jl", "xor3.jl"]
-deps = "data.jl"
+#[bitstring-parity]
+#path = "other/bitstring-parity"
+#notebook = ["xor1.jl", "xor2.jl", "xor3.jl"]
+#deps = "data.jl"
 
 [fizzbuzz]
 path = "other/fizzbuzz"

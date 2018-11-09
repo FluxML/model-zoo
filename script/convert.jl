@@ -7,6 +7,7 @@ meta = meta[ARGS[1]]
 
 path = meta["path"]
 deps = get(meta, "deps", [])
+deps isa String && (deps = [deps])
 
 for d in ["Project.toml", "Manifest.toml", ".gitignore"]
   isfile(joinpath(root, path, d)) && push!(deps, d)
@@ -22,8 +23,13 @@ Pkg.activate(joinpath(root, "notebooks", path))
 
 using Literate
 
-function init_nb(content)
-	content = replace(content, r"#\s*using CuArrays" => "## using CuArrays")
+function postprocess_nb(content)
+	content = replace(content, r"\s*using CuArrays" => "## using CuArrays")
+	return content
+end
+
+function preprocess_nb(content)
+	content = replace(content, r"#\s*using CuArrays" => "using CuArrays")
 	content = "using Pkg; Pkg.activate(\".\"); Pkg.instantiate();\n\n" * content
 	return content
 end
@@ -34,7 +40,8 @@ scripts isa String && (scripts = [scripts])
 for script in scripts
   Literate.notebook(joinpath(root, path, script),
                     joinpath(root, "notebooks", path),
-                    credit = false, preprocess = init_nb)
+                    credit = false, preprocess = preprocess_nb
+                    postprocess = postprocess_nb)
 end
 
 scripts = map(x -> x[1:end - 3] * ".ipynb", scripts)
