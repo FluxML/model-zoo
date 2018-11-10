@@ -40,7 +40,7 @@ scripts isa String && (scripts = [scripts])
 for script in scripts
   Literate.notebook(joinpath(root, path, script),
                     joinpath(root, "notebooks", path),
-                    credit = false, preprocess = preprocess_nb
+                    credit = false, preprocess = preprocess_nb,
                     postprocess = postprocess_nb)
 end
 
