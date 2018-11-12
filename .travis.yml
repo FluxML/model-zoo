@@ -5,6 +5,6 @@ os:
 
 deploy:
   provider: script
-  script: bash script/make_nb.sh
+  script: bash ./script/make_nb.sh
   on:
     branch: master
