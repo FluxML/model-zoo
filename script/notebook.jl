@@ -1,5 +1,6 @@
 using Pkg
 Pkg.activate(@__DIR__)
+Pkg.instantiate()
 
 using Pkg.TOML
 meta = length(ARGS) > 0 ? ARGS :
