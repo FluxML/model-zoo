@@ -1,5 +1,5 @@
 using Flux, Flux.Data.MNIST, Statistics
-using Flux: onehotbatch, onecold, crossentropy, throttle
+using Flux: onehotbatch, onecold, crossentropy, throttle, @epochs
 using Base.Iterators: repeated, partition
 # using CuArrays
 
@@ -36,4 +36,6 @@ accuracy(x, y) = mean(onecold(m(x)) .== onecold(y))
 evalcb = throttle(() -> @show(accuracy(tX, tY)), 10)
 opt = ADAM(params(m))
 
-Flux.train!(loss, train, opt, cb = evalcb)
+@epochs 10 Flux.train!(loss, train, opt, cb = evalcb)
+
+accuracy(tX, tY)
