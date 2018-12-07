@@ -142,8 +142,12 @@ function main()
 
   opt = Momentum(params((forward, backward, output)), 10.0^-5; ρ=0.9)
 
+  i = 0
+
   @epochs EPOCHS begin
-#     println("Epoch " * string(i) * "/" * string(EPOCHS))
+
+    i += 1
+
     shuffle!(data)
     valData = valData[shuffle(1:length(valData))]
     
