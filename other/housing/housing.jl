@@ -45,4 +45,5 @@ for i = 1:10
   @show loss(x, y)
 end
 
-predict(x[:,1]) / y[1]
+pred = predict(x[:,1]) / y[1]
+println(pred)
