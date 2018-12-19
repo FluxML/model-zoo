@@ -1,7 +1,6 @@
 using Flux, Flux.Data.MNIST, Statistics
 using Flux: onehotbatch, onecold, crossentropy, throttle
 using Base.Iterators: repeated, partition
-# using CuArrays
 
 # Classify MNIST digits with a convolutional network
 

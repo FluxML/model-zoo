@@ -1,5 +1,6 @@
 using Flux.Tracker, Statistics, DelimitedFiles
 using Flux.Tracker: Params, gradient, update!
+using Flux: gpu
 
 # This replicates the housing data example from the Knet.jl readme. Although we
 # could have reused more of Flux (see the mnist example), the library's
@@ -16,19 +17,16 @@ rawdata = readdlm("housing.data")'
 
 # The last feature is our target -- the price of the house.
 
-x = rawdata[1:13,:]
-y = rawdata[14:14,:]
+x = rawdata[1:13,:] |> gpu
+y = rawdata[14:14,:] |> gpu
 
 # Normalise the data
 x = (x .- mean(x, dims = 2)) ./ std(x, dims = 2)
 
 # The model
 
-W = param(randn(1,13)/10)
-b = param([0.])
-
-# using CuArrays
-# W, b, x, y = cu.((W, b, x, y))
+W = param(randn(1,13)/10) |> gpu
+b = param([0.]) |> gpu
 
 predict(x) = W*x .+ b
 meansquarederror(ŷ, y) = sum((ŷ .- y).^2)/size(y, 2)
