@@ -296,7 +296,7 @@ labels = onehotbatch([X[i].ground_truth.class for i in 1:50000],1:10);
 
 # Let's take a look at a random image from the dataset
 
-X[rand(1:end)].img;
+X[rand(1:end)].img
 
 # The images are simply 32 X 32 matrices of numbers in 3 channels (R,G,B). We can now
 # arrange them in batches of say, 1000 and keep a validation set to track our progress.
@@ -307,13 +307,17 @@ getarray(X) = float.(permutedims(channelview(X), (2, 3, 1)));
 imgs = [getarray(X[i].img) for i in 1:50000];
 
 # The first 49k images (in batches of 1000) will be our training set, and the rest is
-# for validation.
+# for validation. `partition` handily breaks down the set we give it in consecutive parts
+# 1000 in this case. `cat` is a shorthand for concatentaing multi-dimensional arrays along
+# any dimension.
 
 train = gpu.([(cat(imgs[i]..., dims = 4), labels[:,i]) for i in partition(1:49000, 1000)]);
 valset = 49001:50000
 valX = cat(imgs[valset]..., dims = 4) |> gpu;
 valY = labels[:, valset] |> gpu;
 
+# ## Defining the Classifier
+# --------------------------
 # Now we can define our Convolutional Neural Network (CNN).
 
 m = Chain(
@@ -327,17 +331,25 @@ m = Chain(
   Dense(84, 10),
   softmax) |> gpu
 
-# We will use a crossentropy loss and an Momentum optimiser here.
+# We will use a crossentropy loss and an Momentum optimiser here. Crossentropy will be a
+# good option when it comes to working with mulitple independent classes.
 
 using Flux: crossentropy, Momentum
 
 loss(x, y) = sum(crossentropy(m(x), y))
-opt = Momentum(params(m))
+opt = Momentum(params(m), 0.01)
 
 # We can start writing our train loop where we will keep track of some basic accuracy
 # numbers about our model. We can define an `accuracy` function for it like so.
 
 accuracy(x, y) = mean(onecold(m(x), 1:10) .== onecold(y, 1:10))
+
+# ## Training
+# -----------
+
+# Training is where we do a bunch of the interesting operations we defined earlier,
+# and see what our net is capable of. We will loop over the dataset 100 times and
+# feed the inputs to the neural network and optimise.
 
 epochs = 100
 
@@ -350,14 +362,65 @@ for epoch = 1:epochs
   end
 end
 
+# Seeing our training routine unfold gives us an idea of how the network learnt in the
+# period of time. This is not bad for a small hand-written network, trained for a limited
+# time.
+
+# Training on a GPU
+# -----------------
+
 # The `gpu` functions you see sprinkled through this bit of the code tell Flux to move
 # these entities to GPU if available, and subsequently train on them. No extra faffing
 # about required! The same bit of code would work on any hardware with some small
 # annotations like you saw here.
 
+# ## Testing the Network
+# ----------------------
+
+# We have trained the network for 100 passes over the training dataset. But we need to
+# check if the network has learnt anything at all.
+
+# We will check this by predicting the class label that the neural network outputs, and
+# checking it against the ground-truth.
+
+# Okay, first step. Let's set up the test set, exactly like we did our train set.
+
+valset = valimgs(CIFAR10)
+valimg = [getarray(valset[i].img) for i in 1:10000];
+labels = onehotbatch([valset[i].ground_truth.class for i in 1:10000],1:10);
+test = gpu.([(cat(valimg[i]..., dims = 4), labels[:,i]) for i in partition(1:10000, 1000)]);
+
+# We should take a look at some of the images from the test set.
+
+image(x) = x.img
+image.(valset[rand(1:end, 10)])
+
+# These images look similar to the ones we trained on.
 # Let's see how the model fared.
 
-accuracy(valX, valY)
+accuracy(test[1]...)
 
-# This is much better than random chance, and not bad at all for a small hand written
-# network like ours.
+# This is much better than random chance set at 10% (since we only have 10 classes), and
+# not bad at all for a small hand written network like ours.
+
+# Let's take a look at how the net performed on all the classes performed individually.
+
+class_correct = zeros(10)
+class_total = zeros(10)
+for i in 1:10
+  preds = m(test[i][1])
+  lab = test[i][2]
+  for j = 1:1000
+    pred_class = findmax(preds[:, j])[2]
+    actual_class = findmax(lab[:, j])[2]
+    if pred_class == actual_class
+      class_correct[pred_class] += 1
+    end
+    class_total[actual_class] += 1
+  end
+end
+
+class_correct ./ class_total
+
+# The spread seems pretty good, with certain classes performing significantly better than the others.
+# Why should that be?
