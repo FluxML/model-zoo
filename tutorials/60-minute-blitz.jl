@@ -168,7 +168,8 @@ gradient(myloss, W, b, x)
 
 # Because ML models can contain hundreds of parameters, Flux provides a slightly
 # different way of writing `gradient`. We instead mark arrays with `param` to
-# indicate that we want their derivatives.
+# indicate that we want their derivatives. `W` and `b` represent the weight and
+# bias respectively.
 
 using Flux.Tracker: param, back!, grad
 
@@ -240,8 +241,9 @@ end
 opt = SGD(params(m), 0.01)
 opt() # updates the weights
 
-# Combining all these steps put together, done many times is how we train Flux models.
-# Flux comes with the `train!` to start our training loop.
+# `Training` a network reduces down to iterating on a dataset mulitple times, performing these
+# steps in order. Just for a quick implementation, let’s train a network that learns to predict
+# `0.5` for every input of 10 floats. `Flux` defines the `train!` function to do it for us.
 
 data, labels = rand(10, 100), fill(0.5, 2, 100)
 Flux.train!(loss, [(data, labels)], opt)
@@ -279,46 +281,58 @@ Flux.train!(loss, [(data, labels)], opt)
 # It also has a number of dataloaders that come in handy to load datasets.
 
 using Statistics
+# using CuArrays
 using Flux, Flux.Tracker, Flux.Optimise
 using Metalhead, Images
 using Metalhead: trainimgs
 using Images.ImageCore
 using Flux: onehotbatch, onecold
 using Base.Iterators: partition
-using CuArrays
 
 # The image will give us an idea of what we are dealing with.
 # ![title](https://pytorch.org/tutorials/_images/cifar10.png)
 
-Metalhead.download(CIFAR10);
-X = trainimgs(CIFAR10);
-labels = onehotbatch([X[i].ground_truth.class for i in 1:50000],1:10);
+Metalhead.download(CIFAR10)
+X = trainimgs(CIFAR10)
+labels = onehotbatch([X[i].ground_truth.class for i in 1:50000],1:10)
 
 # Let's take a look at a random image from the dataset
 
-X[rand(1:end)].img
+image(x) = x.img # handy for use later
+ground_truth(x) = x.ground_truth
+image.(X[rand(1:end, 10)])
 
 # The images are simply 32 X 32 matrices of numbers in 3 channels (R,G,B). We can now
 # arrange them in batches of say, 1000 and keep a validation set to track our progress.
+# This process is called minibatch learning, which is a popular method of training
+# large neural networks. Rather that sending the entire dataset at once, we break it
+# down into smaller chunks (called minibatches) that are typically chosen at random,
+# and train only on them. It is shown to help with escaping
+# [saddle points](https://en.wikipedia.org/wiki/Saddle_point).
 
 # Defining a `getarray` function would help in converting the matrices to `Float` type.
 
-getarray(X) = float.(permutedims(channelview(X), (2, 3, 1)));
-imgs = [getarray(X[i].img) for i in 1:50000];
+getarray(X) = float.(permutedims(channelview(X), (2, 3, 1)))
+imgs = [getarray(X[i].img) for i in 1:50000]
 
 # The first 49k images (in batches of 1000) will be our training set, and the rest is
 # for validation. `partition` handily breaks down the set we give it in consecutive parts
-# 1000 in this case. `cat` is a shorthand for concatentaing multi-dimensional arrays along
+# (1000 in this case). `cat` is a shorthand for concatentaing multi-dimensional arrays along
 # any dimension.
 
-train = gpu.([(cat(imgs[i]..., dims = 4), labels[:,i]) for i in partition(1:49000, 1000)]);
+train = gpu.([(cat(imgs[i]..., dims = 4), labels[:,i]) for i in partition(1:49000, 1000)])
 valset = 49001:50000
-valX = cat(imgs[valset]..., dims = 4) |> gpu;
-valY = labels[:, valset] |> gpu;
+valX = cat(imgs[valset]..., dims = 4) |> gpu
+valY = labels[:, valset] |> gpu
 
 # ## Defining the Classifier
 # --------------------------
 # Now we can define our Convolutional Neural Network (CNN).
+
+# A convolutional neural network is one which defines a kernel and slides it across a matrix
+# to create an intermediate representation to extract features from. It creates higher order
+# features as it goes into deeper layers, making it suitable for images, where the strucure of
+# the subject is what will help us determine which class it belongs to.
 
 m = Chain(
   Conv((5,5), 3=>16, relu),
@@ -331,8 +345,12 @@ m = Chain(
   Dense(84, 10),
   softmax) |> gpu
 
+#-
 # We will use a crossentropy loss and an Momentum optimiser here. Crossentropy will be a
-# good option when it comes to working with mulitple independent classes.
+# good option when it comes to working with mulitple independent classes. Momentum gradually
+# lowers the learning rate as we proceed with the training. It helps maintain a bit of
+# adaptivity in our optimisation, preventing us from over shooting from our desired destination.
+#-
 
 using Flux: crossentropy, Momentum
 
@@ -351,7 +369,7 @@ accuracy(x, y) = mean(onecold(m(x), 1:10) .== onecold(y, 1:10))
 # and see what our net is capable of. We will loop over the dataset 100 times and
 # feed the inputs to the neural network and optimise.
 
-epochs = 100
+epochs = 10
 
 for epoch = 1:epochs
   for d in train
@@ -362,15 +380,14 @@ for epoch = 1:epochs
   end
 end
 
-# Seeing our training routine unfold gives us an idea of how the network learnt in the
-# period of time. This is not bad for a small hand-written network, trained for a limited
-# time.
+# Seeing our training routine unfold gives us an idea of how the network learnt the
+# This is not bad for a small hand-written network, trained for a limited time. 
 
 # Training on a GPU
 # -----------------
 
 # The `gpu` functions you see sprinkled through this bit of the code tell Flux to move
-# these entities to GPU if available, and subsequently train on them. No extra faffing
+# these entities to an available GPU, and subsequently train on it. No extra faffing
 # about required! The same bit of code would work on any hardware with some small
 # annotations like you saw here.
 
@@ -381,22 +398,35 @@ end
 # check if the network has learnt anything at all.
 
 # We will check this by predicting the class label that the neural network outputs, and
-# checking it against the ground-truth.
+# checking it against the ground-truth. If the prediction is correct, we add the sample
+# to the list of correct predictions. This will be done on a yet unseen section of data.
 
-# Okay, first step. Let's set up the test set, exactly like we did our train set.
+# Okay, first step. Let us perform the exact same preprocessing on this set, as we did
+# on our training set.
 
 valset = valimgs(CIFAR10)
-valimg = [getarray(valset[i].img) for i in 1:10000];
-labels = onehotbatch([valset[i].ground_truth.class for i in 1:10000],1:10);
-test = gpu.([(cat(valimg[i]..., dims = 4), labels[:,i]) for i in partition(1:10000, 1000)]);
+valimg = [getarray(valset[i].img) for i in 1:10000]
+labels = onehotbatch([valset[i].ground_truth.class for i in 1:10000],1:10)
+test = gpu.([(cat(valimg[i]..., dims = 4), labels[:,i]) for i in partition(1:10000, 1000)])
 
-# We should take a look at some of the images from the test set.
+# Next, display some of the images from the test set.
 
-image(x) = x.img
-image.(valset[rand(1:end, 10)])
+ids = rand(1:10000, 10)
+image.(valset[ids])
 
-# These images look similar to the ones we trained on.
+# The outputs are energies for the 10 classes. Higher the energy for a class, the more the
+# network thinks that the image is of the particular class. Every column corresponds to the
+# output of one image, with the 10 floats in the column being the energies.
+
 # Let's see how the model fared.
+
+rand_test = getarray.(image.(valset[ids])...)
+rand_test = cat(rand_test..., dims = 4) |> gpu
+rand_truth = ground_truth.(valset[ids]...)
+m(rand_test)
+
+# This looks similar to how we would expect the results to be. At this point, it's a good
+# idea to see how our net actually performs on new data, that we have prepared.
 
 accuracy(test[1]...)
 
