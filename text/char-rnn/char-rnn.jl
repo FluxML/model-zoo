@@ -2,7 +2,6 @@ using Flux
 using Flux: onehot, chunk, batchseq, throttle, crossentropy
 using StatsBase: wsample
 using Base.Iterators: partition
-# using CuArrays
 
 cd(@__DIR__)
 
@@ -37,16 +36,16 @@ function loss(xs, ys)
 end
 
 opt = ADAM(params(m), 0.01)
-tx, ty = (gpu.(Xs[5]), gpu.(Ys[5]))
+tx, ty = (Xs[5], Ys[5])
 evalcb = () -> @show loss(tx, ty)
 
 Flux.train!(loss, zip(Xs, Ys), opt,
             cb = throttle(evalcb, 30))
 
 # Sampling
-m = cpu(m)
 
 function sample(m, alphabet, len; temp = 1)
+  m = cpu(m)
   Flux.reset!(m)
   buf = IOBuffer()
   c = rand(alphabet)
