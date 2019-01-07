@@ -212,8 +212,7 @@ params(m)
 
 m = Chain(Dense(10, 5, relu), Dense(5, 2), softmax)
 
-loss(x, y = [0.5, 0.5]) = sum(Flux.crossentropy(m(x), y))
-l = loss(x)
+l = sum(Flux.crossentropy(m(x), [0.5, 0.5]))
 back!(l)
 
 grad.(params(m))
@@ -246,7 +245,8 @@ opt() # updates the weights
 # `0.5` for every input of 10 floats. `Flux` defines the `train!` function to do it for us.
 
 data, labels = rand(10, 100), fill(0.5, 2, 100)
-Flux.train!(loss, [(data, labels)], opt)
+loss(x, y) = sum(Flux.crossentropy(m(x), y))
+Flux.train!(loss, [(data,labels)], opt)
 
 # You don't have to use `train!`. In cases where aribtrary logic might be better suited,
 # you could open up this training loop like so:
