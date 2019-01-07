@@ -6,3 +6,8 @@ deps = ["vae.jl"]
 [char-rnn]
 path = "text/char-rnn"
 notebook = "char-rnn.jl"
+
+[conv]
+path = "vision/mnist/conv/"
+notebook = "conv.jl"
+deps = ["mnistsample.png"]
