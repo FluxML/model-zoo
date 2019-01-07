@@ -420,7 +420,7 @@ image.(valset[ids])
 
 # Let's see how the model fared.
 
-rand_test = getarray.(image.(valset[ids])...)
+rand_test = getarray.(image.(valset[ids]))
 rand_test = cat(rand_test..., dims = 4) |> gpu
 rand_truth = ground_truth.(valset[ids]...)
 m(rand_test)
