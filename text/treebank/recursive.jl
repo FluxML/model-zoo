@@ -35,4 +35,3 @@ evalcb = () -> @show loss(train[1])
 
 Flux.train!(loss, ps, zip(train), opt,
            cb = throttle(evalcb, 10))
-end
