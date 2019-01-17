@@ -52,9 +52,8 @@ loss(x, yo, y) = sum(crossentropy.(model(x, yo), y))
 
 evalcb = () -> @show loss(data[500]...)
 opt = ADAM()
-ps = params(state)
 
-Flux.train!(loss, ps, data, opt, cb = throttle(evalcb, 10))
+Flux.train!(loss, params(state), data, opt, cb = throttle(evalcb, 10))
 
 # Prediction
 

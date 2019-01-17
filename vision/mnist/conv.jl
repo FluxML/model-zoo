@@ -36,6 +36,5 @@ accuracy(x, y) = mean(onecold(m(x)) .== onecold(y))
 
 evalcb = throttle(() -> @show(accuracy(tX, tY)), 10)
 opt = ADAM()
-ps = params(m)
 
-Flux.train!(loss, ps, train, opt, cb = evalcb)
+Flux.train!(loss, params(m), train, opt, cb = evalcb)

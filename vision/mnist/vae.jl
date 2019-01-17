@@ -49,6 +49,7 @@ modelsample() = rand.(Bernoulli.(f(z.(zeros(Dz), zeros(Dz)))))
 evalcb = throttle(() -> @show(-L̄(X[:, rand(1:N, M)])), 30)
 opt = ADAM()
 ps = params(A, μ, logσ, f)
+
 @progress for i = 1:20
   @info "Epoch $i"
   Flux.train!(loss, ps, zip(data), opt, cb=evalcb)
@@ -57,10 +58,10 @@ end
 
 ################################# Sample Output ##############################
 
-#using Images
+using Images
 
-#img(x) = Gray.(reshape(x, 28, 28))
+img(x) = Gray.(reshape(x, 28, 28))
 
-#cd(@__DIR__)
-#sample = hcat(img.([modelsample() for i = 1:10])...)
-#save("sample.png", sample)
+cd(@__DIR__)
+sample = hcat(img.([modelsample() for i = 1:10])...)
+save("sample.png", sample)
