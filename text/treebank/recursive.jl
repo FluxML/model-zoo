@@ -6,7 +6,7 @@ include("data.jl")
 
 N = 300
 
-embedding = param(randn(N, length(alphabet)))
+embedding = param(randn(Float32, N, length(alphabet)))
 
 W = Dense(2N, N, tanh)
 combine(a, b) = W([a; b])
@@ -29,8 +29,10 @@ end
 
 loss(tree) = forward(tree)[2]
 
-opt = ADAM(params(embedding, W, sentiment))
+opt = ADAM()
+ps = params(embedding, W, sentiment)
 evalcb = () -> @show loss(train[1])
 
-Flux.train!(loss, zip(train), opt,
-            cb = throttle(evalcb, 10))
+Flux.train!(loss, ps, zip(train), opt,
+           cb = throttle(evalcb, 10))
+end

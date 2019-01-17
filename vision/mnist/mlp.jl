@@ -24,9 +24,10 @@ accuracy(x, y) = mean(onecold(m(x)) .== onecold(y))
 
 dataset = repeated((X, Y), 200)
 evalcb = () -> @show(loss(X, Y))
-opt = ADAM(params(m))
+opt = ADAM()
+ps = params(m)
 
-Flux.train!(loss, dataset, opt, cb = throttle(evalcb, 10))
+Flux.train!(loss, ps, dataset, opt, cb = throttle(evalcb, 10))
 
 accuracy(X, Y)
 
