@@ -21,11 +21,12 @@ end
 loss(x, y) = crossentropy(model(x), y)
 batch_loss(data) = mean(loss(d...) for d in data)
 
-opt = ADAM(params(scanner, encoder))
+opt = ADAM()
+ps = params(scanner, encoder)
 evalcb = () -> @show batch_loss(val)
 
 for i=1:epochs
-    Flux.train!(loss, train, opt, cb=throttle(evalcb, 10))
+    Flux.train!(loss, ps, train, opt, cb=throttle(evalcb, 10))
 end
 
 # sanity test
