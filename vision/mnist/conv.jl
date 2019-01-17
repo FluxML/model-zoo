@@ -35,6 +35,7 @@ loss(x, y) = crossentropy(m(x), y)
 accuracy(x, y) = mean(onecold(m(x)) .== onecold(y))
 
 evalcb = throttle(() -> @show(accuracy(tX, tY)), 10)
-opt = ADAM(params(m))
+opt = ADAM()
+ps = params(m)
 
-Flux.train!(loss, train, opt, cb = evalcb)
+Flux.train!(loss, ps, train, opt, cb = evalcb)
