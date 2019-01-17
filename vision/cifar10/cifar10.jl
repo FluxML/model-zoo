@@ -115,11 +115,12 @@ accuracy(x, y) = mean(onecold(m(x), 1:10) .== onecold(y, 1:10))
 
 evalcb = throttle(() -> @show(accuracy(valX, valY)), 10)
 
-opt = ADAM(params(m))
+opt = ADAM()
+ps = params(m)
 
 # Starting to train models
 
-Flux.train!(loss, train, opt, cb = evalcb)
+Flux.train!(loss, ps, train, opt, cb = evalcb)
 
 # Fetch the test data from Metalhead and get it into proper shape.
 # CIFAR-10 does not specify a validation set so valimgs fetch the testdata instead of testimgs
