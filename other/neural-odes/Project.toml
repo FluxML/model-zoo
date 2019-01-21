@@ -1,0 +1,4 @@
+[deps]
+DiffEqFlux = "29eb61f6-93cc-5d97-9b01-2cce5884a08e"
+Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
+OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
