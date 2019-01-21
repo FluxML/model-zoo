@@ -1,3 +1,4 @@
+using DataStructures
 import Reinforce
 using Reinforce:CartPoleV0, actions, reset!, finished, step!
 using Flux, StatsBase, Plots
@@ -12,7 +13,6 @@ EPISODES = 3000
 STATE_SIZE = length(env.state)
 ACTION_SIZE = length(actions(env, env.state))
 
-MEM_SIZE = 2000
 BATCH_SIZE = 32
 
 γ = 0.95                # discount rate
@@ -22,18 +22,15 @@ BATCH_SIZE = 32
 ϵ_min = 0.01            # exploration minimum
 ϵ_decay = 0.995         # exploration decay
 
-memory = []             # used to remember past results
+memory = CircularBuffer{Any}(2000)             # used to remember past results
 
 #-------------Model Architecture--------------#
 model = Chain(Dense(STATE_SIZE, 24), Dense(24, 24), Dense(24, ACTION_SIZE))
 loss(x, y) = Flux.mse(model(x), y)
-opt = ADAM(params(model), η)
-fit_model(dataset) = Flux.train!(loss, dataset, opt)
+opt = ADAM(η)
+fit_model(dataset) = Flux.train!(loss, params(model), dataset, opt)
 
 function remember(state, action, reward, next_state, done)
-    if length(memory) == MEM_SIZE
-        deleteat!(memory, 1)
-    end
     push!(memory, (state, action, reward, next_state, done))
 end
 
