@@ -11,13 +11,13 @@ pages = Dict(
   :da => ["Wikipedia", "H.C._Andersen", "L.A._Ring", "Jiangxi", "NATO", "Thomas_Edison", "Bangladesh"])
 
 function innerText(dom)
-  text = ""
+  text = IOBuffer()
   for elem in PreOrderDFS(dom)
         if elem isa HTMLText
-            text = string(text, elem.text)
+            write(text, elem.text)
         end
   end
-  return text
+  return String(take!(text))
 end
 
 rawpage(url) = parsehtml(String(HTTP.get(url).body)).root
