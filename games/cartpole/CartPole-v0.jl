@@ -2,6 +2,7 @@ using DataStructures
 import Reinforce
 using Reinforce:CartPoleV0, actions, reset!, finished, step!
 using Flux, StatsBase, Plots
+# using CuArrays
 
 gr()
 
@@ -25,10 +26,10 @@ BATCH_SIZE = 32
 memory = CircularBuffer{Any}(2000)             # used to remember past results
 
 #-------------Model Architecture--------------#
-model = Chain(Dense(STATE_SIZE, 24), Dense(24, 24), Dense(24, ACTION_SIZE))
-loss(x, y) = Flux.mse(model(x), y)
+model = Chain(Dense(STATE_SIZE, 24), Dense(24, 24), Dense(24, ACTION_SIZE)) |> gpu
+loss(x, y) = Flux.mse(model(x |> gpu), y)
 opt = ADAM(η)
-fit_model(dataset) = Flux.train!(loss, params(model), dataset, opt)
+fit_model(dataset) = Flux.train!(loss, params(model), dataset |> gpu, opt)
 
 function remember(state, action, reward, next_state, done)
     push!(memory, (state, action, reward, next_state, done))
@@ -38,7 +39,7 @@ function act(state)
     if rand() <= ϵ
         return rand(1:ACTION_SIZE)
     end
-    act_values = model(state).data
+    act_values = model(state |> gpu).data
     return argmax(act_values)[1]  # returns action
 end
 
@@ -49,9 +50,9 @@ function exp_replay()
     for (state, action, reward, next_state, done) in minibatch
         target = reward
         if !done
-            target += γ * maximum(model(next_state).data)
+            target += γ * maximum(model(next_state |> gpu).data)
         end
-        target_f = model(state).data
+        target_f = model(state |> gpu).data
         target_f[action, 1] = target
         dataset = [(state, target_f)]
         fit_model(dataset)
