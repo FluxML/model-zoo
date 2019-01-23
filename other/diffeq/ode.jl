@@ -26,7 +26,6 @@ scatter!(t,A)
 # generated data and 1
 
 p = param([2.2, 1.0, 2.0, 0.4]) # Initial Parameter Vector
-params = Flux.Params([p])
 function predict_rd() # Our 1-layer neural network
   diffeq_rd(p,prob,Tsit5(),saveat=0.1)[1,:]
 end
@@ -43,4 +42,4 @@ cb = function () #callback function to observe training
 end
 # Display the ODE with the initial parameter values.
 cb()
-Flux.train!(loss_rd, params, data, opt, cb = cb)
+Flux.train!(loss_rd, [p], data, opt, cb = cb)

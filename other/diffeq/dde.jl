@@ -12,7 +12,6 @@ function lotka_volterra_noise(du,u,p,t)
 end
 prob = SDEProblem(lotka_volterra,lotka_volterra_noise,[1.0,1.0],(0.0,10.0))
 p = param([2.2, 1.0, 2.0, 0.4])
-params = Flux.Params([p])
 function predict_fd_sde()
   diffeq_fd(p,sol->sol[1,:],101,prob,SOSRI(),saveat=0.1)
 end
@@ -26,4 +25,4 @@ cb = function ()
 end
 # Display the SDE with the current parameter values.
 cb()
-Flux.train!(loss_fd_sde, params, data, opt, cb = cb)
+Flux.train!(loss_fd_sde, [p], data, opt, cb = cb)

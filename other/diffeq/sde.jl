@@ -11,7 +11,6 @@ end
 h(p,t) = ones(eltype(p),2)
 prob = DDEProblem(delay_lotka_volterra,[1.0,1.0],h,(0.0,10.0),constant_lags=[0.1])
 p = param([2.2, 1.0, 2.0, 0.4])
-params = Flux.Params([p])
 function predict_rd_dde()
   diffeq_rd(p,prob,MethodOfSteps(Tsit5()),saveat=0.1)[1,:]
 end
@@ -28,4 +27,4 @@ cb = function () #callback function to observe training
 end
 # Display the DDE with the initial parameter values.
 cb()
-Flux.train!(loss_rd_dde, params, data, opt, cb = cb)
+Flux.train!(loss_rd_dde, [p], data, opt, cb = cb)
