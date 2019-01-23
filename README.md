@@ -40,8 +40,12 @@ We welcome contributions of new models. They should be in a folder with a projec
   * [Character-level language detection](text/lang-detection)
   * [Seq2Seq phoneme detection on CMUDict](text/phonemes)
   * [Recursive net on IMDB sentiment treebank](text/treebank)
+* DiffEq
+  * [Train an ODE to satisfy and objective](other/diffeq)
+  * [Train a SDE to satisfy and objective](other/diffeq)
+  * [Train a DDE to satisfy and objective](other/diffeq)
+  * [Time series prediction with a neural ODE](other/diffeq)
 * Other
-  * [Backprop through an ODE](other/diffeq)
   * [BitString Parity Challenge](other/bitstring-parity)
   * [MLP on housing data](other/housing/housing.jl) (low level API)
   * [FizzBuzz](other/fizzbuzz/fizzbuzz.jl)
