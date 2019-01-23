@@ -14,9 +14,16 @@ using Pkg; Pkg.activate("."); Pkg.instantiate()
 
 to install all needed packages. Then you can run the model code with `include("script.jl")` or by running the script line-by-line. More details are available in the README for each model.
 
+Models with a `cuda` folder can be loaded with GPU support, if you have a CUDA installed.
+
+```julia
+using Pkg; Pkg.activate("cuda"); Pkg.instantiate()
+using CuArrays
+```
+
 ## Contributing
 
-We welcome contributions of new models. They should be in a folder with a project and manifest file, to pin all relevant packages, as well as a README to explain what the model is about, how to run it, and what results it acheives (if applicable). If possible models should not depend directly on GPU functionality, but ideally should be CPU/GPU agnostic.
+We welcome contributions of new models. They should be in a folder with a project and manifest file, to pin all relevant packages, as well as a README to explain what the model is about, how to run it, and what results it achieves (if applicable). If possible models should not depend directly on GPU functionality, but ideally should be CPU/GPU agnostic.
 
 ## Model Listing
 

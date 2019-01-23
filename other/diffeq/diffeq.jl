@@ -67,7 +67,7 @@ end
 
 pred = [2.2, 1.0]
 prey = [2, 3]
-Tracker.derivative(p -> stability(p, prey), pred)
+Tracker.gradient(p -> stability(p, prey), pred)
 
 # ––––––––––––––––––––––––––––––––––––––––––––––––––––– #
 #               Optimising Parameters                   #
@@ -77,7 +77,8 @@ predator = param([2.2, 1.0])
 prey = [2, 3]
 
 data = Iterators.repeated((), 100)
-opt = ADAM([predator], 0.1)
+opt = ADAM(0.1)
+ps = [predator]
 cb = () ->
   display(plot(trajectory(Flux.data(predator), prey), ylim=(0,6)))
 
@@ -86,4 +87,4 @@ cb()
 
 # Running this in Juno will generate an animation of the ODE over time.
 Flux.train!(() -> stability(predator, prey),
-            data, opt, cb = cb)
+           ps, data, opt, cb = cb)
