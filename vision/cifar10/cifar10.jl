@@ -98,7 +98,7 @@ getarray(X) = Float32.(permutedims(channelview(X), (2, 3, 1)))
 X = trainimgs(CIFAR10)
 imgs = [getarray(X[i].img) for i in 1:50000]
 labels = onehotbatch([X[i].ground_truth.class for i in 1:50000],1:10)
-train = gpu.([(cat(imgs[i]..., dims=4), labels[:,i]) for i in partition(1:49000, 1000)])
+train = gpu.([(cat(imgs[i]..., dims = 4), labels[:,i]) for i in partition(1:49000, 100)])
 valset = collect(49001:50000)
 valX = cat(imgs[valset]..., dims = 4) |> gpu
 valY = labels[:, valset] |> gpu
@@ -128,7 +128,7 @@ test = valimgs(CIFAR10)
 
 testimgs = [getarray(test[i].img) for i in 1:10000]
 testY = onehotbatch([test[i].ground_truth.class for i in 1:10000], 1:10) |> gpu
-testX = cat(4, testimgs...) |> gpu
+testX = cat(testimgs..., dims = 4) |> gpu
 
 # Print the final accuracy
 
