@@ -91,7 +91,7 @@ vgg19() = Chain(
 
 # Function to convert the RGB image to Float64 Arrays
 
-getarray(X) = Float64.(permutedims(channelview(X), (2, 3, 1)))
+getarray(X) = Float32.(permutedims(channelview(X), (2, 3, 1)))
 
 # Fetching the train and validation data and getting them into proper shape
 
