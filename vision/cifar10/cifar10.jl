@@ -1,4 +1,4 @@
-using Flux, Metalhead
+using Flux, Metalhead, Statistics
 using Flux: onehotbatch, onecold, crossentropy, throttle
 using Metalhead: trainimgs
 using Images
