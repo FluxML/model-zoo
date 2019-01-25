@@ -1,7 +1,7 @@
-using Flux, DiffEqFlux, DifferentialEquations, Plots, StatsBase
+using Flux, DiffEqFlux, DifferentialEquations, Plots, StatsBase, RecursiveArrayTools
 
 const u0 = Float32[2.; 0.]
-const datasize = 30
+const datasize = 1000
 const batchsize = 30
 const tspan = (0.0f0,25f0)
 
@@ -18,9 +18,9 @@ function get_batch()
     batch_idxs = sample(1:datasize,batchsize,
                         replace=false,ordered=true) 
     batch_t = true_sol.t[batch_idxs]
-    batch_u = Array(true_sol[batch_idxs])
-    #= batch_u0 = batch_u[1] =#
-    #= return batch_u0, batch_u, batch_t =#
+    batch_u = Array(true_sol[:,batch_idxs])
+    batch_u0 = batch_u[:,1]
+    return batch_u0, batch_u, batch_t
 end
 
 dudt = Chain(x -> x.^3,
@@ -46,12 +46,13 @@ loss_n_ode(batch_u0, batch_u,batch_t) = sum(abs2,batch_u .- predict_n_ode(batch_
 data = Iterators.repeated(get_batch(), 1000)
 opt = ADAM(0.1)
 cb = function () #callback function to observe training
-  display(loss_n_ode())
+    bu0,bu,bt = get_batch()
+    display(loss_n_ode(bu0,bu,bt))
   # plot current prediction against data
-  cur_pred = Flux.data(predict_n_ode())
-  pl = scatter(t,ode_data[1,:],label="data")
-  scatter!(pl,t,cur_pred[1,:],label="prediction")
-  display(plot(pl))
+  #= cur_pred = Flux.data(predict_n_ode(bu0,bt)) =#
+  #= pl = scatter(bt,ode_data[1,:],label="data") =#
+  #= scatter!(pl,bt,cur_pred[1,:],label="prediction") =#
+  #= display(plot(pl)) =#
 end
 
 # Display the ODE with the initial parameter values.
