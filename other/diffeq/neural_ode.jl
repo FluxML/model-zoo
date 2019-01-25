@@ -3,6 +3,7 @@ using Flux, DiffEqFlux, DifferentialEquations, Plots, StatsBase, RecursiveArrayT
 const u0 = Float32[2.; 0.]
 const datasize = 1000
 const batchsize = 30
+const batchtime = 10
 const tspan = (0.0f0,25f0)
 
 function trueODEfunc(du,u,p,t)
@@ -15,13 +16,15 @@ true_sol = solve(prob,Tsit5(),saveat=t)
 ode_data = Array(true_sol)
 
 function get_batch()
-    batch_idxs = sample(1:datasize,batchsize,
-                        replace=false,ordered=true) 
-    batch_t = true_sol.t[batch_idxs]
-    batch_u = Array(true_sol[:,batch_idxs])
-    batch_u0 = batch_u[:,1]
-    return batch_u0, batch_u, batch_t
+    batch_0s = sample(1:datasize-batchtime, batchsize, replace=false,ordered=false)
+    batch_idxs = range.(batch_0s,batch_0s.+(batchtime-1))
+    batch_ts = [t[i] for i in batch_idxs]
+    batch_u0 = [true_sol[u0] for u0 in batch_0s]
+    batch_u = [true_sol[:,idxs] for idxs in batch_idxs]
+    return batch_u0, batch_u, batch_ts
 end
+batch_u0, batch_u, batch_ts = get_batch();
+
 
 dudt = Chain(x -> x.^3,
              Dense(2,50,tanh),
@@ -33,6 +36,8 @@ function n_ode(batch_u0, batch_t)
 end
 #= n_ode = x->neural_ode(dudt,x,tspan,Tsit5(), =#
                       #= saveat=t,reltol=1e-7,abstol=1e-9) =#
+
+n_ode(batch_u0, batch_ts)
 
 pred = n_ode(u0,t) # Get the prediction using the correct initial condition
 scatter(t,ode_data[1,:],label="data")
