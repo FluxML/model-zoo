@@ -67,6 +67,30 @@ end
 #------------------------Render the environment--------------------#
 gui(plot(env))
 
+#-----------------------Testing-----------------------#
+function test(epis=125)
+    for ep=1:epis
+        reset!(env)
+        state = env.state
+        state = reshape(state, STATE_SIZE, 1) |> gpu
+        step = 0
+        while true
+            step += 1
+            gui(plot(env))
+            action = act(state)
+            reward, next_state = step!(env, state, action)
+            done = finished(env,next_state)
+            next_state = reshape(next_state, STATE_SIZE, 1)
+            state = gpu(next_state)
+            if done
+                println("Episode: $ep/$epis | Score: $step | ϵ: $ϵ")
+                break
+            end
+        end
+    end
+end
+
+#------------------------Training----------------------------#
 for e=1:EPISODES
     reset!(env)
     state = env.state
@@ -91,3 +115,6 @@ for e=1:EPISODES
         exp_replay()
     end
 end
+
+test()
+
