@@ -1,7 +1,8 @@
 using Flux, Metalhead
 using Flux: onehotbatch, onecold, crossentropy, throttle
 using Metalhead: trainimgs
-using Images
+using Images: channelview
+using Statistics: mean
 using Base.Iterators: partition
 
 # VGG16 and VGG19 models
@@ -128,7 +129,7 @@ test = valimgs(CIFAR10)
 
 testimgs = [getarray(test[i].img) for i in 1:10000]
 testY = onehotbatch([test[i].ground_truth.class for i in 1:10000], 1:10) |> gpu
-testX = cat(4, testimgs...) |> gpu
+testX = cat(testimgs..., dims=4) |> gpu
 
 # Print the final accuracy
 
