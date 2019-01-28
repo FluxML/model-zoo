@@ -2,7 +2,7 @@ using Flux, DiffEqFlux, DifferentialEquations, Plots
 
 u0 = Float32[2.; 0.]
 datasize = 30
-tspan = (0.0f0,1.5f0)
+tspan = (0.0f0,1.0f0)
 
 function trueODEfunc(du,u,p,t)
     true_A = [-0.1 2.0; -2.0 -0.1]
@@ -33,11 +33,13 @@ loss_n_sde() = sum(abs2,sde_data .- predict_n_sde())
 Flux.back!(loss_n_sde())
 
 data = Iterators.repeated((), 100)
-opt = ADAM(0.1)
+opt = ADAM(0.025)
 cb = function () #callback function to observe training
-  display(loss_n_sde())
+  sample = predict_n_sde()
+  # loss against current data
+  display(sum(abs2,sde_data .- sample))
   # plot current prediction against data
-  cur_pred = Flux.data(predict_n_sde())
+  cur_pred = Flux.data(sample)
   pl = scatter(t,sde_data[1,:],label="data")
   scatter!(pl,t,cur_pred[1,:],label="prediction")
   display(plot(pl))
