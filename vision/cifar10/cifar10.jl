@@ -1,7 +1,8 @@
 using Flux, Metalhead, Statistics
 using Flux: onehotbatch, onecold, crossentropy, throttle
 using Metalhead: trainimgs
-using Images
+using Images: channelview
+using Statistics: mean
 using Base.Iterators: partition
 
 # VGG16 and VGG19 models
