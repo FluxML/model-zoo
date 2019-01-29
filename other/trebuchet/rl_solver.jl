@@ -38,6 +38,7 @@ MEM_SIZE = 1000000
 MAX_EP = 100000
 MAX_DIST  = 500	# Maximum target distance
 MAX_SPEED =  10 # Maximum wind speed
+START_TRAINING_AFTER = 10000
 
 # ----------------------------- Hyperparameters ------------------------------ #
 
@@ -167,7 +168,7 @@ function episode(train=true)
     s .= s′
     attempts += 1
 
-    if length(memory) >= 10000 && train
+    if train && length(memory) ≥ START_TRAINING_AFTER
       trainer()
       update_target!(actor_target, actor; τ=τ)
       update_target!(critic_target, critic; τ=τ)
