@@ -1,9 +1,8 @@
 using Flux, Statistics, Trebuchet
-using Flux.Tracker
+using Flux.Tracker: data, gradient
 using Flux.Optimise: update!
 
-using CuArrays
-using CUDAnative: tanh
+#using CuArrays
 
 using BSON: @save, @load
 
@@ -19,12 +18,12 @@ using Printf
     Given conditions of environment we are required to predict the angle of
     release and counterweight.
 
-	The problem is gamified by introducing a threshold. The player gets 99
-	attempts. The first attempt has threshold value of 1. Threshold determines
-	the tolerable relative error between actual distance travelled by the Projectile
-	and the target distance. This relative error has to be less than the threshold
-	in order to continue playing the game. The game gets tougher at each attempts
-	by reduction of threshold by 0.01.
+    The problem is gamified by introducing a threshold. The player gets 99
+    attempts. The first attempt has threshold value of 1. Threshold determines
+    the tolerable relative error between actual distance travelled by the Projectile
+    and the target distance. This relative error has to be less than the threshold
+    in order to continue playing the game. The game gets tougher at each attempts
+    by reduction of threshold by 0.01.
 
 # Input:  Wind speed,   Target distance
 # Output: ReleaseAngle, Weight
@@ -110,7 +109,7 @@ function trainer()
 
   Flux.back!(sum(crit_out))
 
-  act_grads = -crit_in.grad[4:5, :]
+  act_grads = -crit_in.grad[end-ACTION_SIZE+1:end, :]
   zero_grad!(actor)
   Flux.back!(actions, act_grads)  # Chain rule
   update!(opt_act, params(actor))
@@ -132,9 +131,8 @@ remember(state, action, next_state, reward, done) =
 
 function action(state, train=true)
   state = reshape(state, size(state)..., 1)
-  act_pred = cpu(actor(state |> gpu).data) .+
-  					train * noise_scale * Float32.(rand(noise, ACTION_SIZE))
-  act_pred  # returns action
+  act_pred = data(actor(state |> gpu)) |> cpu .+
+  	     train * noise_scale * Float32.(rand(noise, ACTION_SIZE))
 end
 
 function reward(target_dist, threshold, wind_speed, release_angle, weight)
