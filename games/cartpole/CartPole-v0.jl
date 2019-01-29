@@ -112,11 +112,6 @@ for e=1:EPISODES
     if length(memory) >= BATCH_SIZE
         exp_replay()
     end
-<<<<<<< HEAD
 end
 
 test()
-
-=======
-end
->>>>>>> parent of 4825afd... Implemented Cartpole gpu version
