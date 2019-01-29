@@ -132,7 +132,7 @@ remember(state, action, next_state, reward, done) =
 
 function action(state, train=true)
   state = reshape(state, size(state)..., 1)
-  act_pred = data(actor(state |> gpu)) |> cpu .+
+  act_pred = cpu(data(actor(state |> gpu))) .+
   	     train * noise_scale * Float32.(rand(noise, ACTION_SIZE))
 end
 
