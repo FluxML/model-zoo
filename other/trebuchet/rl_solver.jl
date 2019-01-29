@@ -2,8 +2,7 @@ using Flux, Statistics, Trebuchet
 using Flux.Tracker
 using Flux.Optimise: update!
 
-using CuArrays
-using CUDAnative: tanh
+# using CuArrays
 
 using BSON: @save, @load
 
