@@ -143,9 +143,9 @@ version = "0.5.3"
 
 [[Flux]]
 deps = ["AbstractTrees", "Adapt", "CodecZlib", "Colors", "DiffRules", "ForwardDiff", "Juno", "LinearAlgebra", "MacroTools", "NNlib", "NaNMath", "Pkg", "Printf", "Random", "Reexport", "Requires", "SpecialFunctions", "Statistics", "StatsBase", "Test", "ZipFile"]
-git-tree-sha1 = "08c957f1fe9ce3b0c36ea54d10def94c11ba6ea7"
+git-tree-sha1 = "cc0b3a248448d6ebecca4d1588c8fd54b96c5939"
 uuid = "587475ba-b771-5e3f-ad9e-33799f191a9c"
-version = "0.7.2"
+version = "0.7.0"
 
 [[ForwardDiff]]
 deps = ["CommonSubexpressions", "DiffResults", "DiffRules", "InteractiveUtils", "LinearAlgebra", "NaNMath", "Random", "SparseArrays", "SpecialFunctions", "StaticArrays", "Test"]
