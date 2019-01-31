@@ -114,11 +114,11 @@ for e=1:EPISODES
     if best_score <= score
         best_score = score
         println(stats); flush(stdout)
-        @save "models/notebook4/model-$e-$score.bson" model
+        @save "models/double-dqn/model-$e-$score.bson" model
         anim = @animate for env in envs
             plot(env)
         end
-        mp4(anim, "models/notebook4/env-$e-$score.mp4", fps=20, show_msg=false)
+        mp4(anim, "models/double-dqn/env-$e-$score.mp4", fps=20, show_msg=false)
     else
         print(stats); flush(stdout); print("\r")
     end
