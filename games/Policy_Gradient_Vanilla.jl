@@ -2,7 +2,7 @@ using Flux, CuArrays
 using OpenAIGym
 import Reinforce.action
 import Flux.params
-using CUDAnative: log
+using Flux.Tracker: grad, update!
 using Flux: onehot
 using Statistics
 
@@ -23,14 +23,14 @@ STATE_SIZE = length(env.state)
 ACTION_SIZE = length(env.actions)
 γ = 1.00f0    # discount rate
 
-η = 1e-3 # Learning rate
+η = 1e-4 # Learning rate
 
 #---------_Define Model And Loss Function---------
 policy = Chain(Dense(STATE_SIZE,30,relu),Dense(30,50,relu),Dense(50,ACTION_SIZE))
 
 function loss(s,actions,A_t)
-    pi = softmax(policy(s))
-    logpi = log.(mean(pi .* actions,dims=1) .+ 1f-10)
+    pi_ = softmax(policy(s))
+    logpi = log.(mean(pi_ .* actions) .+ 1f-10)
     return mean(-logpi .* A_t)
 end
 
@@ -52,6 +52,7 @@ function episode!(env,pi = RandomPolicy())
 
     experience = []
     for (s,a,r,s_) in ep
+	OpenAIGym.render(env)
         push!(experience,(s,a,r,s_))
     end
     
@@ -60,8 +61,6 @@ end
 
 function train(env)
     experience = episode!(env,CartPolePolicy())
-    states = Matrix{Float32}(undef,STATE_SIZE,length(experience))
-    actions = Matrix{Float32}(undef,ACTION_SIZE,length(experience))    
     l = 0.0
     G_t = 0.0
 
@@ -72,9 +71,14 @@ function train(env)
          
         G_t = γ*G_t + r
     
-        l = l .+ loss(state,act,G_t)   
+        l = l + loss(state,act,G_t)   
         Flux.back!(loss(state,act,G_t))
         opt()
+	# grads = Tracker.gradient(() -> loss(state,act,G_t), params(policy))
+	
+	# for p in params(policy)
+	# 	update!(opt,params(policy),grads[p])
+	# end
     end 
     l = l./(1.0*length(experience))
     return G_t,l
