@@ -40,7 +40,7 @@ function n_ode(batch_u0, batch_t)
                saveat=batch_t, reltol=1e-3,abstol=1e-3)
 end
 
-model = Chain(downsample,u->n_ode(Flux.data(u),25.)[:,:,:,:,1],classify)
+model = Chain(downsample,u->n_ode(u,25.)[:,:,:,:,1],classify)
 
 loss(x,y) = Flux.mse(model(x),y)
 
