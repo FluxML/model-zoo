@@ -96,6 +96,8 @@ getarray(X) = Float64.(permutedims(channelview(X), (2, 3, 1)))
 
 # Fetching the train and validation data and getting them into proper shape
 
+# Download the Cifar10 binary dataset from https://www.cs.toronto.edu/~kriz/cifar.html and drop the extracted folders into .julia/packages/Metalhead/fYeSU/datasets
+
 X = trainimgs(CIFAR10)
 imgs = [getarray(X[i].img) for i in 1:50000]
 labels = onehotbatch([X[i].ground_truth.class for i in 1:50000],1:10)
