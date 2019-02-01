@@ -1,6 +1,6 @@
 using Flux, Statistics, Trebuchet
 using Flux.Tracker: data, gradient
-using Flux.Optimise: update!
+using Flux.Optimise: _update_params!
 
 #using CuArrays
 
@@ -113,12 +113,12 @@ function trainer()
   act_grads = -crit_in.grad[end-ACTION_SIZE+1:end, :]
   zero_grad!(actor)
   Flux.back!(actions, act_grads)  # Chain rule
-  update!(opt_act, params(actor))
+  _update_params!(opt_act, params(actor))
 
   # Update Critic
   zero_grad!(critic)
   Flux.back!(loss_crit)
-  update!(opt_crit, params(critic))
+  _update_params!(opt_crit, params(critic))
 
 end
 
