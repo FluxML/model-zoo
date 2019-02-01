@@ -5,7 +5,7 @@ using Reinforce: CartPoleV0, actions, reset!, finished, step!
 using Flux, CuArrays, StatsBase, Plots
 
 gr()
-ENV["GKSwstype"] = "100"
+ENV["GKSwstype"] = "100" # headless plotting
 
 #---------------Initialize game environment----------------#
 env = CartPoleV0()

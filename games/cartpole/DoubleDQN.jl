@@ -5,7 +5,7 @@ using Reinforce: CartPoleV0, actions, reset!, finished, step!
 using Flux, CuArrays, StatsBase, Plots
 
 gr()
-ENV["GKSwstype"] = "100"
+ENV["GKSwstype"] = "100" # headless plotting
 
 #---------------Initialize game environment----------------#
 env = CartPoleV0()
@@ -78,7 +78,7 @@ function replay()
     dataset = [(sb, qb_target)]
     fit_model(dataset)
     
-    GC.gc(); # CuArrays.clearpool()
+    GC.gc()
     
     global ϵ
     ϵ = ϵ_min + (ϵ - ϵ_min)*ϵ_decay
