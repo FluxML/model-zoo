@@ -1,6 +1,8 @@
 using Flux, Metalhead
 using Flux: onehotbatch, onecold, crossentropy, throttle
 using Metalhead: trainimgs
+using Images: channelview
+using Statistics: mean
 using Base.Iterators: partition
 
 # VGG16 and VGG19 models
@@ -90,16 +92,16 @@ vgg19() = Chain(
 
 # Function to convert the RGB image to Float64 Arrays
 
-getarray(X) = float.(permutedims(channelview(im), (2, 3, 1)))
+getarray(X) = Float64.(permutedims(channelview(X), (2, 3, 1)))
 
 # Fetching the train and validation data and getting them into proper shape
 
 X = trainimgs(CIFAR10)
 imgs = [getarray(X[i].img) for i in 1:50000]
 labels = onehotbatch([X[i].ground_truth.class for i in 1:50000],1:10)
-train = gpu.([(cat(4, imgs[i]...), labels[:,i]) for i in partition(1:49000, 1000)])
+train = gpu.([(cat(imgs[i]..., dims=4), labels[:,i]) for i in partition(1:49000, 1000)])
 valset = collect(49001:50000)
-valX = cat(4, imgs[valset]...) |> gpu
+valX = cat(imgs[valset]..., dims = 4) |> gpu
 valY = labels[:, valset] |> gpu
 
 # Defining the loss and accuracy functions
@@ -114,11 +116,11 @@ accuracy(x, y) = mean(onecold(m(x), 1:10) .== onecold(y, 1:10))
 
 evalcb = throttle(() -> @show(accuracy(valX, valY)), 10)
 
-opt = ADAM(params(m))
+opt = ADAM()
 
 # Starting to train models
 
-Flux.train!(loss, train, opt, cb = evalcb)
+Flux.train!(loss, params(m), train, opt, cb = evalcb)
 
 # Fetch the test data from Metalhead and get it into proper shape.
 # CIFAR-10 does not specify a validation set so valimgs fetch the testdata instead of testimgs
@@ -127,7 +129,7 @@ test = valimgs(CIFAR10)
 
 testimgs = [getarray(test[i].img) for i in 1:10000]
 testY = onehotbatch([test[i].ground_truth.class for i in 1:10000], 1:10) |> gpu
-testX = cat(4, testimgs...) |> gpu
+testX = cat(testimgs..., dims=4) |> gpu
 
 # Print the final accuracy
 

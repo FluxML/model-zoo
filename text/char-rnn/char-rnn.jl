@@ -35,11 +35,11 @@ function loss(xs, ys)
   return l
 end
 
-opt = ADAM(params(m), 0.01)
+opt = ADAM(0.01)
 tx, ty = (Xs[5], Ys[5])
 evalcb = () -> @show loss(tx, ty)
 
-Flux.train!(loss, zip(Xs, Ys), opt,
+Flux.train!(loss, params(m), zip(Xs, Ys), opt,
             cb = throttle(evalcb, 30))
 
 # Sampling

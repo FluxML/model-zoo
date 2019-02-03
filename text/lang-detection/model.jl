@@ -38,7 +38,8 @@ loss(x, y) = crossentropy(model(x), y)
 
 testloss() = mean(loss(t...) for t in test)
 
-opt = ADAM(params(scanner, encoder))
+opt = ADAM()
+ps = params(scanner, encoder)
 evalcb = () -> @show testloss()
 
-Flux.train!(loss, train, opt, cb = throttle(evalcb, 10))
+Flux.train!(loss, ps, train, opt, cb = throttle(evalcb, 10))

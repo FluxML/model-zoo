@@ -25,6 +25,12 @@ git-tree-sha1 = "055eb2690182ebc31087859c3dd8598371d3ef9e"
 uuid = "b99e7846-7c00-51b0-8f62-c81ae34c0232"
 version = "0.5.3"
 
+[[Cascadia]]
+deps = ["AbstractTrees", "Gumbo", "Test"]
+git-tree-sha1 = "d51428ab540880c7329c74f178a793096f4e36f0"
+uuid = "54eefc05-d75b-58de-a785-1a3403f0919f"
+version = "0.4.0"
+
 [[CodecZlib]]
 deps = ["BinaryProvider", "Libdl", "Test", "TranscodingStreams"]
 git-tree-sha1 = "e3df104c84dfc108f0ca203fd7f5bbdc98641ae9"
@@ -103,6 +109,24 @@ git-tree-sha1 = "b91250044374764e7c29af59a774c4b8d6100b6e"
 uuid = "f6369f11-7733-5829-9624-2563aa707210"
 version = "0.10.1"
 
+[[Gumbo]]
+deps = ["AbstractTrees", "BinaryProvider", "Libdl", "Test"]
+git-tree-sha1 = "b16b6c5127e8c6be3084e6658c5fb5dd1f97d7fd"
+uuid = "708ec375-b3d6-5a57-a7ce-8257bf98657a"
+version = "0.5.1"
+
+[[HTTP]]
+deps = ["Base64", "Dates", "Distributed", "IniFile", "MbedTLS", "Sockets", "Test"]
+git-tree-sha1 = "b881f69331e85642be315c63d05ed65d6fc8a05b"
+uuid = "cd3eb016-35fb-5094-929b-558a96fad6f3"
+version = "0.7.1"
+
+[[IniFile]]
+deps = ["Test"]
+git-tree-sha1 = "098e4d2c533924c921f9f9847274f2ad89e018b8"
+uuid = "83e8ac13-25f8-5344-8a64-a9f2b223428f"
+version = "0.5.0"
+
 [[InteractiveUtils]]
 deps = ["LinearAlgebra", "Markdown"]
 uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
@@ -135,6 +159,12 @@ version = "0.4.4"
 [[Markdown]]
 deps = ["Base64"]
 uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
+
+[[MbedTLS]]
+deps = ["BinaryProvider", "Dates", "Libdl", "Random", "Sockets", "Test"]
+git-tree-sha1 = "c93a87da4081a3de781f34e0540175795a2ce83d"
+uuid = "739be429-bea8-5141-9913-cc70e7f3736d"
+version = "0.6.6"
 
 [[Media]]
 deps = ["MacroTools", "Test"]
