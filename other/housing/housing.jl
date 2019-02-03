@@ -16,7 +16,6 @@ isfile("housing.data") ||
 rawdata = readdlm("housing.data")'
 
 # The last feature is our target -- the price of the house.
-
 x = rawdata[1:13,:] |> gpu
 y = rawdata[14:14,:] |> gpu
 
@@ -43,4 +42,6 @@ for i = 1:10
   @show loss(x, y)
 end
 
-predict(x[:,1]) / y[1]
+# Use a random example instead of the first example
+test_ind = rand(1:size(y,2))
+println(predict(x[:,test_ind]) / y[test_ind])
