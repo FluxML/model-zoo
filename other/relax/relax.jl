@@ -96,21 +96,45 @@ function relax_all(θ, ϕ, τ, surrogate, u, v, f)
     func_vals
 end
 
+struct BernoulliRelax{F, S, T}
+    f::F
+    surrogate::S
+    τ::T
+    ϕ::Params
+end
+
+Flux.@treelike(BernoulliRelax)
+
+function BernoulliRelax(f, surrogate)
+    τ = param([0.0])
+    ϕ = params(surrogate)
+    push!(ϕ, τ)
+    BernoulliRelax(f, surrogate, τ, ϕ)
+end
+
+function (m::BernoulliRelax)(θ, u, v)
+    θm = param(repeat(Flux.data(θ), inner = (1, size(u, 2))))
+    func_vals, ∂f_∂θ = relax(θm, u, v, m.τ, surrogate, m.f)
+    ∂var_∂ϕ = Flux.gradient(() -> sum(∂f_∂θ .^ 2) ./ size(u, 2), Params(ϕ); nest = true)
+    
+    foreach(p -> p.grad .= Flux.data(∂var_∂ϕ[p]), ϕ)
+    θ.grad .= dropdims(mean(Flux.data(∂f_∂θ), dims = 2), dims = 2)
+    func_vals
+end
+
 
 D = 100
 θ = param(zeros(D))
 c = collect(range(0,1,length = D))
 f(x) = sum((x .- c).^2, dims = 1)
-τ = param([0.0])
-surrogate = Chain(Dense(D, 5, relu), Dense(5, 1))
-ϕ = params(surrogate)
-push!(ϕ, τ)
+
+b = BernoulliRelax(f, Chain(Dense(D, 5, relu), Dense(5, 1)))
+ϕ = params(b)
 nsamples = 10
 
 opt = ADAM(0.1)
-for i in 1:1000
-    u, v = rand(D, nsamples), rand(D, nsamples)
-    fVal = relax_all(θ, ϕ, τ, surrogate, u, v, f)
+for i in 1:2000
+    fVal = b(θ, rand(D, nsamples), rand(D, nsamples))
     Flux.Optimise.update!(opt, ϕ)
     Flux.Optimise.update!(opt, [θ])
     mod(i, 10) == 0 && println(i, " fVal = ", mean(fVal))
