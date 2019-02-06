@@ -30,7 +30,7 @@ include("ELM.jl")
 using .Elm
 
 #train using elmtrain()
-elmtrain(train_x, train_y, 1000);
+elmtrain(train_x, train_y, 10000);
 
 #calculate training and validation accuracy
 predictions = elmpredict(train_x);
