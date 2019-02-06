@@ -112,30 +112,27 @@ function BernoulliRelax(f, surrogate)
     BernoulliRelax(f, surrogate, τ, ϕ)
 end
 
-function (m::BernoulliRelax)(θ, u, v)
-    θm = param(repeat(Flux.data(θ), inner = (1, size(u, 2))))
-    func_vals, ∂f_∂θ = relax(θm, u, v, m.τ, surrogate, m.f)
-    ∂var_∂ϕ = Flux.gradient(() -> sum(∂f_∂θ .^ 2) ./ size(u, 2), Params(ϕ); nest = true)
-    
-    foreach(p -> p.grad .= Flux.data(∂var_∂ϕ[p]), ϕ)
-    θ.grad .= dropdims(mean(Flux.data(∂f_∂θ), dims = 2), dims = 2)
-    func_vals
+
+function ∇relax!(θ::TrackedVector, m::BernoulliRelax, n::Int)
+    f, ∇f = ∇relax(Flux.data(θ), m::BernoulliRelax, n::Int)
+    θ.grad .= ∇f
+    f
 end
 
+function ∇relax(θ::Vector, m::BernoulliRelax, n::Int)
+    θm = repeat(Flux.data(θ), inner = (1, n))
+    func_vals, ∂f_∂θ = ∇relax(θm, m,  rand(length(θ), n), rand(length(θ), n))
+    mean(func_vals), dropdims(mean(∂f_∂θ, dims = 2), dims = 2)
+end
 
-D = 100
-θ = param(zeros(D))
-c = collect(range(0,1,length = D))
-f(x) = sum((x .- c).^2, dims = 1)
-
-b = BernoulliRelax(f, Chain(Dense(D, 5, relu), Dense(5, 1)))
-ϕ = params(b)
-nsamples = 10
-
-opt = ADAM(0.1)
-for i in 1:2000
-    fVal = b(θ, rand(D, nsamples), rand(D, nsamples))
-    Flux.Optimise.update!(opt, ϕ)
-    Flux.Optimise.update!(opt, [θ])
-    mod(i, 10) == 0 && println(i, " fVal = ", mean(fVal))
+"""
+    This is the workhorse function calculating gradient with respect θ and also 
+    calculating surrogate 
+"""
+function ∇relax(θ::Matrix, m::BernoulliRelax,  u = rand(size(θ)), v = rand(size(θ)))
+    func_vals, ∂f_∂θ = relax(param(θ), u, v, m.τ, m.surrogate, m.f)
+    ∂var_∂ϕ = Flux.gradient(() -> sum(∂f_∂θ .^ 2) ./ size(u, 2), Params(m.ϕ); nest = true)
+    
+    foreach(p -> p.grad .= Flux.data(∂var_∂ϕ[p]), m.ϕ)
+    func_vals, Flux.data(∂f_∂θ)
 end
