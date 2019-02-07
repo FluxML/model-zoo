@@ -1,5 +1,6 @@
 #-------Imports-------
 using Flux, Images, Statistics
+using CuArrays, CUDAnative
 using BSON: @save
 using Flux: @interrupts, @epochs, throttle
 
@@ -116,7 +117,7 @@ end
 #-------Creating the model-------
 batch_size = 16
 n_epochs = 5
-model = UNet()
+model = UNet() |> gpu
 opt = ADAM()
 load_train_imgs()
 load_train_masks()
@@ -126,9 +127,17 @@ function dice_coeff(x, y)
     ŷ = model(x)
     val = 2 * sum(ŷ .* y) / (sum(ŷ) + sum(y))
     @info "Dice Coefficient = $(val)"
+end               
+
+function logsig(x)
+    max_v = max.(zero.(x), -x)
+    z = CUDAnative.exp.(-max_v) + CUDAnative.exp.(-(x .+ max_v))
+    -(max_v .+ CUDAnative.log.(z))
 end
 
-loss(x, y) = mean(Flux.logitbinarycrossentropy.(model(x), y))
+logitbinarycrossentropy(logŷ, y) = (1 .- y) .* logŷ .- logsig(logŷ)
+
+loss(x, y) = mean(logitbinarycrossentropy.(model(x |> gpu), y |> gpu))
 
 #-------Training the model-------
 
@@ -138,8 +147,8 @@ train_dataset = [(cat(train_imgs[i]..., dims = 4), cat(train_masks[i]..., dims =
 val_dataset = (cat(train_imgs[(length(train_imgs)- batch_size + 1):end]..., dims = 4),
                cat(train_masks[(length(train_imgs)- batch_size + 1):end]..., dims = 4))
 
-evalcb = throttle(() -> dice_coeff(val_dataset[1], val_dataset[2]), 60)
+evalcb = throttle(() -> dice_coeff(val_dataset[1] |> gpu, val_dataset[2] |> gpu), 60)
 
 @epochs n_epochs train!(loss, params(model), train_dataset, opt, cb = evalcb)
 
-@save "unet.bson" model
+@save "unet.bson" model |> cpu
