@@ -2,7 +2,7 @@
 using Flux, Images, Statistics
 using CuArrays, CUDAnative
 using BSON: @save
-using Flux: @interrupts, @epochs, throttle
+using Flux: @interrupts, @epochs, throttle, train!
 
 #-------Utilities-------
 function center_crop(x, target_size_h, target_size_w)
