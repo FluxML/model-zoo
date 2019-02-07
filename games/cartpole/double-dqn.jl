@@ -11,7 +11,7 @@ ENV["GKSwstype"] = "100" # headless plotting
 env = CartPoleV0()
 
 
-#-------------------------Parameters-----------------------#
+#----------------------Hyperparameters----------------------#
 EPISODES = 400
 STATE_SIZE = length(env.state)
 ACTION_SIZE = length(actions(env, env.state))
@@ -86,7 +86,7 @@ end
 
 #----------------------------Training & Testing---------------------------#
 best_score = 0.0
-test_every, TEST = Integer(EPISODES/10), 10
+TEST_EVERY, TEST = Integer(EPISODES/10), 10
 
 for e=1:EPISODES
     reset!(env)
@@ -114,11 +114,14 @@ for e=1:EPISODES
     if best_score <= score
         best_score = score
         println(stats); flush(stdout)
+        #----------Model saving & demo recording----------#
+        #=
         @save "models/double-dqn/model-$e-$score.bson" model
         anim = @animate for env in envs
             plot(env)
         end
         mp4(anim, "models/double-dqn/env-$e-$score.mp4", fps=20, show_msg=false)
+        =#
     else
         print(stats); flush(stdout); print("\r")
     end
@@ -126,7 +129,8 @@ for e=1:EPISODES
     replay()
     model_target = deepcopy(model)
     
-    if e % test_every == 0
+    #------------------------Model testing------------------------#
+    if e % TEST_EVERY == 0
         score = 0
         for i=1:TEST
             reset!(env)    
@@ -144,7 +148,7 @@ for e=1:EPISODES
         end
         
         score /= TEST
-        println("#-- Avg Test Score $(Integer(e/test_every)) : $score --#")
+        println("#-- Avg Test Score $(Integer(e/TEST_EVERY)) : $score --#")
         score >= 200 && break
     end
 end
