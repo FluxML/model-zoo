@@ -16,7 +16,7 @@ EPISODES = 500
 STATE_SIZE = length(env.state)
 ACTION_SIZE = length(actions(env, env.state))
 REPLAY_MEMORY = 10000
-MAX_STEPS = 300
+MAX_STEPS = 200
 
 BATCH_SIZE = 32
 

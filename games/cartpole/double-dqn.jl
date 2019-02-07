@@ -16,7 +16,7 @@ EPISODES = 400
 STATE_SIZE = length(env.state)
 ACTION_SIZE = length(actions(env, env.state))
 REPLAY_MEMORY = 10000
-MAX_STEPS = 300
+MAX_STEPS = 200
 
 BATCH_SIZE = 32
 
@@ -77,8 +77,6 @@ function replay()
     
     dataset = [(sb, qb_target)]
     fit_model(dataset)
-    
-    GC.gc()
     
     global ϵ
     ϵ = ϵ_min + (ϵ - ϵ_min)*ϵ_decay
