@@ -4,7 +4,9 @@ using Flux: Tracker
 using Flux.Optimise: Optimiser, _update_params!
 using Statistics: mean
 using DataStructures: CircularBuffer
+# using CuArrays
 #Load game environment
+include("cartpole.jl")
 env = CartPoleEnv()
 reset!(env)
 #ctx = Ctx(env)
@@ -82,7 +84,6 @@ ee = 1
 
 
 while true
-
   global ee
   reset!(env)
   total_reward = episode!(env, false)
