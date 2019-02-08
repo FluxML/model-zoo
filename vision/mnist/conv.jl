@@ -73,7 +73,7 @@ model(train_set[1][1])
 # a bit, adding gaussian random noise to our image to make it more robust.
 function loss(x, y)
     # We augment `x` a little bit here, adding in random noise
-    x_aug = x .+ 0.1*randn(eltype(x), size(x))
+    x_aug = x .+ 0.1*gpu(randn(eltype(x), size(x)))
 
     y_hat = model(x_aug)
     return crossentropy(y_hat, y)
