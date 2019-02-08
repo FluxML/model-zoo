@@ -1,10 +1,12 @@
 # This implementation of DQN on cartpole is to verify the cartpole.jl env
 using Flux
 using Flux: Tracker
+using Flux.Tracker: track, @grad, data
 using Flux.Optimise: Optimiser, _update_params!
 using Statistics: mean
 using DataStructures: CircularBuffer
-# using CuArrays
+using Random
+using CuArrays
 #Load game environment
 include("cartpole.jl")
 env = CartPoleEnv()
@@ -23,11 +25,18 @@ ACTION_SIZE = length(env.action_space)
 # Optimiser params
 η = 1f-2  # Learning rate
 
+Random.seed!(100)
+
 # ------------------------------ Model Architecture ----------------------------
+
+sign(x) = track(sign, x)
+@grad sign(x) = Base.sign(data(x)), x̄ -> (x̄,)
 
 model = Chain(Dense(STATE_SIZE, 24, relu),
               Dense(24, 48, relu),
               Dense(48, 1, tanh)) |> gpu
+
+action(state) = sign(model(gpu(state))[1])
 
 loss(r) = Flux.mse(r, env.x_threshold*env.θ_threshold_radians)
 
@@ -35,12 +44,12 @@ opt = ADAM(η)
 
 # ----------------------------- Helper Functions -------------------------------
 
-function replay(a, r, action)
+function replay(a, r)
   Flux.back!(loss(r))
-  grads = [Tracker.grad(action)] |> gpu
-  Flux.back!(a, grads)
   _update_params!(opt, params(model))
 end
+
+@which _update_params!(opt, params(model))
 
 function episode!(env, train=true)
   done = false
@@ -49,11 +58,10 @@ function episode!(env, train=true)
     #render(env, ctx)
     #sleep(0.01)
 
-    s = env.state
-    a = model(s |> gpu)
-    s′, r, done, train_reward, action = step!(env, sign(a.data[1]))
+    a = action(env.state)
+    s′, r, done, train_reward = step!(env, a)
     total_reward += r
-    train && replay(a, train_reward, action)
+    train && replay(a, train_reward)
   end
 
   total_reward

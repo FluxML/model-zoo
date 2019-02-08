@@ -60,9 +60,8 @@ end
 function step!(env::CartPoleEnv, action)
 #    @assert action ∈ env.action_space "$action in ($(env.action_space)) invalid"
     state = env.state
-    x, ẋ, θ, θ̇  = param.(state)
+    x, ẋ, θ, θ̇  = state
     #force = action == 2 ? env.force_mag : -env.force_mag
-    action = param(action)
     force = action * env.force_mag  # action is +1 or -1
     cosθ = cos(θ)
     sinθ = sin(θ)
@@ -106,7 +105,7 @@ function step!(env::CartPoleEnv, action)
     r_x = max(0f0, min(env.x_threshold-x_, x_+env.x_threshold))
     r_θ = max(0f0, min(env.θ_threshold_radians-θ_, θ_+env.θ_threshold_radians))
     train_reward = r_x * r_θ
-    return env.state, reward, done, train_reward, action
+    return env.state, reward, done, train_reward
 end
 
 function reset!(env::CartPoleEnv)
