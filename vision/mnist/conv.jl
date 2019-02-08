@@ -84,7 +84,7 @@ accuracy(x, y) = mean(onecold(model(x)) .== onecold(y))
 # printing out performance against the test set as we go.
 opt = ADAM(0.001)
 
-@info("Beginning traing loop...")
+@info("Beginning training loop...")
 best_acc = 0.0
 last_improvement = 0
 for epoch_idx in 1:100
