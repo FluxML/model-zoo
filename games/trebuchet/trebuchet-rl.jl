@@ -9,6 +9,7 @@ using BSON: @save, @load
 using Distributions: Normal, sample
 using DataStructures: CircularBuffer
 using Printf
+# using CuArrays
 
 #=
 # Description of the problem:

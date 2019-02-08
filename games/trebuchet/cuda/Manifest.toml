@@ -151,9 +151,9 @@ version = "5.0.1"
 
 [[DiffEqDiffTools]]
 deps = ["LinearAlgebra", "Test"]
-git-tree-sha1 = "67700c9fc82033ec68a145bc650f6b9debdf9103"
+git-tree-sha1 = "4b21dd83c341412a0607334ac64bb5593a4bd583"
 uuid = "01453d9d-ee7c-5054-8395-0335cb756afa"
-version = "0.7.1"
+version = "0.8.0"
 
 [[DiffEqOperators]]
 deps = ["DiffEqBase", "LinearAlgebra", "Random", "SparseArrays", "StaticArrays", "Test"]
@@ -258,9 +258,9 @@ version = "0.1.1"
 
 [[JSExpr]]
 deps = ["JSON", "MacroTools", "Observables", "Test", "WebIO"]
-git-tree-sha1 = "013bc2143a2e84ea489365cf30db3407deb540c2"
+git-tree-sha1 = "96429a372b5c4ad63fa9cbff6ba4178a85939705"
 uuid = "97c1335a-c9c5-57fe-bc5d-ec35cebe8660"
-version = "0.5.0"
+version = "0.4.0"
 
 [[JSON]]
 deps = ["Dates", "Distributed", "Mmap", "Sockets", "Test", "Unicode"]
@@ -525,9 +525,9 @@ version = "0.8.1"
 
 [[Trebuchet]]
 deps = ["DiffEqBase", "JSExpr", "OrdinaryDiffEq", "WebIO"]
-git-tree-sha1 = "4d91f65ab58dd07f5c2adeec48338cdd1af069c0"
-repo-rev = "master"
-repo-url = "https://github.com/roboneet/Trebuchet.jl"
+git-tree-sha1 = "32ee23c717a0dde44e5014e40b144c2404ba70c5"
+repo-rev = "tolerance"
+repo-url = "https://github.com/MikeInnes/Trebuchet.jl"
 uuid = "98b73d46-197d-11e9-11eb-69a6ff759d3a"
 version = "0.1.0"
 
@@ -558,10 +558,10 @@ version = "1.1.3"
 
 [[WebIO]]
 deps = ["AssetRegistry", "Base64", "Compat", "FunctionalCollections", "JSON", "Logging", "Observables", "Random", "Requires", "Sockets", "Test", "UUIDs", "Widgets"]
-git-tree-sha1 = "c1f259d4c23f12262f4fa69263a4e54fbea77450"
+git-tree-sha1 = "0400769ea05beac10a949b80295084e659b8dde6"
 pinned = true
 uuid = "0f1e0344-ec1d-5b48-a673-e5cf874b6c29"
-version = "0.7.0"
+version = "0.6.2"
 
 [[Widgets]]
 deps = ["Observables", "OrderedCollections", "Test"]

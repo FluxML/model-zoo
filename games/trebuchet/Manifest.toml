@@ -115,9 +115,9 @@ version = "5.0.1"
 
 [[DiffEqDiffTools]]
 deps = ["LinearAlgebra", "Test"]
-git-tree-sha1 = "67700c9fc82033ec68a145bc650f6b9debdf9103"
+git-tree-sha1 = "4b21dd83c341412a0607334ac64bb5593a4bd583"
 uuid = "01453d9d-ee7c-5054-8395-0335cb756afa"
-version = "0.7.1"
+version = "0.8.0"
 
 [[DiffEqOperators]]
 deps = ["DiffEqBase", "LinearAlgebra", "Random", "SparseArrays", "StaticArrays", "Test"]
@@ -465,9 +465,9 @@ version = "0.8.1"
 
 [[Trebuchet]]
 deps = ["DiffEqBase", "JSExpr", "OrdinaryDiffEq", "WebIO"]
-git-tree-sha1 = "4d91f65ab58dd07f5c2adeec48338cdd1af069c0"
-repo-rev = "master"
-repo-url = "https://github.com/roboneet/Trebuchet.jl"
+git-tree-sha1 = "32ee23c717a0dde44e5014e40b144c2404ba70c5"
+repo-rev = "tolerance"
+repo-url = "https://github.com/MikeInnes/Trebuchet.jl"
 uuid = "98b73d46-197d-11e9-11eb-69a6ff759d3a"
 version = "0.1.0"
 
