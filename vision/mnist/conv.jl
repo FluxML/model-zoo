@@ -18,7 +18,10 @@ train_imgs = MNIST.images()
 
 # Bundle images together with labels and group into minibatchess
 function make_minibatch(X, Y, idxs)
-    X_batch = cat([Float32.(X[i]) for i in idxs]..., dims=4)
+    X_batch = Array{Float32}(undef, size(X[1])..., 1, length(idxs))
+    for i in 1:length(idxs)
+        X_batch[:, :, :, i] = Float32.(X[idxs[i]])
+    end
     Y_batch = onehotbatch(Y[idxs], 0:9)
     return (X_batch, Y_batch)
 end
