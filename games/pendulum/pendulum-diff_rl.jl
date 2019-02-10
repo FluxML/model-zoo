@@ -2,7 +2,7 @@ using Flux, Gym
 using Flux.Optimise: _update_params!
 using Statistics: mean
 using DataStructures: CircularBuffer
-#using CuArrays
+using CuArrays
 
 #Load game environment
 
@@ -15,7 +15,7 @@ STATE_SIZE = length(env.state)
 ACTION_SIZE = 1#length(env.actions)
 ACTION_BOUND = 2#env.action_space.hi
 MAX_EP = 15_000
-MAX_EP_LENGTH = 10_000
+MAX_EP_LENGTH = 750
 
 # ------------------------------ Model Architecture ----------------------------
 
