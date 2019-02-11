@@ -2,7 +2,7 @@ using Flux, Gym
 using Flux.Optimise: _update_params!
 using Statistics: mean
 using DataStructures: CircularBuffer
-using CuArrays
+#using CuArrays
 
 #Load game environment
 
@@ -15,7 +15,8 @@ STATE_SIZE = length(env.state)
 ACTION_SIZE = 1#length(env.actions)
 ACTION_BOUND = 2#env.action_space.hi
 MAX_EP = 15_000
-MAX_EP_LENGTH = 750
+MAX_EP_LENGTH = 1000
+SEQ_LEN = 25
 
 # ------------------------------ Model Architecture ----------------------------
 
@@ -26,31 +27,45 @@ model = Chain(Dense(2, 24, relu),
 η = 3f-2
 
 opt = ADAM(η)
-# Max possible reward in a step in 0.
-# Training one episode in a go
-z = zeros(Float32, MAX_EP_LENGTH) |> gpu
-loss(r) = Flux.mse(r, z)
+
+function loss(r)
+  seq_len = size(r, 1)
+  z = zeros(Float32, seq_len) |> gpu
+  Flux.mse(r, z)
+end
 
 # ----------------------------- Helper Functions -------------------------------
 
 function update(rewards)
   Flux.back!(loss(rewards |> gpu))
   _update_params!(opt, params(model))
+  # grads = Tracker.gradient(()->loss(rewards), params(model))
+  # for p in params(model)
+  #   update!(opt, p, grads[p])
+  # end
 end
 
 function episode!(env, train=true)
   total_reward = 0f0
-  u = nothing
   rewards = []
-  for _=1:MAX_EP_LENGTH
+
+  for ep=1:MAX_EP_LENGTH
     s = env.state
     a = model(s |> gpu)
     s′, r, done, _ = step!(env, a)
-    push!(rewards, r)
+    total_reward += r.data[1]
+    if train
+      push!(rewards, r)
+      if ep == MAX_EP_LENGTH || ep % SEQ_LEN == 0 
+        rewards = vcat(rewards...)
+        update(rewards)
+	rewards = []
+        env.state = param(env.state.data)
+      end
+    end
   end
-  rewards = vcat(rewards...)
-  train && update(rewards)
-  total_reward = sum(Flux.Tracker.data(rewards))
+
+  total_reward
 end
 
 # ------------------------------ Training --------------------------------------
@@ -64,6 +79,7 @@ for e=1:MAX_EP
   last_100_mean = mean(scores)
   println("Last 100 episodes mean score: $last_100_mean")
 end
+
 # -------------------------------- Testing -------------------------------------
 
 for e=1:MAX_EP
