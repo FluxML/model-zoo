@@ -37,7 +37,7 @@ end
 # ----------------------------- Helper Functions -------------------------------
 
 function update(rewards)
-  Flux.back!(loss(rewards |> gpu))
+  Flux.back!(loss(rewards))
   _update_params!(opt, params(model))
   # grads = Tracker.gradient(()->loss(rewards), params(model))
   # for p in params(model)
@@ -51,7 +51,7 @@ function episode!(env, train=true)
 
   for ep=1:MAX_EP_LENGTH
     s = env.state
-    a = model(s |> gpu)
+    a = model(s)
     s′, r, done, _ = step!(env, a)
     total_reward += r.data[1]
     if train
