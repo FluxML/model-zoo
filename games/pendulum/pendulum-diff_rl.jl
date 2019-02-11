@@ -2,7 +2,7 @@ using Flux, Gym
 using Flux.Optimise: _update_params!
 using Statistics: mean
 using DataStructures: CircularBuffer
-#using CuArrays
+using CuArrays
 
 #Load game environment
 
