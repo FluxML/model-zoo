@@ -1,12 +1,12 @@
-using Flux
-using Flux.Optimise
+using Flux, Gym
+using Flux.Optimise: Optimiser
+using Flux.Tracker: data
 using Statistics: mean
 using DataStructures: CircularBuffer
 using Distributions: sample
 using Printf
-#using CuArrays
+using CuArrays
 
-include("cartpole.jl")
 # Load game environment
 env = CartPoleEnv()
 reset!(env)
@@ -17,10 +17,10 @@ STATE_SIZE = length(env.state)    # 4
 ACTION_SIZE = length(env.action_space) # 2
 MEM_SIZE = 100_000
 BATCH_SIZE = 64
-γ = 1.0f0   			  # discount rate
+γ = 1f0   			  # discount rate
 
 # Exploration params
-ϵ = 1.0f0       # Initial exploration rate
+ϵ = 1f0       # Initial exploration rate
 ϵ_MIN = 1f-2    # Final exploratin rate
 ϵ_DECAY = 995f-3
 
@@ -36,51 +36,51 @@ model = Chain(Dense(STATE_SIZE, 24, tanh),
               Dense(24, 48, tanh),
               Dense(48, ACTION_SIZE)) |> gpu
 
-loss(x, y) = Flux.mse(model(x), y)
+loss(x, y) = Flux.mse(model(x |> gpu), y)
 
 opt = Optimiser(ADAM(η), InvDecay(η_decay))
 
 # ----------------------------- Helper Functions -------------------------------
 
-get_ϵ(e) = max(ϵ_MIN, min(ϵ, 1.0f0 - log10(e * ϵ_DECAY)))
+get_ϵ(e) = max(ϵ_MIN, min(ϵ, 1f0 - log10(e * ϵ_DECAY)))
 
 remember(state, action, reward, next_state, done) =
-  push!(memory, (state, action, reward, next_state, done))
+  push!(memory, (data(state), action, reward, data(next_state), done))
 
 function action(state, train=true)
-  train && rand() <= get_ϵ(e) && (return rand(1:ACTION_SIZE))
+  train && rand() <= get_ϵ(e) && (return rand(-1:1))
   act_values = model(state |> gpu)
-  return Flux.onecold(act_values)
+  a = Flux.onecold(act_values)
+  return a == 2 ? 1 : -1
 end
+
+inv_action(a) = a == 1 ? 2 : 1
 
 function replay()
   global ϵ
   batch_size = min(BATCH_SIZE, length(memory))
   minibatch = sample(memory, batch_size, replace = false)
 
-  x = Matrix{Float32}(undef, STATE_SIZE, batch_size)
-  y = Matrix{Float32}(undef, ACTION_SIZE, batch_size)
+  x = []
+  y = []
   for (iter, (state, action, reward, next_state, done)) in enumerate(minibatch)
     target = reward
     if !done
-      target += γ * maximum(model(next_state |> gpu).data)
+      target += γ * maximum(data(model(next_state |> gpu)))
     end
 
-    target_f = model(state |> gpu).data
+    target_f = data(model(state |> gpu))
     target_f[action] = target
 
-    x[:, iter] .= state
-    y[:, iter] .= target_f
+    push!(x, state)
+    push!(y, target_f)
   end
-  x = x |> gpu
-  y = y |> gpu
-
+  x = hcat(x...) |> gpu
+  y = hcat(y...) |> gpu
   Flux.train!(loss, params(model), [(x, y)], opt)
 
   ϵ *= ϵ > ϵ_MIN ? ϵ_DECAY : 1.0f0
 end
-
-step_action(a) = a == 1 ? 1 : -1
 
 function episode!(env, train=true)
   done = false
@@ -89,9 +89,9 @@ function episode!(env, train=true)
     #render(env)
     s = env.state
     a = action(s, train)
-    s′, r, done, _ = step!(env, step_action(a))
+    s′, r, done, _ = step!(env, a)
     total_reward += r
-    train && remember(s, a, r, s′, done)
+    train && remember(s, inv_action(a), r, s′, done)
   end
 
   total_reward
