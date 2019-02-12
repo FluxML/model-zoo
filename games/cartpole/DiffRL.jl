@@ -4,7 +4,7 @@ using Flux.Tracker: track, @grad, data #, gradient
 using Flux.Optimise: Optimiser, _update_params! #, update!
 using Statistics: mean
 using DataStructures: CircularBuffer
-#using CuArrays
+using CuArrays
 
 #Load game environment
 env = CartPoleEnv()
@@ -38,11 +38,11 @@ model = Chain(Dense(STATE_SIZE, 24, relu),
 
 opt = Optimiser(ADAM(η), InvDecay(η_DECAY))
 
-action(state) = model(state |> gpu)
+action(state) = model(state)
 
 function loss(rewards)
   ep_len = size(rewards, 1)
-  max_rewards = ones(Float32, ep_len) * MAX_TRAIN_REWARD
+  max_rewards = ones(Float32, ep_len) * MAX_TRAIN_REWARD |> gpu
   Flux.mse(rewards, max_rewards)
 end
 

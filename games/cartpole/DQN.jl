@@ -26,7 +26,7 @@ BATCH_SIZE = 64
 
 # Optimiser params
 η = 1f-2   # Learning rate
-η_decay = 1f-2
+η_decay = 1f-3
 
 memory = CircularBuffer{Any}(MEM_SIZE) # Used to remember past results
 
