@@ -5,7 +5,7 @@ using Statistics: mean
 using DataStructures: CircularBuffer
 using Distributions: sample
 
-#using CuArrays
+using CuArrays
 
 #Load game environment
 
@@ -80,9 +80,9 @@ critic_target = deepcopy(critic)
 
 # ------------------------------- Param Update Functions---------------------------------
 
-function update_target!(target, model; τ = 1.0f0)
+function update_target!(target, model; τ = 1f0)
   for (p_t, p_m) in zip(params(target), params(model))
-    p_t.data .= (1.0f0 - τ) * p_t.data .+ τ * p_m.data
+    p_t.data .= (1f0 - τ) * p_t.data .+ τ * p_m.data
   end
 end
 
@@ -101,10 +101,10 @@ function replay()
   minibatch = sample(memory, BATCH_SIZE)
   x = hcat(minibatch...)
 
-  s = hcat(x[1, :]...) |> gpu
-  a = hcat(x[2, :]...) |> gpu
-  r = hcat(x[3, :]...) |> gpu
-  s′ = hcat(x[4, :]...) |> gpu
+  s      =   hcat(x[1, :]...) |> gpu
+  a      =   hcat(x[2, :]...) |> gpu
+  r      =   hcat(x[3, :]...) |> gpu
+  s′     =   hcat(x[4, :]...) |> gpu
   s_mask = .!hcat(x[5, :]...) |> gpu
 
   # Update Critic
@@ -141,12 +141,11 @@ remember(state, action, reward, next_state, done) =
 function action(state, train=true)
   state = reshape(data(state), size(state)..., 1)
   act_pred = data(actor(state |> gpu)) .+  ACTION_BOUND * sample_noise(ou)[1] * train
-  clamp.(act_pred[:, 1], -ACTION_BOUND, ACTION_BOUND) |> cpu # returns action
+  clamp(data(act_pred[1]), -ACTION_BOUND, ACTION_BOUND) # returns action
 end
 
 function episode!(env, train=true)
   total_reward = 0f0
-  rewards = []
   s = reset!(env)
   for ep=1:MAX_EP_LENGTH
     a = action(s, train)
