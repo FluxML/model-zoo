@@ -120,7 +120,7 @@ version = "0.5.0"
 
 [[Gym]]
 deps = ["Flux", "JSExpr", "WebIO"]
-git-tree-sha1 = "90fc42b3474221af1f9e30f4eb91ad3b1643efce"
+git-tree-sha1 = "3a5f79660ecbdaa200c94faf9f71639a3aa78932"
 repo-rev = "master"
 repo-url = "https://github.com/tejank10/Gym.jl.git"
 uuid = "56b9baea-2481-11e9-37ae-75904354ad8c"
