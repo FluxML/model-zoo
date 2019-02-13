@@ -1,17 +1,17 @@
 using Flux, Gym
+using Flux.Tracker: data
 using Flux.Optimise: _update_params!
 using Statistics: mean
 using DataStructures: CircularBuffer
-#using CuArrays
+using CuArrays
 
 #Load game environment
 
 env = PendulumEnv()
-reset!(env)
 
 # ----------------------------- Parameters -------------------------------------
 
-STATE_SIZE = length(env.state)
+STATE_SIZE = length(reset!(env)) # returns state from obs space
 ACTION_SIZE = 1#length(env.actions)
 ACTION_BOUND = 2#env.action_space.hi
 MAX_EP = 15_000
@@ -20,7 +20,7 @@ SEQ_LEN = 25
 
 # ------------------------------ Model Architecture ----------------------------
 
-model = Chain(Dense(2, 24, relu),
+model = Chain(Dense(STATE_SIZE, 24, relu),
               Dense(24, 48, relu),
               Dense(48, ACTION_SIZE)) |> gpu
 
@@ -48,19 +48,20 @@ end
 function episode!(env, train=true)
   total_reward = 0f0
   rewards = []
-
+  s = reset!(env)
   for ep=1:MAX_EP_LENGTH
-    s = env.state
     a = model(s)
     s′, r, done, _ = step!(env, a)
-    total_reward += r.data[1]
+    total_reward += data(r)[1]
+    s = s′
     if train
       push!(rewards, r)
       if ep == MAX_EP_LENGTH || ep % SEQ_LEN == 0 
         rewards = vcat(rewards...)
         update(rewards)
 	rewards = []
-        env.state = param(env.state.data)
+        env.state = param(data(env.state))
+        s = Gym._get_obs(env)
       end
     end
   end
@@ -72,7 +73,6 @@ end
 
 scores = CircularBuffer{Float32}(100)
 for e=1:MAX_EP
-  reset!(env)
   total_reward = episode!(env)
   push!(scores, total_reward)
   print("Episode: $e | Score: $total_reward ")
