@@ -1,7 +1,7 @@
 # This implementation of DQN on cartpole is to verify the cartpole.jl env
-using Flux, Gym
-using Flux.Tracker: track, @grad, data #, gradient
-using Flux.Optimise: Optimiser, _update_params! #, update!
+using Flux, Gym, Printf
+using Flux.Tracker: track, @grad, data#, gradient
+using Flux.Optimise: Optimiser, _update_params!#, update!
 using Statistics: mean
 using DataStructures: CircularBuffer
 using CuArrays
@@ -24,8 +24,7 @@ MAX_TRAIN_REWARD = env.x_threshold*env.θ_threshold_radians
 SEQ_LEN = 25
 
 # Optimiser params
-η = 1f-2
-η_DECAY = 1f-2
+η = 3f-2
 
 # ------------------------------ Model Architecture ----------------------------
 
@@ -36,7 +35,7 @@ model = Chain(Dense(STATE_SIZE, 24, relu),
               Dense(24, 48, relu),
               Dense(48, 1, tanh), x->sign(x)) |> gpu
 
-opt = Optimiser(ADAM(η), InvDecay(η_DECAY))
+opt = ADAM(η)
 
 action(state) = model(state)
 
@@ -73,6 +72,7 @@ function replay(rewards)
   #for p in params(model)
   #  update!(opt, p, grads[p])
   #end
+  
   Flux.back!(loss(rewards))
   _update_params!(opt, params(model))
 end
@@ -91,52 +91,52 @@ function episode!(env, train=true)
     a = action(env.state)
     s′, r, done, _ = step!(env, a)
     total_reward += r
+    
     train && push!(rewards, train_reward())
+    
     if train && (frames % SEQ_LEN == 0 || done)
       rewards = vcat(rewards...)
       replay(rewards)
       rewards = []
       env.state = param(env.state.data)
     end
+    
     frames += 1
   end
   total_reward
 end
 
+# -------------------------------- Testing -------------------------------------
+
+function test()
+  score_mean = 0f0
+  for _=1:100
+    reset!(env)
+    total_reward = episode!(env, false)
+    score_mean += total_reward / 100
+  end
+  return score_mean
+end
+
 # ------------------------------ Training --------------------------------------
 
 e = 1
-scores = CircularBuffer{Float32}(100)
 
 while true
   global e
   reset!(env)
   total_reward = episode!(env)
-  push!(scores, total_reward)
   print("Episode: $e | Score: $total_reward | ")
 
-  if e ≥ 100
-    last_100_mean = mean(scores)
-    print("Last 100 episodes mean score: $last_100_mean")
-  end
+  score_mean = test()
+  score_mean_str = @sprintf "%6.2f" score_mean
+  print("Mean score over 100 test episodes: " * score_mean_str)
 
   println()
 
-  if e ≥ 100 && last_100_mean > 195
+  if score_mean > 195
     println("CartPole-v0 solved!")
     break
   end
-  e += 1
-end
-
-# -------------------------------- Testing -------------------------------------
-
-e = 1
-
-while true
-  global e
-  reset!(env)
-  total_reward = episode!(env, false)
-  println("Episode: $e | Score: $total_reward")
   e += 1
 end

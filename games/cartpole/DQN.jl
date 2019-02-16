@@ -1,10 +1,9 @@
-using Flux, Gym
+using Flux, Gym, Printf
 using Flux.Optimise: Optimiser
 using Flux.Tracker: data
 using Statistics: mean
 using DataStructures: CircularBuffer
 using Distributions: sample
-using Printf
 using CuArrays
 
 # Load game environment
@@ -97,36 +96,35 @@ function episode!(env, train=true)
   total_reward
 end
 
+# -------------------------------- Testing -------------------------------------
+
+function test()
+  score_mean = 0f0
+  for _=1:100
+    reset!(env)
+    total_reward = episode!(env, false)
+    score_mean += total_reward / 100    
+  end
+
+  return score_mean
+end
+
 # ------------------------------ Training --------------------------------------
 
 e = 1
-scores = CircularBuffer{Float32}(100)
 
 while true
   global e
   reset!(env)
   total_reward = episode!(env)
-  push!(scores, total_reward)
-  print("Episode: $e | Score: $total_reward ")
-  last_100_mean = mean(scores)
-  print("Last 100 episodes mean score: $(@sprintf "%6.2f" last_100_mean)")
-  if last_100_mean > 195
+  print("Episode: $e | Score: $total_reward | ")
+  score_mean = test()
+  print("Mean score over 100 test episodes: $(@sprintf "%6.2f" score_mean)")
+  if score_mean > 195
     println("\nCartPole-v0 solved!")
     break
   end
   println()
   replay()
   e += 1
-end
-
-# -------------------------------- Testing -------------------------------------
-
-ee = 1
-
-while true
-  global ee
-  reset!(env)
-  total_reward = episode!(env, false)
-  println("Episode: $ee | Score: $total_reward")
-  ee += 1
 end
