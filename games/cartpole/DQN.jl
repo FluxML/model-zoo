@@ -84,13 +84,15 @@ end
 function episode!(env, train=true)
   done = false
   total_reward = 0f0
-  while !done
+  frames = 1
+  while !done && frames <= 200
     #render(env)
     s = env.state
     a = action(s, train)
     s′, r, done, _ = step!(env, a)
     total_reward += r
     train && remember(s, inv_action(a), r, s′, done)
+    frames += 1
   end
 
   total_reward

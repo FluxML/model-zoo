@@ -21,7 +21,7 @@ reset!(env)
 STATE_SIZE = length(env.state)
 ACTION_SIZE = length(env.action_space)
 MAX_TRAIN_REWARD = env.x_threshold*env.θ_threshold_radians
-SEQ_LEN = 25
+SEQ_LEN = 8
 
 # Optimiser params
 η = 3f-2
@@ -84,7 +84,7 @@ function episode!(env, train=true)
   total_reward = 0f0
   rewards = []
   frames = 1
-  while !done
+  while !done && frames <= 200
     #render(env, ctx)
     #sleep(0.01)
 
