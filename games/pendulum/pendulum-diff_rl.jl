@@ -1,4 +1,4 @@
-using Flux, Gym
+using Flux, Gym, Printf
 using Flux.Tracker: data
 using Flux.Optimise: _update_params!
 using Statistics: mean
@@ -69,21 +69,24 @@ function episode!(env, train=true)
   total_reward
 end
 
-# ------------------------------ Training --------------------------------------
-
-scores = CircularBuffer{Float32}(100)
-for e=1:MAX_EP
-  total_reward = episode!(env)
-  push!(scores, total_reward)
-  print("Episode: $e | Score: $total_reward ")
-  last_100_mean = mean(scores)
-  println("Last 100 episodes mean score: $last_100_mean")
-end
-
 # -------------------------------- Testing -------------------------------------
 
+function test()
+  score_mean = 0f0
+  for e=1:100
+    total_reward = episode!(env, false)
+    score_mean += total_reward / 100
+  end
+  return score_mean
+end
+
+# ------------------------------ Training --------------------------------------
+
 for e=1:MAX_EP
-  reset!(env)
-  total_reward = episode!(env, false)
-  println("Episode: $e | Score: $total_reward")
+  total_reward = episode!(env)
+  total_reward = @sprintf "%9.3f" total_reward
+  print("Episode: $e | Score: $total_reward | ")
+  score_mean = test()
+  score_mean = @sprintf "%9.3f" score_mean
+  println("Mean score over 100 test episodes: $score_mean")
 end
