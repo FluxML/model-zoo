@@ -16,7 +16,7 @@ ACTION_SIZE = 1#length(env.actions)
 ACTION_BOUND = 2#env.action_space.hi
 MAX_EP = 15_000
 MAX_EP_LENGTH = 1000
-SEQ_LEN = 25
+SEQ_LEN = 4
 
 # ------------------------------ Model Architecture ----------------------------
 
