@@ -133,7 +133,7 @@ ys = ys[indices];
 #
 # To be able to easily pass a chunk to an RNN, the n<sup>th</sup> word of every sentence in the chunk get placed next to each other in an array. Also, all the words get OneHot encoded.
 #
-# ![batching](D:/downloads/background.svg)
+# ![batching](./images/batching.png)
 
 BATCH_SIZE = 32
 
@@ -374,4 +374,4 @@ predict(testEncoder, testDecoder, "He is singing")
 # I'm not sure why this is happening and I'd love to know! If you've got an idea on how to improve/fix this model, definitely let me know.
 #
 # Thanks
-# ![encoder-decoder](C:/users/Jules/desktop/grafiek.svg)
+# ![encoder-decoder](./images/graph.png)
