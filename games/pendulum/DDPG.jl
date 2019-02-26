@@ -186,11 +186,11 @@ function episode!(env, train=true)
     a = action(s, train)
     s′, r, done, _ = step!(env, a)
     total_reward += data(r)[1]
-    s = s′ 
     if train    
       remember(s, a, r, s′, done)
       replay()
     end
+    s = s′ 
   end
   total_reward
 end
