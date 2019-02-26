@@ -2,7 +2,7 @@
 
 This repository contains various demonstrations of the [Flux](http://fluxml.github.io/) machine learning library. Any of these may freely be used as a starting point for your own models.
 
-The models are broadly categorised into the folders [vision](/vision) (e.g. large convolutional networks (CNNs)), [text](/text) (e.g. various recurrent networks (RNNs) and natural language (NLP) models), [games](/games) (Reinforcement Learning / RL). See the READMEs of respective models for more information.
+The models are broadly categorised into the folders [vision](/vision) (e.g. large convolutional neural networks (CNNs)), [text](/text) (e.g. various recurrent neural networks (RNNs) and natural language processing (NLP) models), [games](/games) (Reinforcement Learning / RL). See the READMEs of respective models for more information.
 
 ## Usage
 
@@ -14,7 +14,7 @@ using Pkg; Pkg.activate("."); Pkg.instantiate()
 
 to install all needed packages. Then you can run the model code with `include("script.jl")` or by running the script line-by-line. More details are available in the README for each model.
 
-Models with a `cuda` folder can be loaded with GPU support, if you have a CUDA installed.
+Models with a `cuda` folder can be loaded with NVIDIA GPU support, if you have a CUDA installed.
 
 ```julia
 using Pkg; Pkg.activate("cuda"); Pkg.instantiate()
@@ -30,7 +30,7 @@ We welcome contributions of new models. They should be in a folder with a projec
 * Vision
   * MNIST
     * [Simple multi-layer perceptron](vision/mnist/mlp.jl)
-    * [Simple ConvNet](vision/mnist/conv.jl)
+    * [Simple ConvNets](vision/mnist/conv.jl)
     * [Simple Auto-Encoder](vision/mnist/autoencoder.jl)
     * [Variational Auto-Encoder](vision/mnist/vae.jl)
   * [VGG 16/19 on CIFAR10](vision/cifar10)
