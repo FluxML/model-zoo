@@ -1,0 +1,1 @@
+This is the folder where the TIMIT data should be placed after downloading it from the [Linguistic Data Consortium](https://www.ldc.upenn.edu/). It is not included in this repository for copyright and, secondarily, space restrictions.
