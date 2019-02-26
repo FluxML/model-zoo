@@ -25,7 +25,7 @@ y = rawdata[14:14,:] |> gpu
 x = (x .- mean(x, dims = 2)) ./ std(x, dims = 2)
 
 # Split into train and test sets
-split_index = convert(Int,floor(size(x,2)*split_ratio))
+split_index = floor(Int,size(x,2)*split_ratio)
 x_train = x[:,1:split_index]
 y_train = y[:,1:split_index]
 x_test = x[:,split_index+1:size(x,2)]
