@@ -14,6 +14,7 @@ env = PendulumEnv()
 STATE_SIZE = length(reset!(env)) # returns state from obs space
 ACTION_SIZE = 1#length(env.actions)
 ACTION_BOUND = 2#env.action_space.hi
+MAX_REWARD = 0f0 # Max reward in a timestep
 MAX_EP = 15_000
 MAX_EP_LENGTH = 1000
 SEQ_LEN = 4
@@ -28,11 +29,7 @@ model = Chain(Dense(STATE_SIZE, 24, relu),
 
 opt = ADAM(η)
 
-function loss(r)
-  seq_len = size(r, 1)
-  z = zeros(Float32, seq_len) |> gpu
-  Flux.mse(r, z)
-end
+loss(r) = Flux.mse(r, MAX_REWARD)
 
 # ----------------------------- Helper Functions -------------------------------
 
