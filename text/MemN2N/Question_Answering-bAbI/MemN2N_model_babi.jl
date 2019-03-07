@@ -189,11 +189,6 @@ function train(data::Array, memory::Memory, epochs::Int, batchsize::Int, max_nor
         for i=1:batchsize:length(data)-batchsize
             cost = run_batch(memory, data[i:i+batchsize-1])
             back!(cost)
-            if isnan(sum(memory.A.grad)) || isnan(sum(memory.T_A.grad))
-                JLD.save("memory.jld", "mem", memory)
-                JLD.save("data.jld", "val", data[i:i+batchsize-1])
-            end
-            write(f, string(i)*"   "*string(cost.data)*"  \n")
             clip_gradients(trainables, max_norm)
             zero_nil_slot(memory)
             opt()

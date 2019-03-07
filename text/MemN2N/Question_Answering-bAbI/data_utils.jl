@@ -1,4 +1,5 @@
 using Base.Iterators: flatten
+using Random
 
 function parse_stories(lines)
       data =[]
@@ -31,7 +32,7 @@ function createVocab(data)
       return words2idx
 end
 
-function vectorize_data(data, word_idx, sentence_size, memory_size)
+function vectorize_data(data, word2idx, sentence_size, memory_size)
       vectorized_data = []
       for (story, query, answer) in data
             story_vec = map(x->map(y->word2idx[y], x),story)
@@ -40,7 +41,7 @@ function vectorize_data(data, word_idx, sentence_size, memory_size)
             end
             time_vec = collect(1:length(story_vec))
             query_vec = map(y->word2idx[y], query)
-            answer_vec = zeros(Float64, length(word_idx))
+            answer_vec = zeros(Float64, length(word2idx))
             answer_vec[word2idx[answer[1]]] = 1
             answer_vec = reshape(answer_vec, (1,length(word2idx)))
             push!(vectorized_data, [story_vec, query_vec, answer_vec, time_vec])
@@ -58,4 +59,29 @@ function vectorize_data(data, word_idx, sentence_size, memory_size)
             end
       end
       return vectorized_data
+end
+
+function create_vocab(data)
+      vocab = Set(collect(flatten(flatten(flatten([[a,[b], [c]] for (a,b,c) in data])))))
+      word2idx = Dict(word=>i+1 for (i,word) in enumerate(vocab))
+      word2idx["Nil"] = 1
+      return (vocab, word2idx)
+end
+
+function create_dataset(data_dir)
+      train_data = []
+      test_data = []
+
+      for i=1:20
+          stub = "qa"*string(i)
+          train_fName = filter(x->occursin("train",x)&&occursin(stub, x), readdir(data_dir))[1]
+          test_fName = filter(x->occursin("test",x)&&occursin(stub, x), readdir(data_dir))[1]
+          push!(train_data, parse_stories(readlines(open(joinpath(data_dir,train_fName)))))
+          push!(test_data, parse_stories(readlines(open(joinpath(data_dir,test_fName)))))
+      end
+
+      data = collect(flatten(cat(train_data, train_data, dims=1)))
+      (vocab, word2idx) = create_vocab(data)
+
+      return (data, vocab, word2idx)
 end
