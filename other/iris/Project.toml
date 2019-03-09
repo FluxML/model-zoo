@@ -1,3 +1,2 @@
 [deps]
-DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"

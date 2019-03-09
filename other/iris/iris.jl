@@ -40,11 +40,11 @@ loss(x, y) = crossentropy(model(x), y)
 optimiser = Descent(0.5)
 
 
-# Start Training.
-for epoch in 1:100
-    Flux.train!(loss, params(model), [(X_train, y_train)], optimiser)
-end
+# Create iterator to train model over 110 epochs.
+data_iterator = Iterators.repeated((X_train, y_train), 110)
 
+println("Starting training.")
+Flux.train!(loss, params(model), data_iterator, optimiser)
 
 # Evaluate trained model against test set.
 accuracy(x, y) = mean(onecold(model(x)) .== onecold(y))

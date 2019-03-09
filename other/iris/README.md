@@ -23,15 +23,17 @@ using Pkg; Pkg.activate("."); Pkg.instantiate()
 Then train and evaluate the model:
 
 ```julia
-julia> include("iris.jl")
 
-Accuracy: 0.92
+julia> include("iris.jl")
+Starting training.
+
+Accuracy: 0.94
 
 Confusion Matrix:
 
 3×3 Array{Int64,2}:
  16   0   0
-  0  15   2
+  0  16   1
   0   2  15
 
 julia>
