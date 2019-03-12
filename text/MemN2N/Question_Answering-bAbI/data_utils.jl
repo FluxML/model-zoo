@@ -43,7 +43,7 @@ function vectorize_data(data, word2idx, sentence_size, memory_size)
             query_vec = map(y->word2idx[y], query)
             answer_vec = zeros(Float64, length(word2idx))
             answer_vec[word2idx[answer[1]]] = 1
-            answer_vec = reshape(answer_vec, (1,length(word2idx)))
+            answer_vec = reshape(answer_vec, (length(word2idx),))
             push!(vectorized_data, [story_vec, query_vec, answer_vec, time_vec])
       end
 
