@@ -4,7 +4,7 @@ using Flux.Tracker: track, @grad, data#, gradient
 using Flux.Optimise: Optimiser, _update_params!#, update!
 using Statistics: mean
 using DataStructures: CircularBuffer
-#using CuArrays
+using CuArrays
 
 #Load game environment
 env = CartPoleEnv()
