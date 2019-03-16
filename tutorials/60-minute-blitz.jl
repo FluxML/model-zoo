@@ -317,7 +317,7 @@ imgs = [getarray(X[i].img) for i in 1:50000]
 
 # The first 49k images (in batches of 1000) will be our training set, and the rest is
 # for validation. `partition` handily breaks down the set we give it in consecutive parts
-# (1000 in this case). `cat` is a shorthand for concatentaing multi-dimensional arrays along
+# (1000 in this case). `cat` is a shorthand for concatenating multi-dimensional arrays along
 # any dimension.
 
 train = gpu.([(cat(imgs[i]..., dims = 4), labels[:,i]) for i in partition(1:49000, 1000)])
