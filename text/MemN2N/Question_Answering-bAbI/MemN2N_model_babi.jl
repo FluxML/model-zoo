@@ -136,19 +136,6 @@ function run_batch(memory::Memory, data::Array)
     return batch_cost
 end
 
-function get_trainables(memory::Memory)
-    """
-    Returns trainable parameters of memory
-    """
-    trainables = []
-    for fieldname in fieldnames(typeof(memory))
-        field = getfield(memory, fieldname)
-        if isa(field, TrackedArray)
-            push!(trainables, field)
-        end
-    end
-    return trainables
-end
 
 function clip_gradients(trainables, max_norm)
     """
@@ -181,21 +168,32 @@ function train(data::Array, memory::Memory, epochs::Int, batchsize::Int, max_nor
     Run the model on data and perform gradient descent
     """
     f = open("cost.txt", "w")
-    trainables = get_trainables(memory)
+    trainables = [memory.A, memory.T_A, memory.T_C]
+    for i in memory.C
+        push!(trainables, i)
+    end
     opt = SGD(trainables, η)
     cost = 0
     for epoch=1:epochs
+        # JLD.save("memory"*"$(epoch)_$(η)"*".jld", "mem", memory)
+        if epoch%15==0
+            η = η/2
+            opt = SGD(trainables, η)
+        end
+
         shuffle!(data)
         for i=1:batchsize:length(data)-batchsize
             cost = run_batch(memory, data[i:i+batchsize-1])
             back!(cost)
+            if isnan(sum(memory.A.grad)) || isnan(sum(memory.T_A.grad))
+                JLD.save("memory.jld", "mem", memory)
+                JLD.save("data.jld", "val", data[i:i+batchsize-1])
+            end
+            write(f, string(i)*"   "*string(cost.data)*"  \n")
             clip_gradients(trainables, max_norm)
             zero_nil_slot(memory)
             opt()
             @show i, cost
-            if i%200==0
-                @save "model_$(i)_$(round(Int, cost.data))" memory
-            end
         end
     end
 end
