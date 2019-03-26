@@ -16,7 +16,7 @@ The data source is Fisher's classic dataset, retrieved from the [UCI Machine Lea
 
 ```julia
 
-using Pkg; Pkg.activate("."); Pkg.instantiate()
+julia> using Pkg; Pkg.activate("."); Pkg.instantiate()
 
 ```
 
