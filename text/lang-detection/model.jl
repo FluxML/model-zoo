@@ -5,6 +5,8 @@ using Unicode    # For 'normalize'
 using Random     # for 'shuffle'
 using Statistics # for 'mean'
 
+using CuArrays   # for 'gpu'
+
 corpora = Dict()
 
 cd(@__DIR__)
@@ -27,10 +29,12 @@ dataset = [(onehotbatch(s, alphabet, '_'), onehot(l, langs))
 
 train, test = dataset[1:end-100], dataset[end-99:end]
 
+train = gpu(train)
+test = gpu(test)
 N = 15
 
-scanner = Chain(Dense(length(alphabet), N, σ), LSTM(N, N))
-encoder = Dense(N, length(langs))
+scanner = Chain(Dense(length(alphabet), N, σ), LSTM(N, N)) |> gpu
+encoder = Dense(N, length(langs)) |> gpu
 
 function model(x)
   state = scanner.(x.data)[end]
