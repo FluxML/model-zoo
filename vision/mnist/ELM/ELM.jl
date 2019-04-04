@@ -3,14 +3,14 @@ using Flux.Data.MNIST
 using Flux: onehotbatch, onecold
 using Statistics
 using Random
-
+"""
+function elmtrain
+input: 1) n * m train set; where m = #samples, n = #features
+       2) c * m labels; where m = #samples, c = #classes
+action: generates win and wout
+"""
 function elmtrain(train_x, train_y, hidden_units)
-	"""
-    	function elmtrain
-    	input: 1) n * m train set; where m = #samples, n = #features
-      	     2) c * m labels; where m = #samples, c = #classes
-    	action: generates win and wout
-	"""
+	
     #fixing layer parameters
     input_units = size(train_x,1)
 
@@ -29,12 +29,12 @@ function elmtrain(train_x, train_y, hidden_units)
     global wout = wout
 end
 
+"""
+function elmpredict
+input: m * n test set; where m = #samples, n = #features
+action: forward propagation and predictions
+"""
 function elmpredict(test_x)    
-    """
-    	function elmpredict
-    	input: m * n test set; where m = #samples, n = #features
-    	action: forward propagation and predictions
-	"""
     #first step of forward propagation
     hidden_layer = win*test_x
     #applying ReLu
