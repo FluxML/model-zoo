@@ -1,6 +1,6 @@
 include("automata.jl")
 
-using Flux, Zygote
+using Flux, Zygote, Statistics
 using Zygote: @adjoint
 
 activate(x) = x > 0.5
@@ -8,17 +8,23 @@ activate(x) = x > 0.5
 
 radius = 3
 
-model = Chain(Dense(2radius+1, 10, relu), Dense(10, 1, σ))
+model = Chain(Dense(2radius+1, 10, σ), Dense(10, 1, σ))
 
 automata(st, i) = model(neighbourhood(st, i, radius))[1] |> activate
 
-automata(State(5), 1)
+function loss(st, steps = length(st))
+  target = vote(st)
+  for i = 1:steps
+    st = step(st, automata)
+  end
+  (target - mean(st.st))^2
+end
 
 st = State(500)
+
+loss(st)
 image(st, automata)
 
-automata(st, 1)
+gradient(loss, st)
 
-gradient(automata, st, 1)
-
-gs = gradient(() -> automata(st, 1), params(model))
+gs = gradient(() -> loss(st), params(model))

@@ -33,11 +33,13 @@ end
 
 vote(x) = count(x) > length(x)÷2
 
+vote(st::State) = vote(st.st)
+
 function accuracy(rule; width = 100, tests = 1000, max = 100)
   s = 0
   for _ = 1:tests
     st = State(width)
-    s += vote(st.st) == converge(st, rule, max = max)
+    s += vote(st) == converge(st, rule, max = max)
   end
   return s / tests
 end
