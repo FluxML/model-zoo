@@ -1,15 +1,18 @@
 using Flux
 using Flux: onehot, onehotbatch, crossentropy, reset!, throttle
+using Statistics: mean
+using Random
+using Unicode
 
 corpora = Dict()
 
 cd(@__DIR__)
 for file in readdir("corpus")
-  lang = Symbol(match(r"(.*)\.txt", file).captures[1])
-  corpus = split(String(read("corpus/$file")), ".")
-  corpus = strip.(normalize_string.(corpus, casefold=true, stripmark=true))
-  corpus = filter(!isempty, corpus)
-  corpora[lang] = corpus
+    lang = Symbol(match(r"(.*)\.txt", file).captures[1])
+    corpus = split(String(read("corpus/$file")), ".")
+    corpus = strip.(Unicode.normalize.(corpus, casefold=true, stripmark=true))
+    corpus = filter(!isempty, corpus)
+    corpora[lang] = corpus
 end
 
 langs = collect(keys(corpora))
@@ -29,9 +32,9 @@ scanner = Chain(Dense(length(alphabet), N, σ), LSTM(N, N))
 encoder = Dense(N, length(langs))
 
 function model(x)
-  state = scanner.(x.data)[end]
-  reset!(scanner)
-  softmax(encoder(state))
+    state = scanner.(x.data)[end]
+    reset!(scanner)
+    softmax(encoder(state))
 end
 
 loss(x, y) = crossentropy(model(x), y)
