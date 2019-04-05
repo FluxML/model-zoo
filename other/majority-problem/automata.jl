@@ -74,8 +74,8 @@ function shuffle(s, i)
   end
 end
 
-st = State(100)
+st = State(1000)
 out = converge(st, shuffle)
-image(st, shuffle, steps = 100)
+image(st, shuffle)
 
 accuracy(shuffle, tests = 1000)
