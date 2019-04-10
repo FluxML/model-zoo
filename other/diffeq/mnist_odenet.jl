@@ -1,9 +1,9 @@
-using Flux, DiffEqFlux, DifferentialEquations, Plots, StatsBase, RecursiveArrayTools
+using Flux, DiffEqFlux, OrdinaryDiffEq,  StatsBase, RecursiveArrayTools
 using Flux: onehotbatch
 using MLDatasets:MNIST
 using Base.Iterators: repeated,partition
 
-batch_size=32
+batch_size=10
 
 train_x, train_y = MNIST.traindata();
 test_x, test_y = MNIST.testdata();
@@ -37,15 +37,29 @@ ps = Flux.params(dudt)
 function n_ode(batch_u0, batch_t)
     neural_ode(dudt,batch_u0,(0.,25.),Tsit5(),
                save_start=false,
-               saveat=batch_t, reltol=1e-3,abstol=1e-3)
+               saveat=batch_t,      # Ugly way to only get sol[end] 
+               reltol=1e-3,abstol=1e-3)
 end
 
-model = Chain(downsample,u->n_ode(u,25.)[:,:,:,:,1],classify)
+model = Chain(downsample,u->n_ode(u,[25.])[:,:,:,:,end],classify) # Further ugliness getting sol[end]
 
 loss(x,y) = Flux.mse(model(x),y)
 
+loss(train_data[1]...) # Works and is tracked
+# This fails with neural_ode_rd with T undefined error
+
 opt = ADAM(0.1)
+Ps = params(model,ps)
 
-Ps = params(model)
+Tracker.gradient(()->loss(xt,yt),Ps) # Fails with BoundsError
+#ERROR: BoundsError: attempt to access 6×6×32×10×1 Array{Float32,5} at index [Base.Slice(Base.OneTo(6)), 1]
 
-Flux.train!(loss, Ps, train_data[1:2], opt, cb = ())
+Flux.train!(loss, Ps, train_data, opt, cb = ()) # Fails with BoundsError
+
+
+function ODEfunc(du,u,p,t)
+    du.= dudt(u)
+end
+prob = ODEProblem(ODEfunc,downsample(xt),(0.,25.))
+
+solve(prob,Tsit5(),saveat=25.)
