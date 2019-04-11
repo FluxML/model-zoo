@@ -65,12 +65,12 @@ discriminator = Chain(
                 Dense(1024, 1,sigmoid)
                 ) |> gpu
 
-# <b>Define the optimizers</b>
+# Define the optimizers
 
 opt_gen  = ADAM(params(generator),gen_lr, β1 = 0.5)
 opt_disc = ADAM(params(discriminator),dis_lr, β1 = 0.5)
 
-# <b>Utility functions to zero out our model gradients</b>
+# Utility functions to zero out our model gradients
 function nullify_grad!(p)
   if typeof(p) <: TrackedArray
     p.grad .= 0.0f0
@@ -82,7 +82,7 @@ function zero_grad!(model)
   model = mapleaves(nullify_grad!, model)
 end
 
-# <b>Creating and Saving Utilities</b>
+# Creating and Saving Utilities
 
 img(x) = Gray.(reshape((x+1)/2, 28, 28)) # For denormalizing the generated image
 
@@ -100,7 +100,7 @@ end
 cd(@__DIR__)
 
 
-# We use the <b>Binary Cross Entropy Loss</b>
+# We use the Binary Cross Entropy Loss
 function bce(ŷ, y)
     mean(-y.*log.(ŷ) - (1  .- y .+ 1f-10).*log.(1 .- ŷ .+ 1f-10))
 end

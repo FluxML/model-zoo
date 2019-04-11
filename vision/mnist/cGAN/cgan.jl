@@ -49,11 +49,11 @@ discriminator = Chain(Dense(794,512,leakyrelu),
                       Dense(128,1,sigmoid)
                       ) |> gpu
 
-# <b>Define the optimizers</b>
+# Define the optimizers
 opt_gen  = ADAM(params(generator),gen_lr, β1 = 0.5)
 opt_disc = ADAM(params(discriminator),dis_lr, β1 = 0.5)
 
-# <b>Utility functions to zero out our model gradients</b>
+# Utility functions to zero out our model gradients
 function nullify_grad!(p)
   if typeof(p) <: TrackedArray
     p.grad .= 0.0f0
@@ -65,7 +65,7 @@ function zero_grad!(model)
   model = mapleaves(nullify_grad!, model)
 end
 
-# <b>Creating and Saving Utilities</b>
+# Creating and Saving Utilities
 
 img(x) = Gray.(reshape((x.+1)/2, 28, 28, 1)) # For denormalizing the generated image
 
@@ -78,17 +78,17 @@ function sample()
 
   noise = [vcat(rand(dist, NOISE_DIM, 1),fake_labels[:,i]) for i=1:num_samples] # Sample 9 digits
   noise = gpu.(noise) # Add to GPU
-  
+
   testmode!(generator)
   fake_imgs = img.(map(x -> gpu(generator(x).data), noise)) # Generate a new image from random noise
   testmode!(generator, false)
-  
+
   img_grid = fake_imgs[1]
 end
 
 cd(@__DIR__)
 
-# We use the <b>Binary Cross Entropy Loss</b>
+# We use the Binary Cross Entropy Loss
 function bce(ŷ, y)
     mean(-y.*log.(ŷ .+ 1f-10) - (1  .- y .+ 1f-10).*log.(1 .- ŷ .+ 1f-10))
 end
@@ -106,13 +106,13 @@ function train(x)
 
   D_real = discriminator(inp) # D(x|y)
   real_labels = ones(size(D_real)) |> gpu
-  
+
   D_real_loss = bce(D_real,real_labels)
 
   fake_x = generator(vcat(z,labels)) # G(z|y)
   D_fake = discriminator(vcat(fake_x,labels)) # D(G(z|y))
   fake_labels = zeros(size(D_fake)) |> gpu  
-    
+
   D_fake_loss = bce(D_fake,fake_labels)
 
   D_loss = D_real_loss + D_fake_loss
@@ -121,15 +121,15 @@ function train(x)
 
   zero_grad!(discriminator)
   zero_grad!(generator)
-  
+
   fake_x = generator(vcat(z,labels)) # G(z|y)
   D_fake = discriminator(vcat(fake_x,labels)) # D(G(z|y))
   real_labels = ones(size(D_fake)) |> gpu  
-    
+
   G_loss = bce(D_fake,real_labels)
   Flux.back!(G_loss)
   opt_gen() # Optimise the generator
-  
+
   if training_steps % verbose_freq == 0
     println("D Loss: $(D_loss.data) | G loss: $(G_loss.data)")
   end
@@ -145,4 +145,4 @@ for e = 1:NUM_EPOCHS
   println("Epoch $e over.")
 end
 
-save("sample_cgan.png", sample())
+save("sample_cgan.png", sample()) 
