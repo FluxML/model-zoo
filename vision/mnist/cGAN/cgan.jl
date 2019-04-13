@@ -102,8 +102,8 @@ function train(x)
   inp[end-9:end,:] = x[end-9:end,:] # The labels should not be modified
 
   labels = Float32.(x[end-9:end,:]) |> gpu # y
-  zero_grad!(discriminator)
-  zero_grad!(generator)
+  # zero_grad!(discriminator)
+  # zero_grad!(generator)
 
   D_real = discriminator(inp) # D(x|y)
   real_labels = ones(size(D_real)) |> gpu
@@ -122,8 +122,8 @@ function train(x)
   gs = Tracker.gradient(() -> D_loss,params(discriminator))
   update!(opt_disc,params(discriminator),gs)
 
-  zero_grad!(discriminator)
-  zero_grad!(generator)
+  # zero_grad!(discriminator)
+  # zero_grad!(generator)
 
   fake_x = generator(vcat(z,labels)) # G(z|y)
   D_fake = discriminator(vcat(fake_x,labels)) # D(G(z|y))
