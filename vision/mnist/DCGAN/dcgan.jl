@@ -67,20 +67,22 @@ discriminator = Chain(
 
 # Define the optimizers
 
-opt_gen  = ADAM(params(generator),gen_lr, β1 = 0.5)
-opt_disc = ADAM(params(discriminator),dis_lr, β1 = 0.5)
+# opt_gen  = ADAM(params(generator),gen_lr, β1 = 0.5)
+# opt_disc = ADAM(params(discriminator),dis_lr, β1 = 0.5)
+opt_gen = ADAM(gen_lr)
+opt_disc = ADAM(dis_lr)
 
 # Utility functions to zero out our model gradients
-function nullify_grad!(p)
-  if typeof(p) <: TrackedArray
-    p.grad .= 0.0f0
-  end
-  return p
-end
+# function nullify_grad!(p)
+#   if typeof(p) <: TrackedArray
+#     p.grad .= 0.0f0
+#   end
+#   return p
+# end
 
-function zero_grad!(model)
-  model = mapleaves(nullify_grad!, model)
-end
+# function zero_grad!(model)
+#   model = mapleaves(nullify_grad!, model)
+# end
 
 # Creating and Saving Utilities
 
@@ -111,7 +113,7 @@ function train(x)
   z = rand(dist, noise_dim, BATCH_SIZE) |> gpu
   inp = 2x .- 1 |> gpu # Normalize images to [-1,1]
  
-  zero_grad!(discriminator)
+  # zero_grad!(discriminator)
   
   D_real = discriminator(inp) # D(x)
   real_labels = ones(size(D_real)) |> gpu
@@ -126,19 +128,24 @@ function train(x)
   D_fake_loss = bce(D_fake,fake_labels)
 
   D_loss = D_real_loss + D_fake_loss
-  Flux.back!(D_loss)
-  opt_disc() # Optimize the discriminator
+  gs = Tracker.gradient(() -> D_loss,params(discriminator))
+  update!(opt_disc,params(discriminator),gs)
+  # Flux.back!(D_loss)
+  # opt_disc() # Optimize the discriminator
 
-  zero_grad!(generator)
+  # zero_grad!(generator)
 
   fake_x = generator(z) # G(z)
   D_fake = discriminator(fake_x) # D(G(z))
   real_labels = ones(size(D_fake)) |> gpu  
 
   G_loss = bce(D_fake,real_labels)
-
-  Flux.back!(G_loss)
-  opt_gen() # Optimise the generator
+  gs = Tracker.gradient(() -> G_loss,params(generator))
+  for _ in 1:3
+    update!(opt_gen,params(generator),gs)
+  end
+  # Flux.back!(G_loss)
+  # opt_gen() # Optimise the generator
   
   if training_steps % verbose_freq == 0
     println("D Loss: $(D_loss.data) | G loss: $(G_loss.data)")

@@ -1,6 +1,7 @@
 # Get the imports done
 using Flux, Flux.Data.MNIST,Flux
-using Flux: @epochs, back!, testmode!, throttle
+using Flux: @epochs, back!, testmode!, throttle, Tracker
+using Flux.Tracker:update!
 using Base.Iterators: partition,flatten
 using Flux: onehot,onehotbatch
 using Distributions: Normal
@@ -8,7 +9,7 @@ using Statistics
 using Images
 
 # Define the hyperparameters
-NUM_EPOCHS = 5000
+NUM_EPOCHS = 500
 BATCH_SIZE = 100
 NOISE_DIM = 100
 gen_lr = 0.0001f0 # Generator learning rate
@@ -50,8 +51,8 @@ discriminator = Chain(Dense(794,512,leakyrelu),
                       ) |> gpu
 
 # Define the optimizers
-opt_gen  = ADAM(params(generator),gen_lr, β1 = 0.5)
-opt_disc = ADAM(params(discriminator),dis_lr, β1 = 0.5)
+opt_gen  = ADAM(gen_lr)
+opt_disc = ADAM(dis_lr)
 
 # Utility functions to zero out our model gradients
 function nullify_grad!(p)
@@ -116,8 +117,10 @@ function train(x)
   D_fake_loss = bce(D_fake,fake_labels)
 
   D_loss = D_real_loss + D_fake_loss
-  Flux.back!(D_loss)
-  opt_disc() # Optimize the discriminator
+  # Flux.back!(D_loss)
+  # opt_disc() # Optimize the discriminator
+  gs = Tracker.gradient(() -> D_loss,params(discriminator))
+  update!(opt_disc,params(discriminator),gs)
 
   zero_grad!(discriminator)
   zero_grad!(generator)
@@ -127,8 +130,12 @@ function train(x)
   real_labels = ones(size(D_fake)) |> gpu  
 
   G_loss = bce(D_fake,real_labels)
-  Flux.back!(G_loss)
-  opt_gen() # Optimise the generator
+  # Flux.back!(G_loss)
+  # opt_gen() # Optimise the generator
+  gs = Tracker.gradient(() -> G_loss,params(generator))
+  for _ in 1:3
+	  update!(opt_gen,params(generator),gs)
+  end
 
   if training_steps % verbose_freq == 0
     println("D Loss: $(D_loss.data) | G loss: $(G_loss.data)")
