@@ -70,15 +70,19 @@ function μEpisode(env::EnvWrapper)
         #sleep(0.01)
         a = action(state(env))
         s′, r, done, _ = step!(env._env, a)
-		## using `env` instead of `env._env` generates error
-		## Uncommenting following generated BoundsError, but works
+	## using `step!(env, a)` instead of `step!(env._env, a)` generates error. Although that's the preferred usage.
+	## Following part is same as `step!(env::EnvWrapper, a)`.
 
-        #env.steps += 1
-        #env.total_reward += r
-        #env.done = done
-		#if !isnothing(env.max_episode_steps)
-		#	env.done |= env.steps ≥ env.max_episode_steps
-		#end
+        env.steps += 1
+        env.total_reward += r
+        env.done = done
+	if !isnothing(env.max_episode_steps)
+		env.done |= env.steps ≥ env.max_episode_steps
+	end
+	## If using `step!(env, a)` (instead of `step!(env._env, a)`) above segment could be commented.
+	## `step!(env, a)` generates:
+	#  ERROR: LoadError: Compiling Tuple{typeof(step!),EnvWrapper,Array{Float32,1}}: AssertionError: not implemented
+	
         if trainable(env)
             l += loss(train_reward(env))
         end
