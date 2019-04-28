@@ -1,6 +1,6 @@
 using Flux, Gym, Printf, Zygote
 using Zygote: @adjoint
-using Flux.Optimise: Optimiser, update!
+using Flux.Optimise: update!
 using Statistics: mean
 #using CuArrays
 
@@ -62,23 +62,13 @@ function train_reward(env::EnvWrapper)
     return r_x .* r_θ
 end
 
-
 function μEpisode(env::EnvWrapper)
     l = 0
     for frames ∈ 1:SEQ_LEN
         #render(env, ctx)
         #sleep(0.01)
         a = action(state(env))
-        s′, r, done, _ = step!(env._env, a)
-		## using `env` instead of `env._env` generates error
-		## Uncommenting following generated BoundsError, but works
-
-        #env.steps += 1
-        #env.total_reward += r
-        #env.done = done
-		#if !isnothing(env.max_episode_steps)
-		#	env.done |= env.steps ≥ env.max_episode_steps
-		#end
+        s′, r, done, _ = step!(env, a)
         if trainable(env)
             l += loss(train_reward(env))
         end
@@ -92,8 +82,7 @@ function episode!(env::EnvWrapper)
     reset!(env)
     while !game_over(env)
         if trainable(env)
-            grads = gradient(()->μEpisode(env),
-                           params(model))
+            grads = gradient(()->μEpisode(env), params(model))
             update!(opt, params(model), grads)
         else
             μEpisode(env)
