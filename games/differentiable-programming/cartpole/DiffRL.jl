@@ -69,6 +69,7 @@ function μEpisode(env::EnvWrapper)
         #sleep(0.01)
         a = action(state(env))
         s′, r, done, _ = step!(env, a)
+
         if trainable(env)
             l += loss(train_reward(env))
         end
