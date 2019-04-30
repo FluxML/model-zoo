@@ -1,6 +1,7 @@
 using Flux, Flux.Data.MNIST, Statistics
 using Flux: throttle, params
 using Juno: @progress
+using CuArrays
 
 # Extend distributions slightly to have a numerically stable logpdf for `p` close to 1 or 0.
 using Distributions
@@ -11,6 +12,7 @@ logpdf(b::Bernoulli, y::Bool) = y * log(b.p + eps(Float32)) + (1f0 - y) * log(1 
 X = float.(hcat(vec.(MNIST.images())...)) .> 0.5
 N, M = size(X, 2), 100
 data = [X[:,i] for i in Iterators.partition(1:N,M)]
+data = gpu.(data)
 
 
 ################################# Define Model #################################
@@ -19,12 +21,12 @@ data = [X[:,i] for i in Iterators.partition(1:N,M)]
 Dz, Dh = 5, 500
 
 # Components of recognition model / "encoder" MLP.
-A, μ, logσ = Dense(28^2, Dh, tanh), Dense(Dh, Dz), Dense(Dh, Dz)
+A, μ, logσ = Dense(28^2, Dh, tanh) |> gpu, Dense(Dh, Dz) |> gpu, Dense(Dh, Dz) |> gpu
 g(X) = (h = A(X); (μ(h), logσ(h)))
 z(μ, logσ) = μ + exp(logσ) * randn(Float32)
 
 # Generative model / "decoder" MLP.
-f = Chain(Dense(Dz, Dh, tanh), Dense(Dh, 28^2, σ))
+f = Chain(Dense(Dz, Dh, tanh), Dense(Dh, 28^2, σ)) |> gpu
 
 
 ####################### Define ways of doing things with the model. #######################
