@@ -4,6 +4,7 @@ using Metalhead: trainimgs
 using Images: channelview
 using Statistics: mean
 using Base.Iterators: partition
+# using CuArrays
 
 # VGG16 and VGG19 models
 
@@ -110,7 +111,7 @@ m = vgg16()
 
 loss(x, y) = crossentropy(m(x), y)
 
-accuracy(x, y) = mean(onecold(m(x), 1:10) .== onecold(y, 1:10))
+accuracy(x, y) = mean(onecold(m(x), 1:10) |> gpu .== onecold(y, 1:10) |> gpu)
 
 # Defining the callback and the optimizer
 
