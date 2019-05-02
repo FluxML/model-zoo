@@ -10,6 +10,7 @@ using Flux, Flux.Data.MNIST, Statistics
 using Flux: onehotbatch, onecold, crossentropy, throttle
 using Base.Iterators: repeated, partition
 using Printf, BSON
+using CuArrays
 
 # Load labels and images from Flux.Data.MNIST
 @info("Loading data set")
@@ -78,7 +79,7 @@ function loss(x, y)
     y_hat = model(x_aug)
     return crossentropy(y_hat, y)
 end
-accuracy(x, y) = mean(onecold(model(x)) .== onecold(y))
+accuracy(x, y) = mean(onecold(model(x)) |> gpu .== onecold(y) |> gpu)
 
 # Train our model with the given training set using the ADAM optimizer and
 # printing out performance against the test set as we go.
@@ -95,7 +96,7 @@ for epoch_idx in 1:100
     # Calculate accuracy:
     acc = accuracy(test_set...)
     @info(@sprintf("[%d]: Test accuracy: %.4f", epoch_idx, acc))
-    
+
     # If our accuracy is good enough, quit out.
     if acc >= 0.999
         @info(" -> Early-exiting: We reached our target accuracy of 99.9%")
