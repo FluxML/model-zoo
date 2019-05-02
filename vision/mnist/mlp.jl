@@ -1,7 +1,7 @@
 using Flux, Flux.Data.MNIST, Statistics
 using Flux: onehotbatch, onecold, crossentropy, throttle
 using Base.Iterators: repeated
-using CuArrays
+# using CuArrays
 
 # Classify MNIST digits with a simple multi-layer-perceptron
 
