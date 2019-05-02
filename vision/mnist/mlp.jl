@@ -1,7 +1,7 @@
 using Flux, Flux.Data.MNIST, Statistics
 using Flux: onehotbatch, onecold, crossentropy, throttle
 using Base.Iterators: repeated
-# using CuArrays
+using CuArrays
 
 # Classify MNIST digits with a simple multi-layer-perceptron
 
@@ -20,7 +20,7 @@ m = Chain(
 
 loss(x, y) = crossentropy(m(x), y)
 
-accuracy(x, y) = mean(onecold(m(x)) .== onecold(y))
+accuracy(x, y) = mean(onecold(m(x)) |> gpu .== onecold(y) |> gpu)
 
 dataset = repeated((X, Y), 200)
 evalcb = () -> @show(loss(X, Y))
