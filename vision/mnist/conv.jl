@@ -10,7 +10,7 @@ using Flux, Flux.Data.MNIST, Statistics
 using Flux: onehotbatch, onecold, crossentropy, throttle
 using Base.Iterators: repeated, partition
 using Printf, BSON
-using CuArrays
+# using CuArrays
 
 # Load labels and images from Flux.Data.MNIST
 @info("Loading data set")
