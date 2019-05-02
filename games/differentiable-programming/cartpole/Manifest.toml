@@ -40,10 +40,10 @@ uuid = "9e28174c-4ba2-5203-b857-d8d62c4213ee"
 version = "0.8.10"
 
 [[BinaryProvider]]
-deps = ["Libdl", "Pkg", "SHA", "Test"]
-git-tree-sha1 = "055eb2690182ebc31087859c3dd8598371d3ef9e"
+deps = ["Libdl", "SHA"]
+git-tree-sha1 = "c7361ce8a2129f20b0e05a89f7070820cfed6648"
 uuid = "b99e7846-7c00-51b0-8f62-c81ae34c0232"
-version = "0.5.3"
+version = "0.5.4"
 
 [[CSTParser]]
 deps = ["LibGit2", "Test", "Tokenize"]
@@ -80,6 +80,12 @@ deps = ["Base64", "Dates", "DelimitedFiles", "Distributed", "InteractiveUtils", 
 git-tree-sha1 = "84aa74986c5b9b898b0d1acaf3258741ee64754f"
 uuid = "34da2185-b29b-5c13-b0c7-acf172513d20"
 version = "2.1.0"
+
+[[Crayons]]
+deps = ["Test"]
+git-tree-sha1 = "f621b8ef51fd2004c7cf157ea47f027fdeac5523"
+uuid = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
+version = "4.0.0"
 
 [[DataStructures]]
 deps = ["InteractiveUtils", "OrderedCollections", "Random", "Serialization", "Test"]
@@ -127,10 +133,10 @@ uuid = "53c48c17-4a7d-5ca2-90c5-79b7896eea93"
 version = "0.5.3"
 
 [[Flux]]
-deps = ["AbstractTrees", "Adapt", "CodecZlib", "Colors", "DelimitedFiles", "Juno", "LinearAlgebra", "MacroTools", "NNlib", "Pkg", "Random", "Reexport", "Requires", "SHA", "Statistics", "StatsBase", "Test", "Tracker", "ZipFile"]
-git-tree-sha1 = "75e5a6850ad9d6129773171d9ba66be899a515ec"
+deps = ["AbstractTrees", "Adapt", "CodecZlib", "Colors", "DelimitedFiles", "Juno", "LinearAlgebra", "MacroTools", "NNlib", "Pkg", "Printf", "Random", "Reexport", "Requires", "SHA", "Statistics", "StatsBase", "Tracker", "ZipFile"]
+git-tree-sha1 = "08212989c2856f95f90709ea5fd824bd27b34514"
 uuid = "587475ba-b771-5e3f-ad9e-33799f191a9c"
-version = "0.8.2"
+version = "0.8.3"
 
 [[ForwardDiff]]
 deps = ["CommonSubexpressions", "DiffResults", "DiffRules", "InteractiveUtils", "LinearAlgebra", "NaNMath", "Random", "SparseArrays", "SpecialFunctions", "StaticArrays", "Test"]
@@ -146,7 +152,7 @@ version = "0.5.0"
 
 [[Gym]]
 deps = ["DataStructures", "Flux", "JSExpr", "Reexport", "WebIO"]
-git-tree-sha1 = "bf7161d11057c66afb7c6a2cb722efdc386c5a34"
+git-tree-sha1 = "8bf423ac0d16cd6b574eb60b31f75cb836fe2218"
 repo-rev = "master"
 repo-url = "git@github.com:FluxML/Gym.jl.git"
 uuid = "56b9baea-2481-11e9-37ae-75904354ad8c"
@@ -154,11 +160,11 @@ version = "0.1.0"
 
 [[IRTools]]
 deps = ["InteractiveUtils", "MacroTools", "Test"]
-git-tree-sha1 = "ca9d6249847874d628f6f3987b7828a010a5f613"
+git-tree-sha1 = "1a946e462d8a86cc60df2cbfd4ff9c2ed9ee2615"
 repo-rev = "master"
 repo-url = "https://github.com/MikeInnes/IRTools.jl.git"
 uuid = "7869d1d1-7146-5819-86e3-90919afe41df"
-version = "0.1.2"
+version = "0.2.0"
 
 [[InteractiveUtils]]
 deps = ["Markdown"]
@@ -221,10 +227,10 @@ version = "0.4.0"
 uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 
 [[NNlib]]
-deps = ["Libdl", "LinearAlgebra", "MacroTools", "Requires", "Test"]
-git-tree-sha1 = "9ac5cd21484189339b27840818c4882d1b6df7fd"
+deps = ["Libdl", "LinearAlgebra", "Requires", "Statistics", "TimerOutputs"]
+git-tree-sha1 = "0c667371391fc6bb31f7f12f96a56a17098b3de8"
 uuid = "872c559c-99b0-510c-b3b7-b6c96a88d5cd"
-version = "0.5.0"
+version = "0.6.0"
 
 [[NaNMath]]
 deps = ["Compat"]
@@ -359,6 +365,12 @@ uuid = "4607b0f0-06f3-5cda-b6b1-a6196a1729e9"
 deps = ["Distributed", "InteractiveUtils", "Logging", "Random"]
 uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
+[[TimerOutputs]]
+deps = ["Crayons", "Printf", "Test", "Unicode"]
+git-tree-sha1 = "b80671c06f8f8bae08c55d67b5ce292c5ae2660c"
+uuid = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
+version = "0.5.0"
+
 [[Tokenize]]
 deps = ["Printf", "Test"]
 git-tree-sha1 = "3e83f60b74911d3042d3550884ca2776386a02b8"
@@ -367,9 +379,9 @@ version = "0.5.3"
 
 [[Tracker]]
 deps = ["Adapt", "DiffRules", "ForwardDiff", "LinearAlgebra", "MacroTools", "NNlib", "NaNMath", "Printf", "Random", "Requires", "SpecialFunctions", "Statistics", "Test"]
-git-tree-sha1 = "4eeea9f0ef9b8c7d1c5c5b1f8f68cb9b7f45d7df"
+git-tree-sha1 = "0bec1b68c63a0e8a58d3944261cbf4cc9577c8a1"
 uuid = "9f7883ad-71c0-57eb-9f7f-b5c9e6d3789c"
-version = "0.1.0"
+version = "0.2.0"
 
 [[TranscodingStreams]]
 deps = ["Random", "Test"]
@@ -410,8 +422,8 @@ version = "0.8.1"
 
 [[Zygote]]
 deps = ["DiffRules", "ForwardDiff", "IRTools", "InteractiveUtils", "LinearAlgebra", "MacroTools", "NNlib", "NaNMath", "Random", "Requires", "SpecialFunctions", "Statistics"]
-git-tree-sha1 = "9d4f46e4bf3f3d7c64c9bf16d02b26366f157aea"
+git-tree-sha1 = "432b43c2d8440947c6f7531b17c4e53708c146c5"
 repo-rev = "master"
 repo-url = "https://github.com/FluxML/Zygote.jl.git"
 uuid = "e88e6eb3-aa80-5325-afca-941959d7151f"
-version = "0.2.0+"
+version = "0.3.0"
