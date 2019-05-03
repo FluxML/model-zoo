@@ -1,23 +1,24 @@
-using Flux, Gym, Printf
-using Flux.Tracker: data, grad
-using Flux.Optimise: _update_params!
+using Flux, Gym, Printf, Zygote
+using Flux.Tracker: data
+using Flux.Optimise: update!
 using Statistics: mean
 using DataStructures: CircularBuffer
 using Distributions: sample
 
-using CuArrays
+#using CuArrays
 
 #Load game environment
 
-env = PendulumEnv()
+env = make("Pendulum-v0")
+reset!(env)
 
 # ----------------------------- Parameters -------------------------------------
 
-STATE_SIZE = length(reset!(env))
+STATE_SIZE = length(state(env))
 ACTION_SIZE = 1#length(env.actions)
-ACTION_BOUND = 2#env.action_space.hi
+ACTION_BOUND = env._env.action_space.high[1]
 MAX_EP = 50_000
-MAX_EP_LENGTH = 1000
+MAX_EP_LENGTH = 200
 
 BATCH_SIZE = 64
 MEM_SIZE = 100_000
@@ -57,7 +58,7 @@ end
 
 struct OUNoise
   μ
-  θ  
+  θ
   σ
   X
 end
@@ -80,11 +81,12 @@ noise_scale = 1f0 / ACTION_BOUND
 w_init(dims...) = 6f-3rand(Float32, dims...) .- 3f-3
 
 actor = Chain(Dense(STATE_SIZE, 400, relu),
-	      Dense(400, 300, relu),
+	      	  Dense(400, 300, relu),
               Dense(300, ACTION_SIZE, tanh, initW=w_init),
               x -> x * ACTION_BOUND) |> gpu
 actor_target = deepcopy(actor)
 
+# Critic model
 struct crit
   state_crit
   act_crit
@@ -101,14 +103,14 @@ end
 
 Base.deepcopy(c::crit) = crit(deepcopy(c.state_crit),
                               deepcopy(c.act_crit),
-			      deepcopy(c.sa_crit))
+			      			  deepcopy(c.sa_crit))
 
 critic = crit(Chain(Dense(STATE_SIZE, 400, relu), Dense(400, 300)) |> gpu,
-              Dense(ACTION_SIZE, 300) |> gpu,
-	      Dense(300, 1, initW=w_init) |> gpu)
+              		Dense(ACTION_SIZE, 300) |> gpu,
+	      			Dense(300, 1, initW=w_init) |> gpu)
 critic_target = deepcopy(critic)
 
-# ------------------------------- Param Update Functions---------------------------------
+# ---------------------- Param Update Functions --------------------------------
 
 function update_target!(target, model; τ = 1f0)
   for (p_t, p_m) in zip(params(target), params(model))
@@ -116,94 +118,89 @@ function update_target!(target, model; τ = 1f0)
   end
 end
 
-nullify_grad!(p) = p
-nullify_grad!(p::TrackedArray) = (p.grad .= 0f0)
-
-zero_grad!(model) = (model = mapleaves(nullify_grad!, model))
+function update_model!(model, opt, loss, inp...)
+  grads = gradient(()->loss(inp...), params(model))
+  update!(opt, params(model), grads)
+end
 
 # ---------------------------------- Training ----------------------------------
-
+## Losses
 function L2_loss(model)
-  l2_loss = 0
-  for p in params(model)
-    l2_loss += sum(p .^ 2)
-  end
-
+  l2_loss = sum(map(p->sum(p.^2), params(model)))
   return L2_DECAY * l2_loss
 end
 
+loss_crit(y, s, a) = Flux.mse(critic(s, a), y) #+ L2_loss(critic)
+
+function loss_act(s)
+  actions = actor(s)
+  crit_out = critic(s, actions)
+  return -sum(crit_out)
+end
+
+## Optimizers
 opt_crit = ADAM(η_crit)
 opt_act  = ADAM(η_act)
 
+
 function replay()
   s, a, r, s′, s_mask = getData()
-  
-  # Update Critic
-  a′ = data(actor_target(s′))
-  v′ = data(critic_target(s′, a′))
-  y = r .+ γ * v′ .* s_mask	# set v′ to 0 where s_ is terminal state
 
-  v = critic(s, a)
-  loss_crit = Flux.mse(y, v) + L2_loss(critic)
-  
-  zero_grad!(critic)
-  Flux.back!(loss_crit)
-  _update_params!(opt_crit, params(critic))
-  
-  # Update Actor
-  actions = actor(s)
-  crit_out = critic(s, actions)
-  
-  zero_grad!(actor)
-  Flux.back!(-sum(crit_out))
-  _update_params!(opt_act, params(actor))
+  a′ = actor_target(s′)
+  v′ = critic_target(s′, a′)
+  y = data(r .+ γ * v′ .* s_mask)	# set v′ to 0 where s_ is terminal state
+
+
+  update_model!(critic, opt_crit, loss_crit, y, s, a)
+  update_model!(actor, opt_act, loss_act, s)
 
   # Update Target models
   update_target!(actor_target, actor; τ = τ)
   update_target!(critic_target, critic; τ = τ)
 end
 
-# --------------------------- Helper Functions --------------------------------
+# ---------------------------- Helper Functions --------------------------------
 
 # Stores tuple of state, action, reward, next_state, and done
 remember(state, action, reward, next_state, done) =
-  push!(memory, [data.((state, action, reward[1], next_state))..., done])
+  push!(memory, [data.((state, action, reward, next_state))..., done])
 
 # Choose action according to policy PendulumPolicy
 function action(state, train=true)
-  state = reshape(data(state), size(state)..., 1)
-  act_pred = data(actor(state |> gpu))
+  state = reshape(state, size(state)..., 1)
+  act_pred = actor(state |> gpu)
   if train
-    act_pred .+= noise_scale * sample_noise(ou)
+    act_pred = act_pred .+ noise_scale * sample_noise(ou)
   end
   clamp.(act_pred, -ACTION_BOUND, ACTION_BOUND) # returns action
 end
 
-function episode!(env, train=true)
-  total_reward = 0f0
-  s = reset!(env)
+function episode!(env::EnvWrapper)
+  reset!(env)
   for ep=1:MAX_EP_LENGTH
-    a = action(s, train)
+	s = state(env)
+    a = action(s, trainable(env))
     s′, r, done, _ = step!(env, a)
-    total_reward += data(r)[1]
-    if train    
+    if trainable(env)
       remember(s, a, r, s′, done)
       replay()
     end
-    s = s′ 
   end
-  total_reward
+  env.total_reward
 end
 
 # -------------------------------- Testing -------------------------------------
 
 # Returns average score over 100 episodes
-function test()
+
+function test(env::EnvWrapper)
   score_mean = 0f0
-  for _=1:100
-    total_reward = episode!(env, false)
+  testmode!(env)
+  for e=1:100
+    total_reward = episode!(env)
     score_mean += total_reward / 100
   end
+  testmode!(env, false)
   return score_mean
 end
 
@@ -221,12 +218,10 @@ for e=1:MIN_EXP_SIZE
 end
 
 for e=1:MAX_EP
-  global noise_scale
   total_reward = episode!(env)
   total_reward = @sprintf "%9.3f" total_reward
   print("Episode: $e | Score: $total_reward | ")
-  score_mean = test()
+  score_mean = test(env)
   score_mean = @sprintf "%9.3f" score_mean
   println("Mean score over 100 test episodes: $score_mean")
-  noise_scale *= ϵ
 end
