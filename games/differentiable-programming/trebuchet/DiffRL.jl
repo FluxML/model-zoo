@@ -1,5 +1,5 @@
 using Flux, Trebuchet
-using Flux.Tracker: forwarddiff
+using Zygote: forwarddiff
 using Statistics: mean
 using Random
 
