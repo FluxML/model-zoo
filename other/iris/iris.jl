@@ -62,6 +62,7 @@ function confusion_matrix(X, y)
     y * ŷ'
 end
 
+#To avoid confusion, here is the definition of a Confusion Matrix: https://en.wikipedia.org/wiki/Confusion_matrix
 println("\nConfusion Matrix:\n")
 display(confusion_matrix(X_test, y_test))
 
