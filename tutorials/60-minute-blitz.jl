@@ -196,7 +196,7 @@ using Flux
 
 m = Dense(10, 5)
 
-x = rand(10)
+x = rand(Float32, 10)
 
 m(x)
 #-
