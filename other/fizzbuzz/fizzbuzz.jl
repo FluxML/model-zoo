@@ -37,7 +37,7 @@ y = onehotbatch(raw_y, LABELS);
 # Model
 m = Chain(Dense(3, 10), Dense(10, 4), softmax)
 loss(x, y) = crossentropy(m(X), y)
-opt = ADAM(params(m))
+opt = ADAM()
 
 # Helpers
 deepbuzz(x) = (a = argmax(m(features(x))); a == 4 ? x : LABELS[a])
@@ -49,6 +49,6 @@ end
 
 # Training
 for e in 0:1000
-    train!(loss, [(X, y)], opt)
+    train!(loss, params(m), [(X, y)], opt)
     if e % 50 == 0; monitor(e) end
 end

@@ -41,3 +41,7 @@ notebook = "fizzbuzz.jl"
 [housing]
 path = "other/housing"
 notebook = "housing.jl"
+
+[tutorials]
+path="tutorials"
+notebook="60-minute-blitz.jl"

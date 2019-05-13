@@ -28,9 +28,9 @@ m = Chain(encoder, decoder)
 loss(x) = mse(m(x), x)
 
 evalcb = throttle(() -> @show(loss(data[1])), 5)
-opt = ADAM(params(m))
+opt = ADAM()
 
-@epochs 10 Flux.train!(loss, zip(data), opt, cb = evalcb)
+@epochs 10 Flux.train!(loss, params(m), zip(data), opt, cb = evalcb)
 
 # Sample output
 

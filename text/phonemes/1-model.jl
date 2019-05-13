@@ -32,7 +32,7 @@ end
 function decode1(tokens, phone)
   weights = asoftmax([align(recur.state[2], t) for t in tokens])
   context = sum(map((a, b) -> a .* b, weights, tokens))
-  y = recur(vcat(float(phone), context))
+  y = recur(vcat(Float32.(phone), context))
   return softmax(toalpha(y))
 end
 
@@ -51,9 +51,9 @@ end
 loss(x, yo, y) = sum(crossentropy.(model(x, yo), y))
 
 evalcb = () -> @show loss(data[500]...)
-opt = ADAM(params(state))
+opt = ADAM()
 
-Flux.train!(loss, data, opt, cb = throttle(evalcb, 10))
+Flux.train!(loss, params(state), data, opt, cb = throttle(evalcb, 10))
 
 # Prediction
 

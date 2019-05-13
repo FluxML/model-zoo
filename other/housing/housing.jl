@@ -1,5 +1,6 @@
 using Flux.Tracker, Statistics, DelimitedFiles
 using Flux.Tracker: Params, gradient, update!
+using Flux: gpu
 
 # This replicates the housing data example from the Knet.jl readme. Although we
 # could have reused more of Flux (see the mnist example), the library's
@@ -15,20 +16,24 @@ isfile("housing.data") ||
 rawdata = readdlm("housing.data")'
 
 # The last feature is our target -- the price of the house.
+split_ratio = 0.1 # For the train test split
 
-x = rawdata[1:13,:]
-y = rawdata[14:14,:]
+x = rawdata[1:13,:] |> gpu
+y = rawdata[14:14,:] |> gpu
 
 # Normalise the data
 x = (x .- mean(x, dims = 2)) ./ std(x, dims = 2)
 
+# Split into train and test sets
+split_index = floor(Int,size(x,2)*split_ratio)
+x_train = x[:,1:split_index]
+y_train = y[:,1:split_index]
+x_test = x[:,split_index+1:size(x,2)]
+y_test = y[:,split_index+1:size(x,2)]
+
 # The model
-
-W = param(randn(1,13)/10)
-b = param([0.])
-
-# using CuArrays
-# W, b, x, y = cu.((W, b, x, y))
+W = param(randn(1,13)/10) |> gpu
+b = param([0.]) |> gpu
 
 predict(x) = W*x .+ b
 meansquarederror(ŷ, y) = sum((ŷ .- y).^2)/size(y, 2)
@@ -38,11 +43,13 @@ loss(x, y) = meansquarederror(predict(x), y)
 θ = Params([W, b])
 
 for i = 1:10
-  g = gradient(() -> loss(x, y), θ)
+  g = gradient(() -> loss(x_train, y_train), θ)
   for x in θ
     update!(x, -g[x]*η)
   end
-  @show loss(x, y)
+  @show loss(x_train, y_train)
 end
 
-predict(x[:,1]) / y[1]
+# Predict the RMSE on the test set
+err = meansquarederror(predict(x_test),y_test)
+println(err)
