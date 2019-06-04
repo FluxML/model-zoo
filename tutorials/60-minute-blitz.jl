@@ -119,9 +119,9 @@ f(5)
 # In simple cases it's pretty easy to work out the gradient by hand – here it's
 # `6x+2`. But it's much easier to make Flux do the work for us!
 
-using Flux.Tracker: derivative
+using Flux.Tracker: gradient
 
-df(x) = derivative(f, x)
+df(x) = gradient(f, x)
 
 df(5)
 
@@ -129,7 +129,7 @@ df(5)
 # as `6x+2`. We can even do this multiple times (but the second derivative is a
 # fairly boring `6`).
 
-ddf(x) = derivative(df, x)
+ddf(x) = gradient(df, x)
 
 ddf(5)
 
@@ -142,7 +142,7 @@ mysin(x) = sum((-1)^k*x^(1+2k)/factorial(1+2k) for k in 0:5)
 
 x = 0.5
 
-mysin(x), derivative(mysin, x)
+mysin(x), gradient(mysin, x)
 #-
 sin(x), cos(x)
 
