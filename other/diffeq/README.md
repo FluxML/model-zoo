@@ -7,3 +7,4 @@ This folder contains several demonstrations of mixing neural networks with diffe
 * [Train a DDE to satisfy an objective](dde.jl)
 * [Time series prediction with a neural ODE](neural_ode.jl)
 * [Time series prediction with a neural SDE](neural_sde.jl)
+* [Tangent-space regularization for identification of smooth ODE](jacprop_ode.jl)
