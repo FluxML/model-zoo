@@ -95,7 +95,7 @@ for epoch_idx in 1:100
     # Calculate accuracy:
     acc = accuracy(test_set...)
     @info(@sprintf("[%d]: Test accuracy: %.4f", epoch_idx, acc))
-    
+
     # If our accuracy is good enough, quit out.
     if acc >= 0.999
         @info(" -> Early-exiting: We reached our target accuracy of 99.9%")
@@ -105,7 +105,7 @@ for epoch_idx in 1:100
     # If this is the best accuracy we've seen so far, save the model out
     if acc >= best_acc
         @info(" -> New best accuracy! Saving model out to mnist_conv.bson")
-        BSON.@save "mnist_conv.bson" model epoch_idx acc
+        BSON.@save joinpath(dirname(@__FILE__), "mnist_conv.bson") model epoch_idx acc
         best_acc = acc
         last_improvement = epoch_idx
     end
