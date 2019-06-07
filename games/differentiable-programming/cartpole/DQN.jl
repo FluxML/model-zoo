@@ -48,7 +48,7 @@ remember(state, action, reward, next_state, done) =
 function action(state, train=true)
   train && rand() ≤ get_ϵ(e) && (return Gym.sample(env.action_space))
   act_values = model(state |> gpu)
-  a = Flux.onecold(act_values)
+  return Flux.onecold(act_values)
 end
 
 function replay()
