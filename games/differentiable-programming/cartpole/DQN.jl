@@ -12,7 +12,7 @@ reset!(env)
 # ----------------------------- Parameters -------------------------------------
 
 STATE_SIZE = length(state(env))    # 4
-ACTION_SIZE = 2#length(env.action_space) # 2
+ACTION_SIZE = length(env.action_space) # 2
 MEM_SIZE = 100_000
 BATCH_SIZE = 64
 γ = 1f0   			  # discount rate
@@ -46,13 +46,10 @@ remember(state, action, reward, next_state, done) =
   push!(memory, (data(state), action, reward, data(next_state), done))
 
 function action(state, train=true)
-  train && rand() ≤ get_ϵ(e) && (return rand(-1:1))
+  train && rand() ≤ get_ϵ(e) && (return Gym.sample(env.action_space))
   act_values = model(state |> gpu)
   a = Flux.onecold(act_values)
-  return a == 2 ? 1 : -1
 end
-
-inv_action(a) = a == 1 ? 2 : 1
 
 function replay()
   global ϵ
@@ -87,7 +84,7 @@ function episode!(env)
     s = state(env)
     a = action(s, trainable(env))
     s′, r, done, _ = step!(env, a)
-    trainable(env) && remember(s, inv_action(a), r, s′, done)
+    trainable(env) && remember(s, a, r, s′, done)
   end
 
   env.total_reward
