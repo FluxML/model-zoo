@@ -116,7 +116,7 @@ accuracy(x, y) = mean(onecold(m(x), 1:10) .== onecold(y, 1:10))
 
 evalcb = throttle(() -> @show(accuracy(valX, valY)), 10)
 
-opt = ADAM()
+opt = Momentum()
 
 # Starting to train models
 
