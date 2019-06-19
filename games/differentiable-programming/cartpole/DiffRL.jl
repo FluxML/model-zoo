@@ -20,13 +20,12 @@ reset!(env)
 # ----------------------------- Parameters -------------------------------------
 
 STATE_SIZE = length(env._env.state)
-ACTION_SIZE = 1#length(env_wrap.env.action_space)
+ACTION_SIZE = length(env._env.action_space)
 MAX_TRAIN_REWARD = env._env.x_threshold * env._env.θ_threshold_radians
 SEQ_LEN = 8
 
 # Optimiser params
 η = 3f-2
-
 # ------------------------------ Model Architecture ----------------------------
 sign(x) = Base.sign.(x)
 @adjoint sign(x) = sign(x), x̄ -> (x̄,)
