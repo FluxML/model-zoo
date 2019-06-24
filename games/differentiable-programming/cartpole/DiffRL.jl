@@ -44,21 +44,21 @@ loss(rewards) = Flux.mse(rewards, MAX_TRAIN_REWARD)
 
 function train_reward(env::EnvWrapper)
     s = env._env.state
-    x, ẋ, θ, θ̇  = s[1:1], s[2:2], s[3:3], s[4:4]
+    x, ẋ, θ, θ̇  = s
     # Custom reward for training
     # Product of Triangular function over x-axis and θ-axis
     # Min reward = 0, Max reward = env.x_threshold * env.θ_threshold_radians
-    x_upper = env._env.x_threshold .- x
-    x_lower = env._env.x_threshold .+ x
+    x_upper = env._env.x_threshold - x
+    x_lower = env._env.x_threshold + x
 
-    r_x     = max.(0f0, min.(x_upper, x_lower))
+    r_x     = max(0f0, min(x_upper, x_lower))
 
-    θ_upper = env._env.θ_threshold_radians .- θ
-    θ_lower = env._env.θ_threshold_radians .+ θ
+    θ_upper = env._env.θ_threshold_radians - θ
+    θ_lower = env._env.θ_threshold_radians + θ
 
-    r_θ     = max.(0f0, min.(θ_upper, θ_lower))
+    r_θ     = max(0f0, min(θ_upper, θ_lower))
 
-    return r_x .* r_θ
+    return r_x * r_θ
 end
 
 function μEpisode(env::EnvWrapper)

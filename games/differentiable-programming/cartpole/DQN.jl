@@ -1,5 +1,4 @@
-using Flux, Gym, Printf
-using Flux.Tracker: data
+using Flux, Gym, Printf, Zygote
 using Statistics: mean
 using DataStructures: CircularBuffer
 using Distributions: sample
@@ -12,7 +11,7 @@ reset!(env)
 # ----------------------------- Parameters -------------------------------------
 
 STATE_SIZE = length(state(env))    # 4
-ACTION_SIZE = length(env.action_space) # 2
+ACTION_SIZE = length(env._env.action_space) # 2
 MEM_SIZE = 100_000
 BATCH_SIZE = 64
 γ = 1f0   			  # discount rate
@@ -34,7 +33,7 @@ model = Chain(Dense(STATE_SIZE, 24, tanh),
               Dense(24, 48, tanh),
               Dense(48, ACTION_SIZE)) |> gpu
 
-loss(x, y) = Flux.mse(model(x |> gpu), y)
+loss(x, y) = Flux.mse(model(x), y)
 
 opt = Flux.Optimiser(ADAM(η), InvDecay(η_decay))
 
@@ -43,10 +42,10 @@ opt = Flux.Optimiser(ADAM(η), InvDecay(η_decay))
 get_ϵ(e) = max(ϵ_MIN, min(ϵ, 1f0 - log10(e * ϵ_DECAY)))
 
 remember(state, action, reward, next_state, done) =
-  push!(memory, (data(state), action, reward, data(next_state), done))
+  push!(memory, (state, action, reward, next_state, done))
 
 function action(state, train=true)
-  train && rand() ≤ get_ϵ(e) && (return Gym.sample(env.action_space))
+  train && rand() ≤ get_ϵ(e) && (return Gym.sample(env._env.action_space))
   act_values = model(state |> gpu)
   return Flux.onecold(act_values)
 end
@@ -61,10 +60,10 @@ function replay()
   for (iter, (state, action, reward, next_state, done)) in enumerate(minibatch)
     target = reward
     if !done
-      target += γ * maximum(data(model(next_state |> gpu)))
+      target += γ * maximum(model(next_state |> gpu))
     end
 
-    target_f = data(model(state |> gpu))
+    target_f = model(state |> gpu)
     target_f[action] = target
 
     push!(x, state)
@@ -72,7 +71,9 @@ function replay()
   end
   x = hcat(x...) |> gpu
   y = hcat(y...) |> gpu
-  Flux.train!(loss, params(model), [(x, y)], opt)
+
+  grads = Zygote.gradient(()->loss(x, y), params(model))
+  Flux.Optimise.update!(opt, params(model), grads)
 
   ϵ *= ϵ > ϵ_MIN ? ϵ_DECAY : 1.0f0
 end
