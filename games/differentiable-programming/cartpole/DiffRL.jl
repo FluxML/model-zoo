@@ -19,14 +19,13 @@ reset!(env)
 
 # ----------------------------- Parameters -------------------------------------
 
-STATE_SIZE = length(state(env))
-ACTION_SIZE = 1#length(env_wrap.env.action_space)
+STATE_SIZE = length(env._env.state)
+ACTION_SIZE = length(env._env.action_space)
 MAX_TRAIN_REWARD = env._env.x_threshold * env._env.θ_threshold_radians
 SEQ_LEN = 8
 
 # Optimiser params
 η = 3f-2
-
 # ------------------------------ Model Architecture ----------------------------
 sign(x) = Base.sign.(x)
 @adjoint sign(x) = sign(x), x̄ -> (x̄,)
@@ -37,29 +36,29 @@ model = Chain(Dense(STATE_SIZE, 24, relu),
 
 opt = ADAM(η)
 
-action(state) = model(state)
+action(state) = state |> model |> (model_output) -> (3 .+ model_output) / 2
 
 loss(rewards) = Flux.mse(rewards, MAX_TRAIN_REWARD)
 
 # ----------------------------- Helper Functions -------------------------------
 
 function train_reward(env::EnvWrapper)
-    s = state(env)
-    x, ẋ, θ, θ̇  = s[1:1], s[2:2], s[3:3], s[4:4]
+    s = env._env.state
+    x, ẋ, θ, θ̇  = s
     # Custom reward for training
     # Product of Triangular function over x-axis and θ-axis
     # Min reward = 0, Max reward = env.x_threshold * env.θ_threshold_radians
-    x_upper = env._env.x_threshold .- x
-    x_lower = env._env.x_threshold .+ x
+    x_upper = env._env.x_threshold - x
+    x_lower = env._env.x_threshold + x
 
-    r_x     = max.(0f0, min.(x_upper, x_lower))
+    r_x     = max(0f0, min(x_upper, x_lower))
 
-    θ_upper = env._env.θ_threshold_radians .- θ
-    θ_lower = env._env.θ_threshold_radians .+ θ
+    θ_upper = env._env.θ_threshold_radians - θ
+    θ_lower = env._env.θ_threshold_radians + θ
 
-    r_θ     = max.(0f0, min.(θ_upper, θ_lower))
+    r_θ     = max(0f0, min(θ_upper, θ_lower))
 
-    return r_x .* r_θ
+    return r_x * r_θ
 end
 
 function μEpisode(env::EnvWrapper)
@@ -67,13 +66,12 @@ function μEpisode(env::EnvWrapper)
     for frames ∈ 1:SEQ_LEN
         #render(env, ctx)
         #sleep(0.01)
-        a = action(state(env))
+        a = action(env._env.state)
         s′, r, done, _ = step!(env, a)
 
         if trainable(env)
             l += loss(train_reward(env))
         end
-
         game_over(env) && break
     end
     return l
