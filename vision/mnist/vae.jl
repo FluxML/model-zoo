@@ -44,7 +44,12 @@ L̄(X) = ((μ̂, logσ̂) = g(X); (logp_x_z(X, sample_z(μ̂, logσ̂)) - kl_q_p
 loss(X) = -L̄(X) + 0.01f0 * sum(x->sum(x.^2), params(f))
 
 # Sample from the learned model.
-modelsample() = rand.(Bernoulli.(f(z.(zeros(Dz), zeros(Dz)))))
+function modelsample()  
+  ϕ = zeros(Float32, Dz) |> gpu
+  p = f(sample_z(ϕ, ϕ))
+  u = rand(Float32, size(p)) |> gpu
+  return (u .< p) |> cpu
+end
 
 
 ################################# Learn Parameters ##############################
@@ -53,7 +58,7 @@ evalcb = throttle(() -> @show(-L̄(X[:, rand(1:N, M)])), 30)
 opt = ADAM()
 ps = params(A, μ, logσ, f)
 
-@progress for i = 1:20
+@progress for i = 1:2
   @info "Epoch $i"
   Flux.train!(loss, ps, zip(data), opt, cb=evalcb)
 end
