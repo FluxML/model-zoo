@@ -58,7 +58,7 @@ evalcb = throttle(() -> @show(-L̄(X[:, rand(1:N, M)])), 30)
 opt = ADAM()
 ps = params(A, μ, logσ, f)
 
-@progress for i = 1:2
+@progress for i = 1:20
   @info "Epoch $i"
   Flux.train!(loss, ps, zip(data), opt, cb=evalcb)
 end
