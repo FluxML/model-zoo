@@ -1,7 +1,7 @@
 using Flux, Flux.Data.MNIST, Statistics
 using Flux: throttle, params
 using Juno: @progress
-using CuArrays
+#  using CuArrays
 
 # Load data, binarise it, and partition into mini-batches of M.
 X = (float.(hcat(vec.(MNIST.images())...)) .> 0.5) |> gpu
