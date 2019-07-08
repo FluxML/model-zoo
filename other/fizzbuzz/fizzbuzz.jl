@@ -36,7 +36,7 @@ y = onehotbatch(raw_y, LABELS);
 
 # Model
 m = Chain(Dense(3, 10), Dense(10, 4), softmax)
-loss(x, y) = crossentropy(m(X), y)
+loss(x, y) = crossentropy(m(x), y)
 opt = ADAM()
 
 # Helpers
