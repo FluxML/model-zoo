@@ -30,7 +30,7 @@ f = Chain(Dense(Dz, Dh, tanh), Dense(Dh, 28^2, σ))
 ####################### Define ways of doing things with the model. #######################
 
 # KL-divergence between approximation posterior and N(0, 1) prior.
-kl_q_p(μ, logσ) = 0.5f0 * sum(exp.(2f0 .* logσ) + μ.^2 .- 1f0 .+ logσ.^2)
+kl_q_p(μ, logσ) = 0.5f0 * sum(exp.(2f0 .* logσ) + μ.^2 .- 1f0 .- (2 .* logσ))
 
 # logp(x|z) - conditional probability of data given latents.
 logp_x_z(x, z) = sum(logpdf.(Bernoulli.(f(z)), x))
