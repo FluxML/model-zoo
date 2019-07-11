@@ -1,5 +1,4 @@
-using Flux.Tracker, Statistics, DelimitedFiles
-using Flux.Tracker: Params, gradient, update!
+using Flux, Statistics, DelimitedFiles
 using Flux: gpu
 
 # This replicates the housing data example from the Knet.jl readme. Although we
@@ -40,12 +39,12 @@ meansquarederror(ŷ, y) = sum((ŷ .- y).^2)/size(y, 2)
 loss(x, y) = meansquarederror(predict(x), y)
 
 η = 0.1
-θ = Params([W, b])
+θ = params(W, b)
 
 for i = 1:10
   g = gradient(() -> loss(x_train, y_train), θ)
   for x in θ
-    update!(x, -g[x]*η)
+    x .-= g[x].*η
   end
   @show loss(x_train, y_train)
 end
