@@ -1,5 +1,6 @@
 using OrdinaryDiffEq
 using Flux
+using Flux: crossentropy
 using MLDatasets: MNIST
 using MLDataUtils
 using DiffEqFlux
@@ -21,15 +22,15 @@ function loadmnist(batchsize=bs)
 	x_train = batchview(x_train,batchsize);
 
 	# Onehot and batch the labels
-	y_train = onehot(labels_raw)
+	y_train = onehot(labels_raw)|>gpu
 	y_train = batchview(y_train,batchsize)
 
 	return x_train, y_train
 end
 
 # Main
-const bs = 200
-x_train, y_train = loadmnist();
+const bs = 5
+x_train, y_train = loadmnist(bs)
 
 down = Chain(
              Conv((3,3),1=>64,relu,stride=1),
@@ -46,14 +47,47 @@ nn = Chain(
           ) |>gpu
 
 fc = Chain(GroupNorm(64,64),
-           x -> MeanPool(x,PoolDims(x,6))
+           x->relu.(x),
+           MeanPool((6,6)),
+           x -> reshape(x,(64,bs)),
            Dense(64,10,σ)
           )|>gpu
 
-maxpool(nn(down(x_train[1])),(1,1))
 
-nn(down(x_train[1])) |>size
+nn_ode(x) = neural_ode(nn,x,(0.f0,1.f0), Tsit5(),save_everystep=false,reltol=1e-2,abstol=1e-2, save_start=false)
+m = Chain(down,nn_ode,fc)
+m_no_ode = Chain(down,nn,fc)
 
-meanpool(nn(down(x_train[1])),PoolDims(nn(down(x_train[1])),6))|>size
+# Showing this works
+x_m = m(x_train[1])
+x_m_no_ode = m_no_ode(x_train[1])
 
-nn(down(x_train[1])) |>size
+
+function loss(x,y)
+    y_hat = m(x)
+    return crossentropy(y_hat,y)
+end
+
+function loss_no_ode(x,y)
+    y_hat = m_no_ode(x)
+    return crossentropy(y_hat,y)
+end
+
+loss(x_train[1],y_train[1])
+loss_no_ode(x_train[1],y_train[1])
+
+opt=ADAM()
+cb() = begin
+    @show loss(x_train[1],y_train[1])
+    @show nn[1].weight[1]
+end
+
+Flux.train!(loss_no_ode,params(m_no_ode),zip(x_train,y_train),opt, cb=cb)
+
+Flux.train!(loss,params(m_no_ode),zip(x_train,y_train),opt, cb=cb)
+
+loss((x_train[1],y_train[1])...)
+
+zip(x_train,y_train)
+
+params(Chain(down,nn,fc)) == params(m)
