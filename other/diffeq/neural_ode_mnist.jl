@@ -29,7 +29,7 @@ function loadmnist(batchsize=bs)
 end
 
 # Main
-const bs = 5
+const bs = 128
 x_train, y_train = loadmnist(bs)
 
 down = Chain(
@@ -77,9 +77,11 @@ loss(x_train[1],y_train[1])
 loss_no_ode(x_train[1],y_train[1])
 
 opt=ADAM()
+iter = 0
 cb() = begin
+    global iter += 1
+    @show iter
     @show loss(x_train[1],y_train[1])
-    @show nn[1].weight[1]
 end
 
 Flux.train!(loss_no_ode,params(m_no_ode),zip(x_train,y_train),opt, cb=cb)
