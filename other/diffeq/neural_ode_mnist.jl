@@ -1,6 +1,6 @@
 using OrdinaryDiffEq
 using Flux
-using Flux: crossentropy
+using Flux: logitcrossentropy
 using MLDatasets: MNIST
 using MLDataUtils
 using DiffEqFlux
@@ -42,6 +42,7 @@ down = Chain(
 
 
 nn = Chain(
+           x->(global nfe+=1;x),
            Conv((3,3),64=>64,relu,stride=1,pad=1),
            Conv((3,3),64=>64,relu,stride=1,pad=1)
           ) |>gpu
@@ -50,46 +51,65 @@ fc = Chain(GroupNorm(64,64),
            x->relu.(x),
            MeanPool((6,6)),
            x -> reshape(x,(64,bs)),
-           Dense(64,10,σ)
+           Dense(64,10)
           )|>gpu
 
 
-nn_ode(x) = neural_ode(nn,x,(0.f0,1.f0), Tsit5(),save_everystep=false,reltol=1e-2,abstol=1e-2, save_start=false)
+nn_ode(x) = neural_ode(nn,x,(0.f0,1.f0), DP5(),save_everystep=false,reltol=1e-3,abstol=1e-3, save_start=false)
 m = Chain(down,nn_ode,fc)
 m_no_ode = Chain(down,nn,fc)
 
 # Showing this works
 x_m = m(x_train[1])
-x_m_no_ode = m_no_ode(x_train[1])
 
+classify(x) = argmax.(eachcol(x))
 
-function loss(x,y)
-    y_hat = m(x)
-    return crossentropy(y_hat,y)
+function accuracy(model,data; n_batches=100)
+    total_correct = 0
+    total = 0
+    for (x,y) in collect(data)[1:n_batches]
+        target_class = classify(y)
+        predicted_class = classify(model(x))
+        total_correct += sum(target_class .== predicted_class)
+        total += length(target_class)
+    end
+    return total_correct/total
 end
 
-function loss_no_ode(x,y)
-    y_hat = m_no_ode(x)
-    return crossentropy(y_hat,y)
+accuracy(m, zip(x_train,y_train))
+
+        
+function loss(x,y)
+    y_hat = m(x)
+    return logitcrossentropy(y_hat,y)
 end
 
 loss(x_train[1],y_train[1])
-loss_no_ode(x_train[1],y_train[1])
 
-opt=ADAM()
+opt=ADAM(η=0.1)
 iter = 0
 cb() = begin
     global iter += 1
     @show iter
+    @show nfe
     @show loss(x_train[1],y_train[1])
+    if iter%10 == 0
+        @show accuracy(m, zip(x_train,y_train))
+    end
+    global nfe=0
 end
 
-Flux.train!(loss_no_ode,params(m_no_ode),zip(x_train,y_train),opt, cb=cb)
 
 Flux.train!(loss,params(m_no_ode),zip(x_train,y_train),opt, cb=cb)
 
-loss((x_train[1],y_train[1])...)
 
-zip(x_train,y_train)
+# Saving doesn't work yet
+using BSON: @save, @load
 
-params(Chain(down,nn,fc)) == params(m)
+m_cpu = cpu(m)
+@save "saved_models/mnist_node.bson" m_cpu
+
+@load "saved_models/mnist_node.bson" m_cpu
+
+
+
