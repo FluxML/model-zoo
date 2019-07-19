@@ -41,14 +41,13 @@ fc = Chain(
            Dense(20,10)
           )|>gpu
 
-
+CuArrays.allowscalar(false)
 nn_ode(x) = neural_ode(nn,x,gpu((0.f0,1.f0)), Tsit5(),save_everystep=false,reltol=1e-3,abstol=1e-3, save_start=false)
 m = Chain(down,nn_ode,fc)
 m_no_ode = Chain(down,nn,fc)
 
 x_d = down(x_train[1])
-nn(x_d)|>typeof
-nn_ode(x_d)|>typeof
+nn_ode(x_d)
 
 ## Stop here
 
