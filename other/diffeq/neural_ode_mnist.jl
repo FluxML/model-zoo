@@ -7,24 +7,18 @@ using DiffEqFlux
 using CuArrays
 using NNlib
 
-using Base.Iterators: repeated
-
 
 function loadmnist(batchsize=bs)
 	# Use MLDataUtils LabelEnc for natural onehot conversion
     onehot(labels_raw) = convertlabel(LabelEnc.OneOfK, labels_raw, LabelEnc.NativeLabels(collect(0:9)))
-
 	# Load MNIST
 	imgs, labels_raw = MNIST.traindata();
-
 	# Process images into (H,W,C,BS) batches
 	x_train = reshape(imgs,size(imgs,1),size(imgs,2),1,size(imgs,3))|>gpu
 	x_train = batchview(x_train,batchsize);
-
 	# Onehot and batch the labels
 	y_train = onehot(labels_raw)|>gpu
 	y_train = batchview(y_train,batchsize)
-
 	return x_train, y_train
 end
 
@@ -33,31 +27,30 @@ const bs = 128
 x_train, y_train = loadmnist(bs)
 
 down = Chain(
-             Conv((3,3),1=>64,relu,stride=1),
-             GroupNorm(64,64),
-             Conv((4,4),64=>64,relu,stride=2,pad=1),
-             GroupNorm(64,64),
-             Conv((4,4),64=>64,stride=2,pad=1),
+             x->reshape(x,(28*28,:)),
+             Dense(784,20,tanh)
             )|>gpu
-
-
+nfe=0
 nn = Chain(
            x->(global nfe+=1;x),
-           Conv((3,3),64=>64,relu,stride=1,pad=1),
-           Conv((3,3),64=>64,relu,stride=1,pad=1)
+           Dense(20,10,tanh),
+           Dense(10,10,tanh),
+           Dense(10,20,tanh)
           ) |>gpu
-
-fc = Chain(GroupNorm(64,64),
-           x->relu.(x),
-           MeanPool((6,6)),
-           x -> reshape(x,(64,bs)),
-           Dense(64,10)
+fc = Chain(
+           Dense(20,10)
           )|>gpu
 
 
-nn_ode(x) = neural_ode(nn,x,(0.f0,1.f0), DP5(),save_everystep=false,reltol=1e-3,abstol=1e-3, save_start=false)
+nn_ode(x) = neural_ode(nn,x,gpu((0.f0,1.f0)), Tsit5(),save_everystep=false,reltol=1e-3,abstol=1e-3, save_start=false)
 m = Chain(down,nn_ode,fc)
 m_no_ode = Chain(down,nn,fc)
+
+x_d = down(x_train[1])
+nn(x_d)|>typeof
+nn_ode(x_d)|>typeof
+
+## Stop here
 
 # Showing this works
 x_m = m(x_train[1])
@@ -86,13 +79,14 @@ end
 
 loss(x_train[1],y_train[1])
 
-opt=ADAM(η=0.1)
+opt=ADAM()
 iter = 0
 cb() = begin
     global iter += 1
     @show iter
     @show nfe
     @show loss(x_train[1],y_train[1])
+    @show down[2].W[1]
     if iter%10 == 0
         @show accuracy(m, zip(x_train,y_train))
     end
