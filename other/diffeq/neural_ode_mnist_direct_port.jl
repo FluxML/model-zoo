@@ -4,9 +4,8 @@ using Flux: logitcrossentropy
 using MLDatasets: MNIST
 using MLDataUtils
 using DiffEqFlux
-using CuArrays
+using CuArrays; CuArrays.allowscalar(false)
 using NNlib
-
 
 function loadmnist(batchsize=bs)
 	# Use MLDataUtils LabelEnc for natural onehot conversion
@@ -24,38 +23,53 @@ end
 
 # Main
 const bs = 128
-x_train, y_train = loadmnist(bs)
+x_train, y_train = loadmnist(bs);
 
 down = Chain(
-             x->reshape(x,(28*28,:)),
-             Dense(784,20,tanh)
-            )|>gpu
-nfe=0
+             Conv((3,3),1=>64,relu,stride=1),
+             GroupNorm(64,64),
+             Conv((4,4),64=>64,relu,stride=2,pad=1),
+             GroupNorm(64,64),
+             Conv((4,4),64=>64,stride=2,pad=1),
+            )|>gpu;
 nn = Chain(
            #= x->(global nfe+=1;x), =#
-           Dense(20,10,tanh),
-           Dense(10,10,tanh),
-           Dense(10,20,tanh)
-          ) |>gpu
-fc = Chain(
-           Dense(20,10)
-          )|>gpu
+           Conv((3,3),64=>64,relu,stride=1,pad=1),
+           Conv((3,3),64=>64,relu,stride=1,pad=1)
+          ) |>gpu;
+fc = Chain(GroupNorm(64,64),
+           x->relu.(x),
+           MeanPool((6,6)),
+           x -> reshape(x,(64,bs)),
+           Dense(64,10)
+          )|>gpu;
 
-CuArrays.allowscalar(false)
-nn_ode(x) = neural_ode(nn,x,gpu((0.f0,1.f0)), Tsit5(),save_everystep=false,reltol=1e-3,abstol=1e-3, save_start=false)
-m = Chain(down,nn_ode,fc)
-m_no_ode = Chain(down,nn,fc)
+neural_ode_layer = DiffEqFlux.NeuralODE(
+                          nn,
+                          (0.f0,1.f0),
+                          Tsit5(),
+                          Dict(
+                               :save_everystep=>false,
+                               :reltol=>1e-3,
+                               :abstol=>1e-3
+                              )
+                         )
 
-x_d = down(x_train[1])
-nn_ode(x_d)
 
-## Stop here
+
+model = Chain(down,neural_ode_layer,fc)
 
 # Showing this works
-x_m = m(x_train[1])
+x_m = model(x_train[1])
+
+function loss(x,y)
+    y_hat = model(x)
+    return logitcrossentropy(y_hat,y)
+end
+
+loss(x_train[1],y_train[1])
 
 classify(x) = argmax.(eachcol(x))
-
 function accuracy(model,data; n_batches=100)
     total_correct = 0
     total = 0
@@ -68,15 +82,7 @@ function accuracy(model,data; n_batches=100)
     return total_correct/total
 end
 
-accuracy(m, zip(x_train,y_train))
-
-        
-function loss(x,y)
-    y_hat = m(x)
-    return logitcrossentropy(y_hat,y)
-end
-
-loss(x_train[1],y_train[1])
+accuracy(model, zip(x_train,y_train))
 
 opt=ADAM()
 iter = 0
@@ -85,7 +91,7 @@ cb() = begin
     @show iter
     @show nfe
     @show loss(x_train[1],y_train[1])
-    @show cpu(down)[2].W[1]
+    @show no.model[2].weight[1]
     if iter%10 == 0
         @show accuracy(m, zip(x_train,y_train))
     end
@@ -93,7 +99,9 @@ cb() = begin
 end
 
 
-Flux.train!(loss,params(down,nn,fc),zip(x_train,y_train),opt, cb=cb)
+Flux.train!(loss,params(model),zip(x_train,y_train),opt, cb=cb)
+
+Flux.Tracker.gradient(()->loss(x_train[1],y_train[1]),params(m_no))
 
 
 # Saving doesn't work yet
