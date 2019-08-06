@@ -51,9 +51,10 @@ model = Chain(
               fc                #(6,6,64,BS) -> (10, BS)
              )
 
-# Showing this works
+# Showing this works with forward solve
 x_m = model(x_train[1])
 
+# Define loss and test with forward solve
 function loss(x,y)
     y_hat = model(x)
     return logitcrossentropy(y_hat,y)
@@ -61,6 +62,7 @@ end
 
 loss(x_train[1],y_train[1])
 
+# Define accuracy, diagnostic but not objective
 classify(x) = argmax.(eachcol(x))
 
 function accuracy(model,data; n_batches=100)
@@ -77,6 +79,7 @@ end
 
 accuracy(model, zip(x_train,y_train))
 
+# Logging and accuracy in callback
 using TensorBoardLogger, Logging
 
 lg=TBLogger("tensorboard_logs/run", min_level=Logging.Info)
@@ -96,18 +99,15 @@ cb() = begin
     end
 end
 
-
+#Main Train Loop
 opt=ADAM()
 Flux.train!(loss,params(model),ncycle(zip(x_train,y_train),100),opt, cb=cb)
 
-Flux.Tracker.gradient(()->loss(x_train[1],y_train[1]),params(model))
-
-
-# Saving doesn't work yet
+# Save and load trained models for plotting
 using BSON: @save, @load
-model_cpu = cpu(model)
 
-@save "saved_models/mnist_node.bson" model_cpu
+#model_cpu = cpu(model)
+#@save "saved_models/mnist_node.bson" model_cpu
 
 @load "saved_models/mnist_node.bson" model_cpu
 
@@ -117,13 +117,11 @@ node_loaded= gpu(model_cpu[2])
 dense_solver_kwargs = Dict(:saveat=> collect(0.f0:0.01:1.f0),:reltol=>1e-3, :abstol=>1e-3)
 dense_node = DiffEqFlux.NeuralODE(node_loaded.model,node_loaded.tspan,node_loaded.solver,node_loaded.args,dense_solver_kwargs)
 
-
+# Animation code for JuliaCon talk: 
 slv = cpu(Flux.data(dense_node(dwn_loaded(x_train[1]))))
 
 using Plots; pyplot();
-# using Colors
 
-# cs = Colors.distinguishable_colors(10,RGB(1,1,1))
 cs = palette(:default)
 
 clfy(x) = argmax.(eachcol(x))
@@ -146,12 +144,3 @@ for ti in 1:size(slv,5)
          c=cs[clfy(y_train[1])]')
     savefig("plots/mnist_dynamics_anim/$(lpad(ti,4,"0")).png")
 end
-
-
-savefig("plots/mnist_dynamics.png")
-
-plot(collect(eachrow(reshape(slv[:,:,:,3,:],6*6*64,51))),legend=false)
-
-savefig("plots/mnist_dynamics_fig1.png")
-
-;xclock
