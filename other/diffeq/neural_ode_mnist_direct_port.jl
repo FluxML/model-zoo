@@ -6,6 +6,7 @@ using MLDataUtils
 using DiffEqFlux
 using CuArrays; CuArrays.allowscalar(false)
 using NNlib
+using IterTools: ncycle
 
 function loadmnist(batchsize=bs)
 	# Use MLDataUtils LabelEnc for natural onehot conversion
@@ -26,14 +27,11 @@ const bs = 128
 x_train, y_train = loadmnist(bs);
 
 down = Chain(
-             Conv((3,3),1=>64,relu,stride=1),
-             GroupNorm(64,64),
-             Conv((4,4),64=>64,relu,stride=2,pad=1),
-             GroupNorm(64,64),
+             Conv((3,3),1=>64,relu,stride=1), GroupNorm(64,64),
+             Conv((4,4),64=>64,relu,stride=2,pad=1), GroupNorm(64,64),
              Conv((4,4),64=>64,stride=2,pad=1),
             )|>gpu;
-nn = Chain(
-           #= x->(global nfe+=1;x), =#
+dudt = Chain(
            Conv((3,3),64=>64,relu,stride=1,pad=1),
            Conv((3,3),64=>64,relu,stride=1,pad=1)
           ) |>gpu;
@@ -44,20 +42,14 @@ fc = Chain(GroupNorm(64,64),
            Dense(64,10)
           )|>gpu;
 
-neural_ode_layer = DiffEqFlux.NeuralODE(
-                          nn,
-                          (0.f0,1.f0),
-                          Tsit5(),
-                          Dict(
-                               :save_everystep=>false,
-                               :reltol=>1e-3,
-                               :abstol=>1e-3
-                              )
-                         )
+solver_kwargs = Dict(:save_start=>false,:save_everystep=>false, :reltol=>1e-3, :abstol=>1e-3)
+neural_ode_layer = DiffEqFlux.NeuralODE(dudt, (0.f0,1.f0), Tsit5(), solver_kwargs)
 
-
-
-model = Chain(down,neural_ode_layer,fc)
+model = Chain(
+              down,             #(28,28,1,BS) -> (6,6,64,BS)
+              neural_ode_layer, #(6,6,64,BS) -> (6,6,64,BS)
+              fc                #(6,6,64,BS) -> (10, BS)
+             )
 
 # Showing this works
 x_m = model(x_train[1])
@@ -70,6 +62,7 @@ end
 loss(x_train[1],y_train[1])
 
 classify(x) = argmax.(eachcol(x))
+
 function accuracy(model,data; n_batches=100)
     total_correct = 0
     total = 0
@@ -84,33 +77,81 @@ end
 
 accuracy(model, zip(x_train,y_train))
 
-opt=ADAM()
+using TensorBoardLogger, Logging
+
+lg=TBLogger("tensorboard_logs/run", min_level=Logging.Info)
 iter = 0
 cb() = begin
     global iter += 1
-    @show iter
-    @show nfe
-    @show loss(x_train[1],y_train[1])
-    @show no.model[2].weight[1]
-    if iter%10 == 0
-        @show accuracy(m, zip(x_train,y_train))
+    li = Flux.data(loss(x_train[1],y_train[1]))
+    with_logger(lg) do
+        @info "loss" li
     end
-    global nfe=0
+    if iter%100 == 0
+        ai = accuracy(model, zip(x_train,y_train))
+        with_logger(lg) do
+            @info "accuracy" ai
+        end
+        ai > 0.97 && Flux.stop()
+    end
 end
 
 
-Flux.train!(loss,params(model),zip(x_train,y_train),opt, cb=cb)
+opt=ADAM()
+Flux.train!(loss,params(model),ncycle(zip(x_train,y_train),100),opt, cb=cb)
 
-Flux.Tracker.gradient(()->loss(x_train[1],y_train[1]),params(m_no))
+Flux.Tracker.gradient(()->loss(x_train[1],y_train[1]),params(model))
 
 
 # Saving doesn't work yet
 using BSON: @save, @load
+model_cpu = cpu(model)
 
-m_cpu = cpu(m)
-@save "saved_models/mnist_node.bson" m_cpu
+@save "saved_models/mnist_node.bson" model_cpu
 
-@load "saved_models/mnist_node.bson" m_cpu
+@load "saved_models/mnist_node.bson" model_cpu
+
+dwn_loaded = gpu(model_cpu[1])
+node_loaded= gpu(model_cpu[2])
+
+dense_solver_kwargs = Dict(:saveat=> collect(0.f0:0.01:1.f0),:reltol=>1e-3, :abstol=>1e-3)
+dense_node = DiffEqFlux.NeuralODE(node_loaded.model,node_loaded.tspan,node_loaded.solver,node_loaded.args,dense_solver_kwargs)
 
 
+slv = cpu(Flux.data(dense_node(dwn_loaded(x_train[1]))))
 
+using Plots; pyplot();
+# using Colors
+
+# cs = Colors.distinguishable_colors(10,RGB(1,1,1))
+cs = palette(:default)
+
+clfy(x) = argmax.(eachcol(x))
+
+for ti in 1:size(slv,5) 
+    plot(
+         collect(eachrow(slv[2,3,7,:,1:ti])),
+         collect(eachrow(slv[3,3,7,:,1:ti])), 
+         legend=false,
+         ticks=false,
+         c=cs[clfy(y_train[1])]',
+        opacity=0.5,
+        xlim= extrema(slv[2,3,7,:,1:end]),
+        ylim = slv[3,3,7,:,1:end])
+    scatter!(
+         collect(eachrow(slv[2,3,7,:,ti])),
+         collect(eachrow(slv[3,3,7,:,ti])), 
+         legend=false,
+         ticks=false,
+         c=cs[clfy(y_train[1])]')
+    savefig("plots/mnist_dynamics_anim/$(lpad(ti,4,"0")).png")
+end
+
+
+savefig("plots/mnist_dynamics.png")
+
+plot(collect(eachrow(reshape(slv[:,:,:,3,:],6*6*64,51))),legend=false)
+
+savefig("plots/mnist_dynamics_fig1.png")
+
+;xclock
