@@ -27,7 +27,7 @@ function sampleA2B(X_A_test,gen;base_id="1")
     X_A_test : N x C x H x W array - Test images in domain A
     """
     X_A_test = norm(X_A_test)
-    X_B_generated = cpu(gen(X_A_test |> gpu)).data
+    X_B_generated = denorm(cpu(gen(X_A_test |> gpu)).data)
     
     imgs = []
     s = size(X_B_generated)
