@@ -30,6 +30,7 @@ end
 # Image loading utilities #
 function load_image(filename)
     img = load(filename)
+    img = imresize(img,(div(H,RESIZE_FACTOR),div(W,RESIZE_FACTOR)))
     img = Float32.(channelview(img))
 end
 

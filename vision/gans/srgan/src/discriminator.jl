@@ -12,6 +12,10 @@ _ConvBN(in_chs::Int,out_chs::Int,k=3,s=1,p=1) =
 				BatchNormWrap(out_chs)...,
 				x -> leakyrelu.(x,0.2))
 
+function print_(x)
+	println("SIze of x : $(size(x))")
+end
+
 function Discriminator()
 	Chain(_Conv(3,64,3,1,1),
 		  _ConvBN(64,64,3,2,1),
@@ -21,8 +25,10 @@ function Discriminator()
 		  _ConvBN(256,256,3,2,1),
 		  _ConvBN(256,512,3,1,1),
 		  _ConvBN(512,512,3,2,1),
+		  # x -> print_(x),
 		  x -> flatten(x),
-		  Dense(16 * 16 * 512,1024),
+		  # x -> print_(x),
+		  Dense(126 * 86 * 512,1024),
 		  x -> leakyrelu.(x,0.2),
 		  Dense(1024,1),
 		  x -> σ.(x))

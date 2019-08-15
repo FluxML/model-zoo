@@ -26,8 +26,8 @@ function (m::ResidualBlock)(x)
 end
 
 UpBlock(in_chs::Int,out_chs::Int) = Chain(_Conv(in_chs,out_chs,3,1,1),
-										  x->PixelShuffle(x,UP_SAMPLE_FACTOR),
-										  PRelu(div(out_chs,UP_SAMPLE_FACTOR * UP_SAMPLE_FACTOR_STEP)))
+										  x->PixelShuffle(x,UP_SAMPLE_FACTOR_STEP),
+										  PRelu(div(out_chs,UP_SAMPLE_FACTOR_STEP * UP_SAMPLE_FACTOR_STEP)))
 mutable struct Generator
 	init_conv
 	residual_blocks
@@ -48,9 +48,9 @@ function Gen(B::Int)
 
 	residual_blocks = tuple(residual_blocks...)
 
-	conv_blocks = (_ConvBN(64,64),_Conv(1,3,9,1,1))
+	conv_blocks = (_ConvBN(64,64),_Conv(64,3,9,1,1))
 
-	up_blocks = (UpBlock(64,256),UpBlock(16,256))
+	up_blocks = (UpBlock(64,256),UpBlock(64,256))
 
 	Generator(init_conv,residual_blocks,conv_blocks,up_blocks)
 end
@@ -71,6 +71,7 @@ function (gen::Generator)(x)
 
 	println("ResConvBlock size : $(size(x))")
 	for up_block in gen.up_blocks
+		println("UP!")
 		x = up_block(x)
 	end
 

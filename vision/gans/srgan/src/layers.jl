@@ -4,10 +4,14 @@ end
 
 @treelike PRelu
 
-PRelu(num_channels::Int;init=Flux.glorot_uniform) = PRelu(param(init(num_channels)))
+function PRelu(num_channels::Int;init=Flux.glorot_uniform) 
+	println("In PRelu!")
+	println(num_channels)
+	PRelu(param(init(num_channels)))
+end
 
 function (m::PRelu)(x)
-	size(x)[end - 1] == length(m.α) || error("NUmber of channels in input does not match with length of α")
+	size(x)[end - 1] == length(m.α) || error("NUmber of channels($(size(x)[end-1])) in input does not match with length of α($(length(m.α)))")
 	max.(0.0f0,x) .+ (reshape(m.α,ones(Int64,length(size(x)) - 2)...,length(m.α),1) .* min.(0.0f0,x))
 end
 
