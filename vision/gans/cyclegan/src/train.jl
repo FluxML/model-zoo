@@ -14,8 +14,8 @@ include("utils.jl")
 include("generator.jl")
 include("discriminator.jl")
 
-TRAIN_A_PATH = "../data/trainA/"
-TRAIN_B_PATH = "../data/trainB/"
+TRAIN_A_PATH = ""
+TRAIN_B_PATH = "" 
 SAVE_PATH = "../weights/"
 
 # Hyperparameters
@@ -26,7 +26,7 @@ gen_lr = 0.0002f0
 λ₁ = convert(Float32,100.0) # Cycle loss weight for dommain A
 λ₂ = convert(Float32,100.0) # Cycle loss weight for domain B
 λid = convert(Float32,0.5) # Identity loss weight - Set this to '0' if identity loss is not required
-NUM_EXAMPLES = 1 # Temporary for experimentation
+NUM_EXAMPLES = 2 # Temporary for experimentation
 VERBOSE_FREQUENCY = 10 # Verbose output after every 2 epochs
 SAVE_FREQUENCY = 200
 
@@ -35,6 +35,7 @@ dataA = load_dataset(TRAIN_A_PATH,256)[:,:,:,1:NUM_EXAMPLES]
 dataB = load_dataset(TRAIN_B_PATH,256)[:,:,:,1:NUM_EXAMPLES]
 mb_idxs = partition(1:size(dataA)[end], BATCH_SIZE)
 train_A = [make_minibatch(dataA, i) for i in mb_idxs]
+println(length(train_A))
 train_B = [make_minibatch(dataB, i) for i in mb_idxs]
 println("Loaded Data")
 
@@ -121,7 +122,7 @@ function g_loss(a,b)
     # gen_B should be identity if a is fed : ||gen_B(a) - a||
     idt_B_loss = mean(abs.(gen_B(b) .- a))
 
-    gen_A_loss + gen_B_loss + λ₁*rec_A_loss + λ₂*rec_B_loss + λid*(λ₁*idt_A_loss + λ₂*idt_B_loss
+    gen_A_loss + gen_B_loss + rec_A_loss + rec_B_loss # + λ₁*rec_A_loss + λ₂*rec_B_loss + λid*(λ₁*idt_A_loss + λ₂*idt_B_loss)
 end
 
 # Forward prop, backprop, optimise!
