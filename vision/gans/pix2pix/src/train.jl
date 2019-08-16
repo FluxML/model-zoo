@@ -35,7 +35,7 @@ D_STEPS = 1
 resume = false
 inverse_order = true
 # Define paths
-DATA_PATH = "../../../../../../old_server_pix2pix/data/facades/train/"
+DATA_PATH = "../../old_server_pix2pix/data/facades/train/"
 SAVE_PATH = "../weights/"
 
 # Global printing variables
