@@ -62,7 +62,8 @@ end
 # NOTE : TRPO will not work with Categorical Policies as nested AD is not currently defined for `softmax`
 ENV_NAME = "Pendulum-v0"
 EPISODE_LENGTH = 1000
-resume = true
+terminate_horizon = false
+resume = false
 # Policy parameters #
 η = 1e-3 # Learning rate
 STD = 0.0 # Standard deviation
@@ -83,7 +84,7 @@ global_step = 0
 env_wrap = EnvWrap(ENV_NAME)
 
 if resume == true
-    policy = load_policy(env_wrap,"./weights/")
+    policy = load_policy(env_wrap,"../weights/")
 else
     policy = get_policy(env_wrap)
 end
@@ -199,7 +200,7 @@ function train()
         println(mean(stats_buffer.exp_dict["rollout_returns"]))
 
         if i % SAVE_FREQUENCY == 0
-            save_policy(policy,"./weights")
+            save_policy(policy,"../weights")
         end
     end
 end
