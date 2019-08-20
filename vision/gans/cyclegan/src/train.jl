@@ -1,3 +1,5 @@
+using Pkg
+Pkg.activate("..")
 using CUDAnative
 device!(2)
 using Images,CuArrays,Flux
@@ -14,25 +16,25 @@ include("utils.jl")
 include("generator.jl")
 include("discriminator.jl")
 
-TRAIN_A_PATH = ""
-TRAIN_B_PATH = "" 
+TRAIN_A_PATH = "../../../../../../cycleGAN/data/trainA/"
+TRAIN_B_PATH = "../../../../../../cycleGAN/data/trainB/" 
 SAVE_PATH = "../weights/"
 
 # Hyperparameters
-NUM_EPOCHS = 200
+NUM_EPOCHS = 2000
 BATCH_SIZE = 2
 dis_lr = 0.0002f0
 gen_lr = 0.0002f0
-λ₁ = convert(Float32,100.0) # Cycle loss weight for dommain A
-λ₂ = convert(Float32,100.0) # Cycle loss weight for domain B
-λid = convert(Float32,0.5) # Identity loss weight - Set this to '0' if identity loss is not required
+λ₁ = convert(Float32,1.0) # Cycle loss weight for dommain A
+λ₂ = convert(Float32,1.0) # Cycle loss weight for domain B
+λid = convert(Float32,0.0) # Identity loss weight - Set this to '0' if identity loss is not required
 NUM_EXAMPLES = 2 # Temporary for experimentation
 VERBOSE_FREQUENCY = 10 # Verbose output after every 2 epochs
 SAVE_FREQUENCY = 200
 
 # Data Loading
-dataA = load_dataset(TRAIN_A_PATH,256)[:,:,:,1:NUM_EXAMPLES] 
-dataB = load_dataset(TRAIN_B_PATH,256)[:,:,:,1:NUM_EXAMPLES]
+dataA = load_dataset(TRAIN_A_PATH,256)[:,:,:,2:NUM_EXAMPLES] 
+dataB = load_dataset(TRAIN_B_PATH,256)[:,:,:,2:NUM_EXAMPLES]
 mb_idxs = partition(1:size(dataA)[end], BATCH_SIZE)
 train_A = [make_minibatch(dataA, i) for i in mb_idxs]
 println(length(train_A))
@@ -126,14 +128,14 @@ function g_loss(a,b)
 end
 
 # Forward prop, backprop, optimise!
-function train_step(X_A,X_B,opt_gen,opt_disc_A,opt_disc_B) 
+function train_step(X_A,X_B,opt_gen,opt_disc_A,opt_disc_B)
     # Normalise the Images
     X_A = norm(X_A)
     X_B = norm(X_B)
 
     # Optimise Generators
     gs = Tracker.gradient(() -> g_loss(X_A,X_B),params(params(gen_A)...,params(gen_B)...))
-        
+
     update!(opt_gen,params(params(gen_A)...,params(gen_B)...),gs)
 
     # Optimise Discriminators
@@ -161,7 +163,8 @@ function train()
     for epoch in 1:NUM_EPOCHS
         println("-----------Epoch : $epoch-----------")
         for i in 1:length(train_A)
-            g_loss,dA_loss,dB_loss = train_step(train_A[i] |> gpu,train_B[i] |> gpu,opt_gen,opt_disc_A,opt_disc_B)
+	    println(size(train_A[i]))
+            train_step(train_A[i] |> gpu,train_B[i] |> gpu,opt_gen,opt_disc_A,opt_disc_B)
         end
     	if epoch % SAVE_FREQUENCY == 0
     		save_weights(gen_A,dis_A,gen_B,dis_B)

@@ -1,3 +1,5 @@
+using Pkg
+Pkg.activate("..")
 using CUDAnative
 device!(2)
 
@@ -16,10 +18,10 @@ include("generator.jl")
 include("discriminator.jl")
 
 gen_A = UNet()
-TEST_A_PATH = "../data/trainA/"
-TEST_B_PATH = "../data/trainB/"
+TEST_A_PATH = "../../../../../../cycleGAN/data/trainA/"
+TEST_B_PATH = "../../../../../../cycleGAN/data/trainB/"
 LOAD_PATH = "../weights/" # For loading the weights
-SAVE_PATH = "../sample" # For saving the generated samples
+SAVE_PATH = "../sample/" # For saving the generated samples
 
 ### SAMPLING ###
 function sampleA2B(X_A_test,gen_A)
@@ -41,7 +43,7 @@ function test()
    # load test data
    dataA = load_dataset(TEST_A_PATH,256)[:,:,:,2]
    dataA = reshape(dataA,256,256,3,1)
-   @load string(SAVE_PATH,"gen_A.bson") gen_A
+   @load string(LOAD_PATH,"gen_A.bson") gen_A
    gen_A = gen_A |> gpu
    out = sampleA2B(dataA,gen_A)
    for (i,img) in enumerate(out)
