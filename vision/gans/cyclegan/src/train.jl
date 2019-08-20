@@ -124,7 +124,7 @@ function g_loss(a,b)
     # gen_B should be identity if a is fed : ||gen_B(a) - a||
     idt_B_loss = mean(abs.(gen_B(b) .- a))
 
-    gen_A_loss + gen_B_loss + rec_A_loss + rec_B_loss # + λ₁*rec_A_loss + λ₂*rec_B_loss + λid*(λ₁*idt_A_loss + λ₂*idt_B_loss)
+    gen_A_loss + gen_B_loss + λ₁*rec_A_loss + λ₂*rec_B_loss + λid*(λ₁*idt_A_loss + λ₂*idt_B_loss)
 end
 
 # Forward prop, backprop, optimise!
