@@ -55,7 +55,7 @@ function sample(m, alphabet, len; temp = 1)
   c = rand(alphabet)
   for i = 1:len
     write(buf, c)
-    c = wsample(alphabet, m(onehot(c, alphabet)).data)
+    c = wsample(alphabet, m(onehot(c, alphabet)))
   end
   return String(take!(buf))
 end
