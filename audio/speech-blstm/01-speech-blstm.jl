@@ -92,6 +92,8 @@ function readData(dataDir)
   
   for (i, fname) in enumerate(fnames)
     print(string(i) * "/" * string(length(fnames)) * "\r")
+    dd = joinpath(dataDir, fname)
+    occursin(".bson", dd) || continue
     BSON.@load joinpath(dataDir, fname) x y
     x = [x[i,:] for i in 1:size(x,1)]
     y = [y[:,i] for i in 1:size(y,2)]

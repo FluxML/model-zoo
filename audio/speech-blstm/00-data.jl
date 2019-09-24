@@ -1,7 +1,9 @@
 # 00-data.jl
 # Extracts audio features from TIMIT to be used in speech recognition
 
+using Flux
 using Flux: onehotbatch
+using Flux.Zygote: @nograd
 using WAV
 using BSON
 
@@ -157,11 +159,14 @@ function createData(data_dir, out_dir)
       base, _ = splitext(phnFname)
       dat_name = one_dir_up * base * ".bson"
       dat_path = joinpath(out_dir, dat_name)
+      @show x, y
       BSON.@save dat_path x y
     end
   end
   println()
 end
+
+@nograd Flux.reset!
 
 createData(TRAINING_DATA_DIR, TRAINING_OUT_DIR)
 createData(TEST_DATA_DIR, TEST_OUT_DIR)

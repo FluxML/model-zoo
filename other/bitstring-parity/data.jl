@@ -1,5 +1,8 @@
 using Flux: onehot, onehotbatch
+using Flux.Zygote: @nograd
 using Random
+
+@nograd Flux.reset!
 
 const alphabet = [false, true]  # 0, 1
 

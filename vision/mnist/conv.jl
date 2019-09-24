@@ -10,6 +10,9 @@ using Flux, Flux.Data.MNIST, Statistics
 using Flux: onehotbatch, onecold, crossentropy, throttle
 using Base.Iterators: repeated, partition
 using Printf, BSON
+using Flux.Zygote: @nograd
+
+@nograd gpu
 
 # Load labels and images from Flux.Data.MNIST
 @info("Loading data set")
@@ -41,15 +44,15 @@ test_set = make_minibatch(test_imgs, test_labels, 1:length(test_imgs))
 model = Chain(
     # First convolution, operating upon a 28x28 image
     Conv((3, 3), 1=>16, pad=(1,1), relu),
-    x -> maxpool(x, (2,2)),
+    MaxPool((2,2)),
 
     # Second convolution, operating upon a 14x14 image
     Conv((3, 3), 16=>32, pad=(1,1), relu),
-    x -> maxpool(x, (2,2)),
+    MaxPool((2,2)),
 
     # Third convolution, operating upon a 7x7 image
     Conv((3, 3), 32=>32, pad=(1,1), relu),
-    x -> maxpool(x, (2,2)),
+    MaxPool((2,2)),
 
     # Reshape 3d tensor into a 2d one, at this point it should be (3, 3, 32, N)
     # which is where we get the 288 in the `Dense` layer below:
@@ -87,14 +90,14 @@ opt = ADAM(0.001)
 @info("Beginning training loop...")
 best_acc = 0.0
 last_improvement = 0
-for epoch_idx in 1:100
+for epoch_idx in 1:1
     global best_acc, last_improvement
     # Train for a single epoch
     Flux.train!(loss, params(model), train_set, opt)
 
     # Calculate accuracy:
     acc = accuracy(test_set...)
-    @info(@sprintf("[%d]: Test accuracy: %.4f", epoch_idx, acc))
+    # @info(@sprintf("[%d]: Test accuracy: %.4f", epoch_idx, acc))
     
     # If our accuracy is good enough, quit out.
     if acc >= 0.999
@@ -115,12 +118,12 @@ for epoch_idx in 1:100
         opt.eta /= 10.0
         @warn(" -> Haven't improved in a while, dropping learning rate to $(opt.eta)!")
 
-        # After dropping learning rate, give it a few epochs to improve
+    #     # After dropping learning rate, give it a few epochs to improve
         last_improvement = epoch_idx
     end
 
-    if epoch_idx - last_improvement >= 10
-        @warn(" -> We're calling this converged.")
-        break
-    end
+    # if epoch_idx - last_improvement >= 10
+    #     @warn(" -> We're calling this converged.")
+    #     break
+    # end
 end

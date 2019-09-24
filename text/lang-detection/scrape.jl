@@ -14,10 +14,10 @@ function innerText(dom)
   for elem in PreOrderDFS(dom)
     elem isa HTMLText && print(text, elem.text)
   end
-  return String(text)
+  return take!(text)
 end
 
-content(url) = join(innerText.(matchall(sel".mw-parser-output > p", rawpage(url))), "\n")
+content(url) = join((collect(nodeText(m) for m in eachmatch(sel".mw-parser-output > p", rawpage(url)))), "\n")
 
 cd(@__DIR__)
 mkpath("corpus")

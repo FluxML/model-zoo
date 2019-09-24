@@ -98,13 +98,12 @@ W * x
 
 # CUDA functionality is provided separately by the [CuArrays
 # package](https://github.com/JuliaGPU/CuArrays.jl). If you have a GPU and CUDA
-# available, you can run `] add CuArrays` in a REPL or IJulia to get it.
+# available.
 
-# Once CuArrays is loaded you can move any array to the GPU with the `cu`
+# CuArrays is loaded alongside Flux and you can move any array to the GPU with the `cu`
 # function, and it supports all of the above operations with the same syntax.
 
-## using CuArrays
-## x = cu(rand(5, 3))
+## x = gpu(rand(5, 3))
 
 # Automatic Differentiation
 # -------------------------
@@ -119,9 +118,8 @@ f(5)
 # In simple cases it's pretty easy to work out the gradient by hand – here it's
 # `6x+2`. But it's much easier to make Flux do the work for us!
 
-using Flux.Tracker: derivative
-
-df(x) = derivative(f, x)
+using Flux: gradient
+df(x) = gradient(f, x)
 
 df(5)
 
@@ -129,7 +127,7 @@ df(5)
 # as `6x+2`. We can even do this multiple times (but the second derivative is a
 # fairly boring `6`).
 
-ddf(x) = derivative(df, x)
+ddf(x) = gradient(x -> df(x) |> sum, x)
 
 ddf(5)
 
@@ -142,7 +140,7 @@ mysin(x) = sum((-1)^k*x^(1+2k)/factorial(1+2k) for k in 0:5)
 
 x = 0.5
 
-mysin(x), derivative(mysin, x)
+# mysin(x), gradient(mysin, x)
 #-
 sin(x), cos(x)
 
@@ -152,8 +150,6 @@ sin(x), cos(x)
 # This gets more interesting when we consider functions that take *arrays* as
 # inputs, rather than just a single number. For example, here's a function that
 # takes a matrix and two vectors (the definition itself is arbitrary)
-
-using Flux.Tracker: gradient
 
 myloss(W, b, x) = sum(W * x .+ b)
 
@@ -167,26 +163,25 @@ gradient(myloss, W, b, x)
 # in handy when we want to train models.
 
 # Because ML models can contain hundreds of parameters, Flux provides a slightly
-# different way of writing `gradient`. We instead mark arrays with `param` to
+# different way of writing `gradient`. We instead mark arrays with `Params` to
 # indicate that we want their derivatives. `W` and `b` represent the weight and
 # bias respectively.
 
-using Flux.Tracker: param, back!, grad
-
-W = param(randn(3, 5))
-b = param(zeros(3))
+using Flux: Params
+W = randn(3, 5)
+b = zeros(3)
 x = rand(5)
 
-y = sum(W * x .+ b)
+g(x) = sum(W * x .+ b)
+ps = Params([W, b])
 
-# Anything marked `param` becomes *tracked*, indicating that Flux keeping an eye
-# on its gradient. We can now call
+# We can now call
 
-back!(y) # Run backpropagation
-
-grad(W), grad(b)
+grads = gradient(() -> g(x), ps)
 
 # We can now grab the gradients of `W` and `b` directly from those parameters.
+
+grads[W], grads[b]
 
 # This comes in handy when working with *layers*. A layer is just a handy
 # container for some parameters. For example, `Dense` does a linear transform
@@ -212,10 +207,11 @@ params(m)
 
 m = Chain(Dense(10, 5, relu), Dense(5, 2), softmax)
 
-l = sum(Flux.crossentropy(m(x), [0.5, 0.5]))
-back!(l)
+grads = gradient(params(m)) do
+  sum(Flux.crossentropy(m(x), [0.5, 0.5]))
+end
 
-grad.(params(m))
+grads
 
 # You don't have to use layers, but they can be convient for many simple kinds
 # of models and fast iteration.
@@ -224,11 +220,11 @@ grad.(params(m))
 # familiar, *Gradient Descent* is a simple algorithm that takes the weights and steps
 # using a learning rate and the gradients. `weights = weights - learning_rate * gradient`.
 
-using Flux.Tracker: update!
+using Flux.Optimise: update!
 
 η = 0.1
 for p in params(m)
-  update!(p, -η * grad(p))
+  update!(p, -η * grads[p])
 end
 
 # While this is a valid way of updating our weights, it can get more complicated as the
@@ -237,8 +233,9 @@ end
 # Flux comes with a bunch of pre-defined optimisers and makes writing our own really simple.
 # We just give it the model parameters and any other parameters of the optimisers themselves.
 
-opt = SGD(params(m), 0.01)
-opt() # updates the weights
+opt = Descent(0.01)
+ps = params(m)
+Flux.Optimise.update!(opt, ps, grads)
 
 # `Training` a network reduces down to iterating on a dataset mulitple times, performing these
 # steps in order. Just for a quick implementation, let’s train a network that learns to predict
@@ -246,7 +243,7 @@ opt() # updates the weights
 
 data, labels = rand(10, 100), fill(0.5, 2, 100)
 loss(x, y) = sum(Flux.crossentropy(m(x), y))
-Flux.train!(loss, [(data,labels)], opt)
+Flux.train!(loss, params(m), [(data,labels)], opt)
 
 # You don't have to use `train!`. In cases where aribtrary logic might be better suited,
 # you could open up this training loop like so:
@@ -282,7 +279,7 @@ Flux.train!(loss, [(data,labels)], opt)
 
 using Statistics
 # using CuArrays
-using Flux, Flux.Tracker, Flux.Optimise
+using Flux, Flux.Zygote, Flux.Optimise
 using Metalhead, Images
 using Metalhead: trainimgs
 using Images.ImageCore
@@ -336,9 +333,9 @@ valY = labels[:, valset] |> gpu
 
 m = Chain(
   Conv((5,5), 3=>16, relu),
-  x -> maxpool(x, (2,2)),
+  MaxPool((2,2)),
   Conv((5,5), 16=>8, relu),
-  x -> maxpool(x, (2,2)),
+  MaxPool((2,2)),
   x -> reshape(x, :, size(x, 4)),
   Dense(200, 120),
   Dense(120, 84),
@@ -355,7 +352,7 @@ m = Chain(
 using Flux: crossentropy, Momentum
 
 loss(x, y) = sum(crossentropy(m(x), y))
-opt = Momentum(params(m), 0.01)
+opt = Momentum(0.01)
 
 # We can start writing our train loop where we will keep track of some basic accuracy
 # numbers about our model. We can define an `accuracy` function for it like so.
@@ -369,13 +366,15 @@ accuracy(x, y) = mean(onecold(m(x), 1:10) .== onecold(y, 1:10))
 # and see what our net is capable of. We will loop over the dataset 100 times and
 # feed the inputs to the neural network and optimise.
 
-epochs = 10
+epochs = 1
 
+ps = params(m)
 for epoch = 1:epochs
   for d in train
-    l = loss(d...)
-    back!(l)
-    opt()
+    grads = gradient(ps) do
+      loss(d...)
+    end
+    Flux.Optimise.update!(opt, ps, grads)
     @show accuracy(valX, valY)
   end
 end
@@ -422,7 +421,7 @@ image.(valset[ids])
 
 rand_test = getarray.(image.(valset[ids]))
 rand_test = cat(rand_test..., dims = 4) |> gpu
-rand_truth = ground_truth.(valset[ids]...)
+rand_truth = ground_truth.(valset[ids])
 m(rand_test)
 
 # This looks similar to how we would expect the results to be. At this point, it's a good

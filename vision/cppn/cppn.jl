@@ -31,7 +31,7 @@ end
 push!(layers, unit(N, 1, σ))
 
 model = Chain(layers...)
-getColorAt(x) = Flux.data(model(x))
+getColorAt(x) = model(x)
 
 function batch(arr, s)
     batches = []

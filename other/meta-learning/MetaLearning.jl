@@ -108,24 +108,27 @@ function fomaml(model; meta_opt=Descent(0.01), inner_opt=Descent(0.02), epochs=3
 
             x = Float32.(rand(dist, train_batch_size))
             y = task(x)
-            grad = Flux.Tracker.gradient(() -> Flux.mse(model(x'), y'), weights)
+            grad = Flux.gradient(() -> Flux.mse(model(x'), y'), weights)
 
-            for w in weights
-                w.data .-= Flux.Optimise.apply!(inner_opt, w.data, grad[w].data)
-            end
+           #  for w in weights
+           #      w.data .-= Flux.Optimise.apply!(inner_opt, w.data, grad[w].data)
+           #  end
+
+            Flux.Optimise.update!(inner_opt, weights, grad)
 
             testy = task(testx)
-            grad = Flux.Tracker.gradient(() -> Flux.mse(model(testx'), testy'), weights)
+            grad = Flux.gradient(() -> Flux.mse(model(testx'), testy'), weights)
 
             # reset weights and accumulate gradients
-            for (w1, w2) in zip(weights, prev_weights)
-                w1.data .= w2
-                w1.grad .+= grad[w1].data
-            end
+           #  for (w1, w2) in zip(weights, prev_weights)
+           #      w1.data .= w2
+           #      w1.grad .+= grad[w1].data
+           #  end
+	   w1 .= w2
 
         end
 
-        Flux.Optimise._update_params!(meta_opt, weights)
+        Flux.Optimise.update!(meta_opt, weights, grads)
 
         if i % eval_interval == 0
             @printf("Iteration %d, evaluating model on random task...\n", i)

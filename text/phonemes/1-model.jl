@@ -1,6 +1,10 @@
 # Based on https://arxiv.org/abs/1409.0473
 
 using Flux: flip, crossentropy, reset!, throttle
+using Flux.Zygote: @nograd
+
+@nograd reset!
+@nograd flip
 
 include("0-data.jl")
 
@@ -15,7 +19,7 @@ backward = LSTM(Nin, Nh÷2)
 encode(tokens) = vcat.(forward.(tokens), flip(backward, tokens))
 
 alignnet = Dense(2Nh, 1)
-align(s, t) = alignnet(vcat(t, s .* trues(1, size(t, 2))))
+align(s, t) = alignnet(vcat(t, s .* ones(1, size(t, 2))))
 
 # A recurrent model which takes a sequence of annotations, attends, and returns
 # a predicted output token.
@@ -32,7 +36,7 @@ end
 function decode1(tokens, phone)
   weights = asoftmax([align(recur.state[2], t) for t in tokens])
   context = sum(map((a, b) -> a .* b, weights, tokens))
-  y = recur(vcat(Float32.(phone), context))
+  y = recur(vcat(phone, context))
   return softmax(toalpha(y))
 end
 

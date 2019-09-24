@@ -2,7 +2,7 @@ include("data.jl")
 using Flux, Statistics
 using Flux: onehot, onehotbatch, throttle, crossentropy, reset!, onecold
 
-const epochs = 20
+const epochs = 1
 
 train = gendata(100, 2)
 val = gendata(10, 2)
@@ -11,7 +11,7 @@ scanner = LSTM(length(alphabet), 20)
 encoder = Dense(20, length(alphabet))
 
 function model(x)
-    state = scanner.(x.data)[end]
+    state = scanner.(x)[end]
     reset!(scanner)
     softmax(encoder(state))
 end
@@ -33,4 +33,4 @@ tx = map(c -> onehotbatch(c, alphabet), [
     [true, false], # 10 -> 1
     [false, false], # 00 -> 0
     [true, true]]) # 11 -> 0
-[onecold(model(x)) - 1 for x in tx] |> println
+[onecold(model(x)) .- 1 for x in tx] |> println
