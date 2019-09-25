@@ -463,10 +463,10 @@ uuid = "51556ac3-7006-55f5-8cb3-34580c88182d"
 version = "0.1.1"
 
 [[ImageFiltering]]
-deps = ["CatIndices", "ColorVectorSpace", "Colors", "ComputationalResources", "DataStructures", "FFTViews", "FFTW", "FixedPointNumbers", "ImageCore", "LinearAlgebra", "Logging", "MappedArrays", "OffsetArrays", "Random", "Requires", "StaticArrays", "Statistics", "Test", "TiledIteration"]
-git-tree-sha1 = "40bccb4aa09b04085e052f30097b75fe5a155d34"
+deps = ["CatIndices", "ColorVectorSpace", "Colors", "ComputationalResources", "DataStructures", "FFTViews", "FFTW", "FixedPointNumbers", "ImageCore", "LinearAlgebra", "MappedArrays", "OffsetArrays", "Requires", "StaticArrays", "Statistics", "TiledIteration"]
+git-tree-sha1 = "e7be8c871a1e38cd29d1e978f7bff3feb7079025"
 uuid = "6a3955dd-da59-5b1f-98d4-e7296123deb5"
-version = "0.5.4"
+version = "0.6.5"
 
 [[ImageMetadata]]
 deps = ["AxisArrays", "ColorVectorSpace", "Colors", "FixedPointNumbers", "ImageAxes", "ImageCore", "IndirectArrays"]
@@ -647,12 +647,6 @@ deps = ["MacroTools", "Test"]
 git-tree-sha1 = "75a54abd10709c01f1b86b84ec225d26e840ed58"
 uuid = "e89f7d12-3494-54d1-8411-f7d8b9ae1f27"
 version = "0.5.0"
-
-[[Metalhead]]
-deps = ["BSON", "ColorTypes", "Flux", "ImageFiltering", "Images", "REPL", "Requires", "Statistics", "Test"]
-git-tree-sha1 = "4f72ff737bafc31cc5378f8995e9bc108e012077"
-uuid = "dbeba491-748d-5e0e-a39e-b530a07fa0cc"
-version = "0.3.0"
 
 [[Missings]]
 git-tree-sha1 = "29858ce6c8ae629cf2d733bffa329619a1c843d0"
@@ -1055,6 +1049,8 @@ version = "0.3.4"
 
 [[ZygoteRules]]
 deps = ["MacroTools"]
-path = "/Users/dhairyagandhi/.julia/dev/ZygoteRules"
+git-tree-sha1 = "c4c29b30b8ff3be13d4244e78be7df2a42bc54d0"
+repo-rev = "master"
+repo-url = "https://github.com/FluxML/ZygoteRules.jl.git"
 uuid = "700de1a5-db45-46bc-99cf-38207098b444"
 version = "0.2.0"
