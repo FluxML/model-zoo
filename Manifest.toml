@@ -285,7 +285,9 @@ version = "0.5.3"
 
 [[Flux]]
 deps = ["AbstractTrees", "Adapt", "CUDAapi", "CodecZlib", "Colors", "CuArrays", "DelimitedFiles", "Juno", "LinearAlgebra", "MacroTools", "NNlib", "Pkg", "Printf", "Random", "Reexport", "SHA", "Statistics", "StatsBase", "Test", "ZipFile", "Zygote", "ZygoteRules"]
-path = "/Users/dhairyagandhi/.julia/dev/Flux"
+git-tree-sha1 = "a9bb03f2cb6f178d6afe99bdaf8a8e8c9dcbd4a8"
+repo-rev = "master"
+repo-url = "https://github.com/FluxML/Flux.jl.git"
 uuid = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 version = "0.9.0"
 
@@ -372,6 +374,12 @@ deps = ["CatIndices", "ColorVectorSpace", "Colors", "ComputationalResources", "D
 git-tree-sha1 = "40bccb4aa09b04085e052f30097b75fe5a155d34"
 uuid = "6a3955dd-da59-5b1f-98d4-e7296123deb5"
 version = "0.5.4"
+
+[[ImageMagick]]
+deps = ["BinaryProvider", "ColorTypes", "FileIO", "FixedPointNumbers", "ImageCore", "InteractiveUtils", "Libdl", "Pkg", "Random"]
+git-tree-sha1 = "6e1efa8bd5123e18a082c5580c7b8d4a287e1af4"
+uuid = "6218d12a-5da1-5696-b52f-db25d2ecc6d1"
+version = "0.7.5"
 
 [[ImageMetadata]]
 deps = ["AxisArrays", "ColorVectorSpace", "Colors", "FixedPointNumbers", "ImageAxes", "ImageCore", "IndirectArrays"]
@@ -489,10 +497,10 @@ deps = ["Base64"]
 uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 
 [[MbedTLS]]
-deps = ["BinaryProvider", "Dates", "Distributed", "Libdl", "Random", "Sockets", "Test"]
-git-tree-sha1 = "2d94286a9c2f52c63a16146bb86fd6cdfbf677c6"
+deps = ["BinaryProvider", "Dates", "Libdl", "Random", "Sockets"]
+git-tree-sha1 = "85f5947b53c8cfd53ccfa3f4abae31faa22c2181"
 uuid = "739be429-bea8-5141-9913-cc70e7f3736d"
-version = "0.6.8"
+version = "0.7.0"
 
 [[Measures]]
 deps = ["Test"]
@@ -728,7 +736,7 @@ uuid = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
 version = "0.8.0"
 
 [[SuiteSparse]]
-deps = ["Libdl", "LinearAlgebra", "SparseArrays"]
+deps = ["Libdl", "LinearAlgebra", "Serialization", "SparseArrays"]
 uuid = "4607b0f0-06f3-5cda-b6b1-a6196a1729e9"
 
 [[Test]]
@@ -797,12 +805,16 @@ version = "0.8.3"
 
 [[Zygote]]
 deps = ["DiffRules", "FFTW", "FillArrays", "ForwardDiff", "IRTools", "InteractiveUtils", "LinearAlgebra", "MacroTools", "NNlib", "NaNMath", "Random", "Requires", "SpecialFunctions", "Statistics", "ZygoteRules"]
-path = "/Users/dhairyagandhi/.julia/dev/Zygote"
+git-tree-sha1 = "b1e0543160bd76790a0dd56b217a66c7ed711fcd"
+repo-rev = "master"
+repo-url = "https://github.com/FluxML/Zygote.jl.git"
 uuid = "e88e6eb3-aa80-5325-afca-941959d7151f"
 version = "0.3.4"
 
 [[ZygoteRules]]
 deps = ["MacroTools"]
-path = "/Users/dhairyagandhi/.julia/dev/ZygoteRules"
+git-tree-sha1 = "c4c29b30b8ff3be13d4244e78be7df2a42bc54d0"
+repo-rev = "master"
+repo-url = "https://github.com/FluxML/ZygoteRules.jl.git"
 uuid = "700de1a5-db45-46bc-99cf-38207098b444"
 version = "0.2.0"
