@@ -20,6 +20,7 @@ Models with a `cuda` folder can be loaded with NVIDIA GPU support, if you have a
 using Pkg; Pkg.activate("cuda"); Pkg.instantiate()
 using CuArrays
 ```
+Note: Place your downloaded dataset where MetalHead is installed, typically in `/home/<user>/.julia/packages/MetalHead/fYeSU/src/datasets`
 
 ## Contributing
 
