@@ -129,7 +129,7 @@ df(5)
 # as `6x+2`. We can even do this multiple times (but the second derivative is a
 # fairly boring `6`).
 
-ddf(x) = gradient(df, x; nest =true)[1]
+ddf(x) = gradient(df, x)[1]
 
 ddf(5)
 
