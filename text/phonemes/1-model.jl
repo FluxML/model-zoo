@@ -1,7 +1,7 @@
 # Based on https://arxiv.org/abs/1409.0473
 
 using Flux: flip, crossentropy, reset!, throttle
-using Flux.Zygote: @nograd
+using Zygote: @nograd
 
 @nograd reset!
 @nograd flip

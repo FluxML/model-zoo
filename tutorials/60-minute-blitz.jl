@@ -279,7 +279,7 @@ Flux.train!(loss, params(m), [(data,labels)], opt)
 
 using Statistics
 # using CuArrays
-using Flux, Flux.Zygote, Flux.Optimise
+using Flux, Zygote, Flux.Optimise
 using Metalhead, Images
 using Metalhead: trainimgs
 using Images.ImageCore

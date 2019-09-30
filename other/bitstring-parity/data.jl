@@ -1,5 +1,5 @@
 using Flux: onehot, onehotbatch
-using Flux.Zygote: @nograd
+using Zygote: @nograd
 using Random
 
 @nograd Flux.reset!

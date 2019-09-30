@@ -3,7 +3,7 @@
 
 using Flux
 using Flux: onehotbatch
-using Flux.Zygote: @nograd
+using Zygote: @nograd
 using WAV
 using BSON
 

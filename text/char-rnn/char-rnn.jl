@@ -2,7 +2,7 @@ using Flux
 using Flux: onehot, chunk, batchseq, throttle, crossentropy
 using StatsBase: wsample
 using Base.Iterators: partition
-using Flux.Zygote: @nograd
+using Zygote: @nograd
 
 cd(@__DIR__)
 

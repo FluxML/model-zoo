@@ -2,7 +2,7 @@ using Flux
 using Flux: onehot, onehotbatch, crossentropy, reset!, throttle
 using Unicode: normalize
 using Random: shuffle
-using Flux.Zygote: @nograd
+using Zygote: @nograd
 using Statistics
 
 @nograd Flux.reset!
