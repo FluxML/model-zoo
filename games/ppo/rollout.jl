@@ -98,7 +98,7 @@ function collect_and_process_rollouts(policy,episode_buffer::Buffer,num_steps::I
 	episode_advantages = normalise(episode_advantages)
 
 	if terminate_horizon == false
-		println("Appending value of last state to returns")
+		    # println("Appending value of last state to returns")
 	        episode_returns = disconunted_returns(episode_rewards,policy.value_net(episode_states[end]).data[1])
 	else
 		episode_returns = disconunted_returns(episode_rewards)

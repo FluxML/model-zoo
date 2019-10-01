@@ -49,7 +49,6 @@ function disconunted_returns(rewards::Array,last_val=0;γ=0.99)
     for i in reverse(1:length(rewards))
         r = rewards[i] + γ*r
 	if i == length(rewards)
-		println(last_val)
 		r = r + last_val
 	end
         push!(returns,r)

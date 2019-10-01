@@ -299,8 +299,6 @@ function save_policy(policy,path = nothing)
             π = policy.π
             @save string(path,"policy_cat.bson") π
         elseif typeof(policy) <: DiagonalGaussianPolicy
-	    println("IN")
-	    println(path)
             μ = policy.μ
             logΣ = policy.logΣ
             @save string(path,"policy_mu.bson") μ
