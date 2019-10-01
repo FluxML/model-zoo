@@ -44,7 +44,7 @@ Flux.train!(loss, params(m), zip(Xs, Ys), opt,
 
 # Sampling
 
-function sample(m, alphabet, len; temp = 1)
+function sample(m, alphabet, len)
   m = cpu(m)
   Flux.reset!(m)
   buf = IOBuffer()
@@ -57,8 +57,3 @@ function sample(m, alphabet, len; temp = 1)
 end
 
 sample(m, alphabet, 1000) |> println
-
-# evalcb = function ()
-#   @show loss(Xs[5], Ys[5])
-#   println(sample(deepcopy(m), alphabet, 100))
-# end
