@@ -6,7 +6,7 @@ The models are broadly categorised into the folders [vision](/vision) (e.g. larg
 
 ## Usage
 
-Each folder is its own [Julia project](https://julialang.github.io/Pkg.jl/latest/#Using-someone-else's-project-1), which lists the packages you need to run the models. You can run the models by opening Julia in the project folder and running
+The zoo comes with its own [Julia project](https://julialang.github.io/Pkg.jl/latest/#Using-someone-else's-project-1), which lists the packages you need to run the models. You can run the models by opening Julia in the project folder and running
 
 ```
 using Pkg; Pkg.activate("."); Pkg.instantiate()
@@ -14,12 +14,7 @@ using Pkg; Pkg.activate("."); Pkg.instantiate()
 
 to install all needed packages. Then you can run the model code with `include("script.jl")` or by running the script line-by-line. More details are available in the README for each model.
 
-Models with a `cuda` folder can be loaded with NVIDIA GPU support, if you have a CUDA installed.
-
-```julia
-using Pkg; Pkg.activate("cuda"); Pkg.instantiate()
-using CuArrays
-```
+Models may also be run with NVIDIA GPU support, if you have a CUDA installed. Most models will have this capability by default, pointed at by calls to `gpu` in the model code.
 
 ## Contributing
 
