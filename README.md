@@ -21,6 +21,16 @@ using Pkg; Pkg.activate("cuda"); Pkg.instantiate()
 using CuArrays
 ```
 
+### Gitpod Online IDE
+
+Each model can be used in [Gitpod](https://www.gitpod.io/), just [open the repository by gitpod](https://gitpod.io/#https://github.com/FluxML/model-zoo)
+
+#### Consideration:
+
+* Based on [Gitpod's policies](https://www.gitpod.io/pricing/), free access is limited.
+* All of your work will place in the Gitpod's cloud.
+* It isn't an officially maintained feature.
+
 ## Contributing
 
 We welcome contributions of new models. They should be in a folder with a project and manifest file, to pin all relevant packages, as well as a README to explain what the model is about, how to run it, and what results it achieves (if applicable). If possible models should not depend directly on GPU functionality, but ideally should be CPU/GPU agnostic.
