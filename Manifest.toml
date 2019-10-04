@@ -243,9 +243,9 @@ uuid = "717857b8-e6f2-59f4-9121-6e50c889abd2"
 version = "0.6.0"
 
 [[DataAPI]]
-git-tree-sha1 = "8903f0219d3472543fc4b2f5ebaf675a07f817c0"
+git-tree-sha1 = "674b67f344687a88310213ddfa8a2b3c76cc4252"
 uuid = "9a962f9c-6df0-11e9-0e5d-c546b8b5ee8a"
-version = "1.0.1"
+version = "1.1.0"
 
 [[DataStructures]]
 deps = ["InteractiveUtils", "OrderedCollections"]
@@ -645,6 +645,14 @@ git-tree-sha1 = "75a54abd10709c01f1b86b84ec225d26e840ed58"
 uuid = "e89f7d12-3494-54d1-8411-f7d8b9ae1f27"
 version = "0.5.0"
 
+[[Metalhead]]
+deps = ["BSON", "ColorTypes", "Flux", "ImageFiltering", "Images", "REPL", "Requires", "Statistics"]
+git-tree-sha1 = "03d530795cbe10edac4f09086a576e87ef749e36"
+repo-rev = "modelzooups"
+repo-url = "https://github.com/dhairyagandhi96/Metalhead.jl.git"
+uuid = "dbeba491-748d-5e0e-a39e-b530a07fa0cc"
+version = "0.4.0"
+
 [[Missings]]
 git-tree-sha1 = "29858ce6c8ae629cf2d733bffa329619a1c843d0"
 uuid = "e1d29d7a-bbdc-5cf2-9ac0-f12de2c33e28"
@@ -661,9 +669,9 @@ version = "0.2.1"
 
 [[NLSolversBase]]
 deps = ["Calculus", "DiffEqDiffTools", "DiffResults", "Distributed", "ForwardDiff"]
-git-tree-sha1 = "c430bd3f2dfcffc30688cf4a9cb61535e8d85f65"
+git-tree-sha1 = "f1b8ed89fa332f410cfc7c937682eb4d0b361521"
 uuid = "d41bc354-129a-5804-8e4c-c37616107c6c"
-version = "7.4.1"
+version = "7.5.0"
 
 [[NLsolve]]
 deps = ["DiffEqDiffTools", "Distances", "ForwardDiff", "LineSearches", "LinearAlgebra", "NLSolversBase", "Printf", "Reexport"]
