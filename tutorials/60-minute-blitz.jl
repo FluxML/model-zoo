@@ -279,7 +279,6 @@ Flux.train!(loss, params(m), [(data,labels)], opt)
 # It also has a number of dataloaders that come in handy to load datasets.
 
 using Statistics
-# using CuArrays
 using Flux, Flux.Tracker, Flux.Optimise
 using Metalhead, Images
 using Metalhead: trainimgs
@@ -334,9 +333,9 @@ valY = labels[:, valset] |> gpu
 
 m = Chain(
   Conv((5,5), 3=>16, relu),
-  x -> maxpool(x, (2,2)),
+  MaxPool((2, 2)),
   Conv((5,5), 16=>8, relu),
-  x -> maxpool(x, (2,2)),
+  MaxPool((2, 2)),
   x -> reshape(x, :, size(x, 4)),
   Dense(200, 120),
   Dense(120, 84),
