@@ -2,7 +2,6 @@ using Flux, Flux.Data.MNIST
 using Flux: @epochs, onehotbatch, mse, throttle
 using Base.Iterators: partition
 using Juno: @progress
-# using CuArrays
 
 # Encode MNIST images as compressed vectors that can later be decoded back into
 # images.
