@@ -23,9 +23,9 @@ Pkg.activate(joinpath(root, "notebooks", path))
 using Literate
 
 function init_nb(content)
-	content = replace(content, r"#\s*using CuArrays" => "## using CuArrays")
-	content = "using Pkg; Pkg.activate(\".\"); Pkg.instantiate();\n\n" * content
-	return content
+  act = root |> normpath
+  content = "using Pkg; Pkg.activate(\"$act\"); Pkg.instantiate();\n\n" * content
+  return content
 end
 
 scripts = meta["notebook"]
