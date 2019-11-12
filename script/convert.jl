@@ -7,6 +7,7 @@ meta = meta[ARGS[1]]
 
 path = meta["path"]
 deps = get(meta, "deps", [])
+deps = deps isa String ? [deps] : deps
 
 for d in ["Project.toml", "Manifest.toml", ".gitignore"]
   isfile(joinpath(root, path, d)) && push!(deps, d)
@@ -23,8 +24,7 @@ Pkg.activate(joinpath(root, "notebooks", path))
 using Literate
 
 function init_nb(content)
-  act = root |> normpath
-  content = "using Pkg; Pkg.activate(\"$act\"); Pkg.instantiate();\n\n" * content
+  content = "using Pkg; Pkg.activate(\"$root\"); Pkg.status();\n\n" * content
   return content
 end
 
@@ -38,7 +38,8 @@ for script in scripts
 end
 
 scripts = map(x -> x[1:end - 3] * ".ipynb", scripts)
-keep = union(deps, scripts)
+nbs = filter(x -> endswith(x, ".ipynb"), readdir(joinpath(root, path)))
+keep = union(deps, scripts, nbs)
 files = readdir(joinpath(root, "notebooks", path))
 
 for r in files
