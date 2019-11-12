@@ -1,5 +1,6 @@
 using Flux.Tracker, Statistics, DelimitedFiles
 using Flux.Tracker: Params, gradient, update!
+using DelimitedFiles, Statistics
 using Flux: gpu
 
 # This replicates the housing data example from the Knet.jl readme. Although we
