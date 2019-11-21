@@ -31,6 +31,9 @@ image: nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
       - PRID
       - TESTSUITE
       - FLUXBOT
+  artifacts:
+    paths:
+      - notebooks/*.ipynb
 
 zoo:1.0:
     extends:
