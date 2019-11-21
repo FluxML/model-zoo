@@ -35,7 +35,6 @@ image: nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
 zoo:1.0:
     extends:
       - .julia:1.0
-      - .test
       - .modelzoo
     tags:
       - nvidia
@@ -43,7 +42,6 @@ zoo:1.0:
 zoo:1.1:
     extends:
       - .julia:1.1
-      - .test
       - .modelzoo
     tags:
       - nvidia
@@ -51,7 +49,6 @@ zoo:1.1:
 zoo:1.2:
     extends:
       - .julia:1.2
-      - .test
       - .modelzoo
     tags:
       - nvidia
@@ -59,7 +56,6 @@ zoo:1.2:
 zoo:1.3:
     extends:
       - .julia:1.3
-      - .test
       - .modelzoo
     tags:
       - nvidia
@@ -67,7 +63,6 @@ zoo:1.3:
 zoo:nightly:
     extends:
       - .julia:nightly
-      - .test
       - .modelzoo
     tags:
       - nvidia
