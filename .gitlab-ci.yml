@@ -9,8 +9,8 @@ image: nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
 
     # if triggered by FluxBot
     - git clone https://github.com/FluxML/Flux.jl
-    - cd Flux.jl && git fetch origin pull/$PR_ID/head:test_$PR_ID
-    - git checkout test_$ID
+    - cd Flux.jl && git fetch origin pull/$PRID/head:test_$PRID
+    - git checkout test_$PRID
     - julia --project -e 'using Pkg;
             Pkg.instantiate();'
     - cd ..
@@ -28,7 +28,7 @@ image: nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
   
   only:
     variables:
-      - PR_ID
+      - PRID
       - TESTSUITE
       - FLUXBOT
 
