@@ -22,7 +22,6 @@ image: nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
         Pkg.instantiate();
         Pkg.develop(PackageSpec(path = ENV["FLUX"]));
         Pkg.resolve();
-        Pkg.instantiate();
         Pkg.API.precompile();'
     - cd script
     - julia --project -e 'using Pkg; Pkg.instantiate()'
