@@ -16,9 +16,11 @@ image: nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
     - cd ..
     # end
 
+    - export FLUX="$PWD/Flux.jl"
+    - export JULIA_LOAD_PATH=".:$FLUX::"
     - julia --project -e 'using Pkg;
         Pkg.instantiate();
-        Pkg.develop(PackageSpec(path = "./Flux.jl"));
+        Pkg.develop(PackageSpec(path = ENV["FLUX"]));
         Pkg.resolve();
         Pkg.instantiate();
         Pkg.API.precompile();'
@@ -69,4 +71,4 @@ zoo:nightly:
       - .modelzoo
     tags:
       - nvidia
-   allow_failure: true
+    allow_failure: true
