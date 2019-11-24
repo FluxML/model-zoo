@@ -356,12 +356,6 @@ git-tree-sha1 = "5c49dab19938b119fe204fd7d7e8e174f4e9c68b"
 uuid = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 version = "0.8.8"
 
-[[IRTools]]
-deps = ["InteractiveUtils", "MacroTools", "Test"]
-git-tree-sha1 = "72421971e60917b8cd7737f9577c4f0f87eab306"
-uuid = "7869d1d1-7146-5819-86e3-90919afe41df"
-version = "0.3.0"
-
 [[IdentityRanges]]
 deps = ["OffsetArrays", "Test"]
 git-tree-sha1 = "b8c36c6083fd14e2a82c5974225702126e894f23"
@@ -922,15 +916,3 @@ deps = ["BinaryProvider", "Libdl", "Printf"]
 git-tree-sha1 = "580ce62b6c14244916cc28ad54f8a2e2886f843d"
 uuid = "a5390f91-8eb1-5f08-bee0-b1d1ffed6cea"
 version = "0.8.3"
-
-[[Zygote]]
-deps = ["DiffRules", "FFTW", "FillArrays", "ForwardDiff", "IRTools", "InteractiveUtils", "LinearAlgebra", "MacroTools", "NNlib", "NaNMath", "Random", "Requires", "SpecialFunctions", "Statistics", "ZygoteRules"]
-git-tree-sha1 = "e4245b9c5362346e154b62842a89a18e0210b92b"
-uuid = "e88e6eb3-aa80-5325-afca-941959d7151f"
-version = "0.4.1"
-
-[[ZygoteRules]]
-deps = ["MacroTools"]
-git-tree-sha1 = "b3b4882cc9accf6731a08cc39543fbc6b669dca8"
-uuid = "700de1a5-db45-46bc-99cf-38207098b444"
-version = "0.2.0"
