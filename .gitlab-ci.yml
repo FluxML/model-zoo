@@ -5,6 +5,10 @@ image: nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
 
 .modelzoo:
   stage: deploy
+
+  before_script:
+    - julia --project=.fluxbot -e 'using Pkg; Pkg.instantiate()'
+
   script:
 
     # if triggered by FluxBot
@@ -23,15 +27,21 @@ image: nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
         Pkg.develop(PackageSpec(path = ENV["FLUX"]));
         Pkg.resolve();
         Pkg.API.precompile();'
+
     - cd script
     - julia --project -e 'using Pkg; Pkg.instantiate()'
     - julia --project convert.jl $TESTSUITE
+
+  after_script:
+    - apt-get install unzip
+    - julia --project=.fluxbot -e 'using FluxBot; FluxBot.respond()'
   
   only:
     variables:
       - PRID
       - TESTSUITE
       - FLUXBOT
+      - REPO_NAME
   artifacts:
     paths:
       - notebooks/*.ipynb
