@@ -35,7 +35,7 @@ image: nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
     - julia --project convert.jl $TESTSUITE
 
   after_script:
-    - apt-get install unzip
+    - apt-get -qq -o=Dpkg::Use-Pty=0 -y install unzip
     - julia --project=script -e 'using FluxBot; FluxBot.respond();'
   
   only:
