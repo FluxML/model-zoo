@@ -1,2 +1,3 @@
 [deps]
+FluxBot = "352bd040-0f98-11ea-1faf-6f930ca83554"
 Literate = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
