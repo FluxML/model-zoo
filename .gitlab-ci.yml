@@ -6,11 +6,8 @@ image: nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
 .modelzoo:
   stage: deploy
 
-  before_script:
-    - julia --project=script -e 'using Pkg; Pkg.instantiate()'
-
   script:
-
+    - julia --project=script -e 'using Pkg; Pkg.instantiate()'
     # if triggered by FluxBot
     - >
       if [ "$FLUXBOT" == "true" ]; then
