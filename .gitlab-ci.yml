@@ -33,9 +33,8 @@ image: nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
 
   after_script:
     - apt-get -qq -o=Dpkg::Use-Pty=0 -y install unzip
-    - echo $PWD
-    - cd script
-    - julia --project -e 'using FluxBot; FluxBot.respond();'
+    - julia --project=script -e 'using Pkg; Pkg.status();'
+    - julia --project=script -e 'using FluxBot; FluxBot.respond();'
 
   only:
     variables:
