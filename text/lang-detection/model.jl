@@ -2,10 +2,7 @@ using Flux
 using Flux: onehot, onehotbatch, crossentropy, reset!, throttle
 using Unicode: normalize
 using Random: shuffle
-using Flux.Zygote: @nograd
-using Statistics
-
-@nograd Flux.reset!
+using Statistics: mean
 
 corpora = Dict()
 
@@ -35,9 +32,9 @@ scanner = Chain(Dense(length(alphabet), N, σ), LSTM(N, N))
 encoder = Dense(N, length(langs))
 
 function model(x)
-  state = scanner.(x.data)[end]
-  reset!(scanner)
-  softmax(encoder(state))
+    state = scanner.(x.data)[end]
+    reset!(scanner)
+    softmax(encoder(state))
 end
 
 loss(x, y) = crossentropy(model(x), y)

@@ -50,7 +50,7 @@ function getImage(z)
     reshape(pixels, y_dim, x_dim)
 end
 
-function saveImg(z, image_path="sample.png")
+function saveImg(z, image_path=joinpath(dirname(@__FILE__),"sample.png"))
     imgg = getImage(z)
     save(image_path, imgg)
     imgg

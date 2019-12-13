@@ -1,0 +1,84 @@
+include:
+  - 'https://raw.githubusercontent.com/JuliaGPU/gitlab-ci/master/templates/v6.yml'
+
+image: nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
+
+.modelzoo:
+  stage: deploy
+
+  script:
+    - julia --project=script -e 'using Pkg; Pkg.instantiate()'
+    # if triggered by FluxBot
+    - >
+      if [ "$FLUXBOT" == "true" ]; then
+        git clone https://github.com/FluxML/Flux.jl
+        cd Flux.jl && git fetch origin pull/$PRID/head:test_$PRID
+        git checkout test_$PRID
+        julia --project -e 'using Pkg;
+                            Pkg.instantiate();'
+        cd ..
+        export FLUX="$PWD/Flux.jl"
+        export JULIA_LOAD_PATH=".:$FLUX::"
+      fi
+    # end
+
+    - julia --project -e 'using Pkg;
+                          Pkg.instantiate();
+                          ENV["FLUXBOT"] == true && Pkg.develop(PackageSpec(path = ENV["FLUX"]));
+                          Pkg.resolve();
+                          Pkg.API.precompile();'
+
+    - cd script
+    - julia --project convert.jl $TESTSUITE
+
+  after_script:
+    - apt-get -qq -o=Dpkg::Use-Pty=0 -y install unzip
+    - julia --project=script -e 'using Pkg; Pkg.instantiate();'
+    - julia --project=script -e 'using FluxBot; FluxBot.respond();'
+
+  only:
+    variables:
+      - $PRID
+      - $TESTSUITE
+      - $FLUXBOT
+      - $REPO_NAME
+  artifacts:
+    paths:
+      - notebooks/*.ipynb
+
+zoo:1.0:
+  extends:
+    - .julia:1.0
+    - .modelzoo
+  tags:
+    - nvidia
+
+zoo:1.1:
+  extends:
+    - .julia:1.1
+    - .modelzoo
+  tags:
+    - nvidia
+
+zoo:1.2:
+  extends:
+    - .julia:1.2
+    - .modelzoo
+  tags:
+    - nvidia
+
+zoo:1.3:
+  extends:
+    - .julia:1.3
+    - .modelzoo
+  tags:
+    - nvidia
+
+zoo:nightly:
+  extends:
+    - .julia:nightly
+    - .modelzoo
+  tags:
+    - nvidia
+  allow_failure: true
+

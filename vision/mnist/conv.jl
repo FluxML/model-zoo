@@ -10,9 +10,6 @@ using Flux, Flux.Data.MNIST, Statistics
 using Flux: onehotbatch, onecold, crossentropy, throttle
 using Base.Iterators: repeated, partition
 using Printf, BSON
-using Flux.Zygote: @nograd
-
-@nograd gpu
 
 # Load labels and images from Flux.Data.MNIST
 @info("Loading data set")
@@ -97,8 +94,13 @@ for epoch_idx in 1:1
 
     # Calculate accuracy:
     acc = accuracy(test_set...)
+<<<<<<< HEAD
     # @info(@sprintf("[%d]: Test accuracy: %.4f", epoch_idx, acc))
     
+=======
+    @info(@sprintf("[%d]: Test accuracy: %.4f", epoch_idx, acc))
+
+>>>>>>> master
     # If our accuracy is good enough, quit out.
     if acc >= 0.999
         @info(" -> Early-exiting: We reached our target accuracy of 99.9%")
@@ -108,7 +110,7 @@ for epoch_idx in 1:1
     # If this is the best accuracy we've seen so far, save the model out
     if acc >= best_acc
         @info(" -> New best accuracy! Saving model out to mnist_conv.bson")
-        BSON.@save "mnist_conv.bson" model epoch_idx acc
+        BSON.@save joinpath(dirname(@__FILE__), "mnist_conv.bson") model epoch_idx acc
         best_acc = acc
         last_improvement = epoch_idx
     end
