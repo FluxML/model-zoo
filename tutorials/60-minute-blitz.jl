@@ -118,14 +118,8 @@ f(5)
 # In simple cases it's pretty easy to work out the gradient by hand – here it's
 # `6x+2`. But it's much easier to make Flux do the work for us!
 
-<<<<<<< HEAD
 using Flux: gradient
 df(x) = gradient(f, x)
-=======
-using Flux.Tracker: gradient
-
-df(x) = gradient(f, x; nest =true)[1]
->>>>>>> master
 
 df(5)
 
@@ -133,11 +127,7 @@ df(5)
 # as `6x+2`. We can even do this multiple times (but the second derivative is a
 # fairly boring `6`).
 
-<<<<<<< HEAD
 ddf(x) = gradient(x -> df(x) |> sum, x)
-=======
-ddf(x) = gradient(df, x)[1]
->>>>>>> master
 
 ddf(5)
 
@@ -150,11 +140,7 @@ mysin(x) = sum((-1)^k*x^(1+2k)/factorial(1+2k) for k in 0:5)
 
 x = 0.5
 
-<<<<<<< HEAD
 # mysin(x), gradient(mysin, x)
-=======
-mysin(x), gradient(mysin, x)
->>>>>>> master
 #-
 sin(x), cos(x)
 
@@ -248,11 +234,8 @@ end
 # We just give it the learning rate η
 
 opt = Descent(0.01)
-<<<<<<< HEAD
 ps = params(m)
 Flux.Optimise.update!(opt, ps, grads)
-=======
->>>>>>> master
 
 # `Training` a network reduces down to iterating on a dataset mulitple times, performing these
 # steps in order. Just for a quick implementation, let’s train a network that learns to predict
@@ -261,10 +244,7 @@ Flux.Optimise.update!(opt, ps, grads)
 data, labels = rand(10, 100), fill(0.5, 2, 100)
 loss(x, y) = sum(Flux.crossentropy(m(x), y))
 Flux.train!(loss, params(m), [(data,labels)], opt)
-<<<<<<< HEAD
 
-=======
->>>>>>> master
 # You don't have to use `train!`. In cases where aribtrary logic might be better suited,
 # you could open up this training loop like so:
 
