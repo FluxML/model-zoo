@@ -94,13 +94,8 @@ for epoch_idx in 1:1
 
     # Calculate accuracy:
     acc = accuracy(test_set...)
-<<<<<<< HEAD
     # @info(@sprintf("[%d]: Test accuracy: %.4f", epoch_idx, acc))
     
-=======
-    @info(@sprintf("[%d]: Test accuracy: %.4f", epoch_idx, acc))
-
->>>>>>> master
     # If our accuracy is good enough, quit out.
     if acc >= 0.999
         @info(" -> Early-exiting: We reached our target accuracy of 99.9%")
