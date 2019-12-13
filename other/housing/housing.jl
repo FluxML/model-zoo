@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 using Flux, Statistics, DelimitedFiles
 using Flux: Params, gradient
 using Flux.Optimise: update!

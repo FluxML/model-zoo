@@ -1,10 +1,6 @@
 # Based on https://arxiv.org/abs/1409.0473
 
 using Flux: flip, crossentropy, reset!, throttle
-using Flux.Zygote: @nograd
-
-@nograd reset!
-@nograd flip
 
 include("0-data.jl")
 
