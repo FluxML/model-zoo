@@ -2,7 +2,6 @@ using Flux
 using Flux: onehot, chunk, batchseq, throttle, crossentropy
 using StatsBase: wsample
 using Base.Iterators: partition
-using Flux.Zygote: @nograd
 
 cd(@__DIR__)
 
@@ -29,9 +28,6 @@ m = Chain(
   softmax)
 
 m = gpu(m)
-
-@nograd Flux.reset!
-@nograd gpu
 
 function loss(xs, ys)
   l = sum(crossentropy.(m.(gpu.(xs)), gpu.(ys)))
