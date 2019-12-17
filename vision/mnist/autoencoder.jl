@@ -42,7 +42,7 @@ function sample()
   # 20 random digits
   before = [imgs[i] for i in rand(1:length(imgs), 20)]
   # Before and after images
-  after = img.(map(x -> cpu(m)(float(vec(x))).data, before))
+  after = img.(map(x -> cpu(m)(float(vec(x))), before))
   # Stack them all together
   hcat(vcat.(before, after)...)
 end
