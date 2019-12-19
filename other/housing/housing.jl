@@ -45,7 +45,7 @@ x = rawdata[1:13,:] |> gpu
 y = rawdata[14:14,:] |> gpu
 
 # ### Normalising
-# What is the need ? <br>
+# What is the need ? 
 # Normalization is a technique often applied as part of data preparation for machine learning. 
 # The goal of normalization is to change the values of numeric columns in the dataset to a common scale,
 # without distorting differences in the ranges of values. For machine learning, every dataset does not require normalization.
@@ -64,6 +64,13 @@ y_test = y[:,split_index+1:size(x,2)]
 # ## The Model 
 # Here comes everyone's favourite part : implementing a machine learning model.
 # 
+# A ML model is in it's simplest terms a mathematical model which has a number of parameters
+# that need to be learned from the data provided. The data has an important task: to fit our model parameters.
+# The more data we have, the more we can accurately predict the target.
+#
+# Hyperparameters aren't learnt during the training process. They can be treated as constants that are fixed for the 
+# entire process. These parameters express important properties of the model such as its complexity or how fast it should learn.
+#
 # We'll now define the Weight (W) and the Bias (b) terms. They are our hyperparameter which
 # we tune to enhance our predictions during gradient descent. 
 # To get an intution about how gradientDescent actually works, check out Andrew Ng's awesome explaination 
@@ -77,8 +84,8 @@ b = param([0.]) |> gpu
 # - The prediction functions returns our prediction of the price of the house as 
 # suggested by our 2 hyperparameters: W and b.
 # - MSE is the average of the squared error that is used as the loss function for least squares regression.
-# It is the sum, over all the data points, of the square of the difference between the predicted and actual target
-# variables, divided by the number of data points.
+# It is defined as the sum, over all the data points, of the square of the difference between the predicted and actual target
+# variables, divided by the number of data points. 
 #
 # Loss functions evaluate how well your algorithm models your dataset. 
 # If predictions are off, the loss function is high. If they're good, it'll be low.
@@ -112,4 +119,16 @@ println(err)
 # If this was your first ML project in Flux, Congrats! 
 # 
 # You should have gotten a gist of basic ML functionality in Flux Package using Julia by now.
+
+# ## References : 
+# 1. [Introduction to Loss Functions](https://algorithmia.com/blog/introduction-to-loss-functions)
+# 2. [Why Data Normalization is necessary for Machine Learning models](https://medium.com/@urvashilluniya/why-data-normalization-is-necessary-for-machine-learning-models-681b65a05029)
+# 3. [About Train, Validation and Test Sets in Machine Learning](https://towardsdatascience.com/train-validation-and-test-sets-72cb40cba9e7)
+# 4. [How to select the Right Evaluation Metric for Machine Learning Models: Part 1 Regression Metrics](https://towardsdatascience.com/how-to-select-the-right-evaluation-metric-for-machine-learning-models-part-1-regrression-metrics-3606e25beae0)
+# 5. [MIT's Notes on Linear Regression](http://www.mit.edu/~6.s085/notes/lecture3.pdf)
+# 6. [ML | Hyperparameters: An Understanding](https://www.geeksforgeeks.org/ml-hyperparameter-tuning/)
+#
+# And lastly, the course to which I owe this understanding:
+# [Stanford's Machine Learning](https://www.coursera.org/learn/machine-learning) 
+# as taught by Andrew Ng.
 
