@@ -45,10 +45,11 @@ We welcome contributions of new models. They should be in a folder with a projec
   * [Character-level language detection](text/lang-detection)
   * [Seq2Seq phoneme detection on CMUDict](text/phonemes)
   * [Recursive net on IMDB sentiment treebank](text/treebank)
-* Other
-  * [Differential Equations](other/diffeq)
+* Other & contributed models
+  * [Differential Equations](contrib/diffeq)
   * [BitString Parity Challenge](other/bitstring-parity)
   * [MLP on housing data](other/housing/housing.jl) (low level API)
   * [FizzBuzz](other/fizzbuzz/fizzbuzz.jl)
   * [Meta-Learning](contrib/meta-learning/MetaLearning.jl)
   * [Logistic Regression Iris](other/iris/iris.jl)
+  * [Speech recognition](contrib/audio/speech-blstm)
