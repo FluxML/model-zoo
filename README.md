@@ -50,5 +50,5 @@ We welcome contributions of new models. They should be in a folder with a projec
   * [BitString Parity Challenge](other/bitstring-parity)
   * [MLP on housing data](other/housing/housing.jl) (low level API)
   * [FizzBuzz](other/fizzbuzz/fizzbuzz.jl)
-  * [Meta-Learning](other/meta-learning/MetaLearning.jl)
+  * [Meta-Learning](contrib/meta-learning/MetaLearning.jl)
   * [Logistic Regression Iris](other/iris/iris.jl)
