@@ -19,7 +19,7 @@ using DelimitedFiles, Statistics
 using Flux: gpu
 
 # ## Getting the data and other pre-processing.
-# We'll start by getting <code>housing.data</code> and splitting it into 
+# We'll start by getting `housing.data` and splitting it into 
 # training and test sets. 
 # Training Dataset is the sample of data used to **fit** the model while
 # Test Dataset is the sample of data used to provide an unbiased evaluation 
@@ -95,7 +95,7 @@ meansquarederror(ŷ, y) = sum((ŷ .- y).^2)/size(y, 2)
 loss(x, y) = meansquarederror(predict(x), y)
 
 # ### Gradient Descent 
-# Optimizing our parameters to get accurate prediction. Learn more from the links I mentioned above.
+# Optimizing our parameters to get accurate prediction. Learn more from the links mentioned above.
 
 η = 0.1
 θ = Params([W, b])
@@ -128,7 +128,5 @@ println(err)
 # 5. [MIT's Notes on Linear Regression](http://www.mit.edu/~6.s085/notes/lecture3.pdf)
 # 6. [ML | Hyperparameters: An Understanding](https://www.geeksforgeeks.org/ml-hyperparameter-tuning/)
 #
-# And lastly, the course to which I owe this understanding:
-# [Stanford's Machine Learning](https://www.coursera.org/learn/machine-learning) 
-# as taught by Andrew Ng.
+
 
