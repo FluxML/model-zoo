@@ -7,9 +7,17 @@
 # accuracy after training for approximately 20 epochs.
 
 using Flux, Flux.Data.MNIST, Statistics
-using Flux: onehotbatch, onecold, crossentropy, throttle
+using Flux: onehotbatch, onecold, crossentropy, throttle, loadparams!
+using Zygote: @adjoint, refresh
 using Base.Iterators: repeated, partition
 using Printf, BSON
+using CUDAapi
+if has_cuda()
+    import CuArrays
+    CuArrays.allowscalar(false)
+end
+using Random
+Random.seed!(0)
 
 # Load labels and images from Flux.Data.MNIST
 @info("Loading data set")
@@ -68,17 +76,30 @@ model = gpu(model)
 # Make sure our model is nicely precompiled before starting our training loop
 model(train_set[1][1])
 
+augment(x) = x .+ 0.1f0*gpu(randn(eltype(x), size(x)))
+@adjoint augment(x) = augment(x), Δ->(Δ,)
+paramvec(m) = vcat(map(p->p[:], params(m))...)
+anynan(x::AbstractArray{<:AbstractFloat}) = any(isnan.(x))
+findnan(x) = findfirst(isnan.(x))
+ps1 = cpu(paramvec(model))
+# using Plots
+# histogram(ps1, title="Pre-training")
+
 # `loss()` calculates the crossentropy loss between our prediction `y_hat`
 # (calculated from `model(x)`) and the ground truth `y`.  We augment the data
 # a bit, adding gaussian random noise to our image to make it more robust.
-function loss(x, y)
+function loss(m, x, y)
     # We augment `x` a little bit here, adding in random noise
-    x_aug = x .+ 0.1f0*gpu(randn(eltype(x), size(x)))
+    x_aug = augment(x)
 
-    y_hat = model(x_aug)
+    y_hat = m(x_aug)
     return crossentropy(y_hat, y)
 end
-accuracy(x, y) = mean(onecold(model(x)) .== onecold(y))
+loss(x, y) = loss(model, x, y)
+accuracy(x, y) = mean(onecold(cpu(model(x))) .== onecold(cpu(y)))
+accuracy(m, x, y) = mean(onecold(cpu(m(x))) .== onecold(cpu(y)))
+
+optstate(opt, m) = map(p->cpu.(opt.state[p]), params(m))
 
 # Train our model with the given training set using the ADAM optimizer and
 # printing out performance against the test set as we go.
@@ -97,17 +118,21 @@ for epoch_idx in 1:100
     @info(@sprintf("[%d]: Test accuracy: %.4f", epoch_idx, acc))
 
     # If our accuracy is good enough, quit out.
-    if acc >= 0.999
-        @info(" -> Early-exiting: We reached our target accuracy of 99.9%")
+    if anynan(cpu(paramvec(model)))
+        @warn "NaN params"
         break
     end
 
     # If this is the best accuracy we've seen so far, save the model out
+    BSON.@save joinpath(dirname(@__FILE__), "mnist_conv.bson") params=cpu.(params(model)) opt_state=optstate(opt, model) epoch_idx acc
     if acc >= best_acc
         @info(" -> New best accuracy! Saving model out to mnist_conv.bson")
-        BSON.@save joinpath(dirname(@__FILE__), "mnist_conv.bson") model epoch_idx acc
         best_acc = acc
         last_improvement = epoch_idx
+    end
+    if acc >= 0.999
+        @info(" -> Early-exiting: We reached our target accuracy of 99.9%")
+        break
     end
 
     # If we haven't seen improvement in 5 epochs, drop our learning rate:
@@ -124,3 +149,55 @@ for epoch_idx in 1:100
         break
     end
 end
+bson_data = BSON.load(joinpath(@__DIR__, "mnist_conv.bson"))
+model1 = deepcopy(cpu(model))
+loadparams!(model1, bson_data[:params])
+model1 = gpu(model1)
+opt1 = ADAM()
+for (p, s) in zip(params(model1), bson_data[:opt_state])
+    s = map(s) do x
+        if x isa Array 
+            x = gpu(x)
+        end
+        x
+    end
+    opt1.state[p] = s
+end
+gradvec(gs) = vcat(map(g->cpu(g[:]), values(gs.grads))...)
+function nangrad(m, ts)
+    gs = gradient(params(m)) do
+        loss(m, ts...)
+    end
+    anynan(gradvec(gs))
+end
+ng = map(ts->nangrad(model1, ts), train_set)
+findall(ng)
+ls = map(ts->loss(model1, ts...), train_set)
+any(isnan.(ls))
+Flux.train!((x,y)->loss(model1, x, y), params(model1), train_set, opt1)
+any(isnan.(paramvec(model1)))
+accuracy(model1, test_set...)
+
+ts = train_set[43]
+loss(model1, ts...)
+anynan(paramvec(model1))
+gs = gradient(params(model1)) do
+    loss(model1, ts...)
+end
+anynan(gradvec(gs))
+refresh()
+
+model2 = cpu(model1)
+cts = cpu.(ts)
+function loss1(m, x, y)
+    # We augment `x` a little bit here, adding in random noise
+    x_aug = 0.1f0*randn(eltype(x), size(x))
+
+    y_hat = m(x_aug)
+    return crossentropy(y_hat, y)
+end
+cgs = gradient(params(model2)) do
+    loss1(model2, cts...)
+end
+gradvec(cgs)
+=#
