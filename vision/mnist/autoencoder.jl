@@ -1,8 +1,12 @@
 using Flux, Flux.Data.MNIST
 using Flux: @epochs, onehotbatch, mse, throttle
 using Base.Iterators: partition
-using Juno: @progress
-# using CuArrays
+using CUDAapi
+if has_cuda()
+    @info "CUDA is on"
+    import CuArrays
+    CuArrays.allowscalar(false)
+end
 
 # Encode MNIST images as compressed vectors that can later be decoded back into
 # images.
@@ -42,11 +46,11 @@ function sample()
   # 20 random digits
   before = [imgs[i] for i in rand(1:length(imgs), 20)]
   # Before and after images
-  after = img.(map(x -> cpu(m)(float(vec(x))).data, before))
+  after = img.(map(x -> cpu(m)(float(vec(x))), before))
   # Stack them all together
   hcat(vcat.(before, after)...)
 end
 
 cd(@__DIR__)
 
-save("sample.png", sample())
+save("sample_ae.png", sample())
