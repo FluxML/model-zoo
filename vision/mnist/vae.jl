@@ -2,13 +2,6 @@ using Flux, Flux.Data.MNIST, Statistics
 using Flux: throttle, params
 using Juno: @progress
 
-using CUDAapi
-if has_cuda()
-    @info "CUDA is on"
-    import CuArrays
-    CuArrays.allowscalar(false)
-end
-
 # Extend distributions slightly to have a numerically stable logpdf for `p` close to 1 or 0.
 using Distributions
 import Distributions: logpdf
@@ -26,7 +19,7 @@ data = [X[:,i] for i in Iterators.partition(1:N,M)]
 Dz, Dh = 5, 500
 
 # Components of recognition model / "encoder" MLP.
-A, μ, logσ = (Dense(28^2, Dh, tanh), Dense(Dh, Dz), Dense(Dh, Dz))
+A, μ, logσ = Dense(28^2, Dh, tanh), Dense(Dh, Dz), Dense(Dh, Dz)
 g(X) = (h = A(X); (μ(h), logσ(h)))
 z(μ, logσ) = μ + exp(logσ) * randn(Float32)
 
@@ -59,7 +52,7 @@ ps = params(A, μ, logσ, f)
 
 @progress for i = 1:20
   @info "Epoch $i"
-  Flux.train!(loss, ps, data, opt, cb=evalcb)
+  Flux.train!(loss, ps, zip(data), opt, cb=evalcb)
 end
 
 
@@ -71,4 +64,4 @@ img(x) = Gray.(reshape(x, 28, 28))
 
 cd(@__DIR__)
 sample = hcat(img.([modelsample() for i = 1:10])...)
-save("sample_vae.png", sample)
+save("sample.png", sample)
