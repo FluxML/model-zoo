@@ -1,3 +1,4 @@
+# This model can reach accuracies of upto ~22%(close to what is described in the paper)
 # After a lot of debugging and asking around
 # The fix was found to be to remove every conv layer.
 # Previously, whilst using the conv model, the accuracy was stuck at exactly 0.8 and loss at exactly 3.33253
