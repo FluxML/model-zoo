@@ -31,7 +31,7 @@ N = length(alphabet)
 seqlen = 50 #batch size
 nbatch = 50 #number of batches
 
-# perform chunking to get meaningful phrases, partition into minibatches and return as array
+#Perform chunking to get meaningful phrases, partition into minibatches and return as arrays
 Xs = collect(partition(batchseq(chunk(text, nbatch), stop), seqlen))
 Ys = collect(partition(batchseq(chunk(text[2:end], nbatch), stop), seqlen))
 
