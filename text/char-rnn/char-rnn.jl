@@ -31,8 +31,9 @@ N = length(alphabet)
 seqlen = 50 #batch size
 nbatch = 50 #number of batches
 
-Xs = collect(partition(batchseq(chunk(text, nbatch), stop), seqlen)) #get array of minibatches of input x
-Ys = collect(partition(batchseq(chunk(text[2:end], nbatch), stop), seqlen)) #get array of minibatches of "label" y
+# perform chunking to get meaningful phrases, partition into minibatches and return as array
+Xs = collect(partition(batchseq(chunk(text, nbatch), stop), seqlen))
+Ys = collect(partition(batchseq(chunk(text[2:end], nbatch), stop), seqlen))
 
 # # 3. Define RNN Model, Hyperparameters
 #- Define 4-layer deep RNN
