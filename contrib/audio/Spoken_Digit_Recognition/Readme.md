@@ -3,8 +3,8 @@ This is an implementation of Spoken Digit Recognition by applying Convolutional 
 Here, to train, [Spoken_Digit_Dataset](https://www.kaggle.com/divyanshu99/spoken-digit-dataset/download) from kaggle is used. 
 
 ## Steps for loading the data
-First Download the data from the given link : https://www.kaggle.com/divyanshu99/spoken-digit-dataset/download
-After downloading the data, to your workspace, extract the data and rename the folder as Spoken_Digit. Now, the data is ready is ready to be processed.
+First Download the data from the given link : https://www.kaggle.com/divyanshu99/spoken-digit-dataset/download<br>
+After downloading the data, to your workspace, extract the data and rename the folder as Spoken_Digit. Now, the data is ready to be processed.
 
 ## About the Dataset
 Dataset consists of:
