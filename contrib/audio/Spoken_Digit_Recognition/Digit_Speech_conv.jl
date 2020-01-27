@@ -19,6 +19,7 @@ using Images
 
 cd("@__dir__")
 
+#Assuming that after the Dataset is extracted the recordings folder is transferred to Spoken_Digit Folder
 A = readdir("./Spoken_Digit/recordings")
 
 cd("./Spoken_Digit/recordings")
@@ -38,20 +39,20 @@ cd("../..")
 #= ########
 IpY = pyimport("IPython")
 IpY.display.Audio(A[453])
-PyPlot.plot(X[1])
 =# ########
+PyPlot.plot(X[1])
 
 #Padding each audio file to length of 10000
 for i in 1:length(X)
     X[i] = Array(PaddedView(0,X[i],(10000,1)))
 end
 
-
+#=
 #Function to find periodogram of the first audio file
 Y1 = periodogram(X[1][:,1])
-
 #Function to plot the Periodogram freq vs Power
 PyPlot.plot(Y1.freq, DSP.pow2db.(Y1.power))
+=#
 
 #Function to Plot Spectrogram
 c = PyPlot.specgram(X[1][:,1],Fs = X_fs[1]) #Spectrogram of Padded audio data
