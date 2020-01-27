@@ -2,6 +2,10 @@
 This is an implementation of Spoken Digit Recognition by applying Convolutional Neural Networks using Spectrogram values of WAV audio files.
 Here, to train, [Spoken_Digit_Dataset](https://www.kaggle.com/divyanshu99/spoken-digit-dataset/download) from kaggle is used. 
 
+## Steps for loading the data
+First Download the data from the given link : https://www.kaggle.com/divyanshu99/spoken-digit-dataset/download
+After downloading the data, to your workspace, extract the data and rename the folder as Spoken_Digit. Now, the data is ready is ready to be processed.
+
 ## About the Dataset
 Dataset consists of:
 - 4 speakers
@@ -14,3 +18,8 @@ In the model, spectrogram values for the WAV audio files are obatined which are 
 
 ## Test Accuracy
 Test data is assumed after making a 15% split from the total available dataset. Test accuracy of 92.33% was achieved after 20 iterations. Model with best performance was saved as Digit_Speech.bson
+
+## References
+<ul>
+  <li>https://github.com/FluxML/model-zoo/blob/master/vision/mnist/conv.jl</li>
+</ul>
