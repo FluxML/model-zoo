@@ -74,9 +74,9 @@ dataset_len = length(train_dataset)
 for i in 1:epochs
   for (idx,dataset) in enumerate(train_dataset)
     Flux.train!(loss,params(m),[dataset],opt)
-    # Flux.train!(loss,params(m),[dataset],opt,cb = throttle(()->@show(loss(dataset...)),20))
-    acc = accuracy(dataset...)
+    # Flux.train!(loss,params(m),[dataset],opt,cb = throttle(()->@show(loss(dataset...)),20))    
     if idx == dataset_len
+      acc = accuracy(dataset...)
       @info("Epoch# $(i)/$(epochs) - loss: $(loss(dataset...)), accuracy: $(acc)")
       push!(accs,acc)
     end
