@@ -29,7 +29,7 @@ uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
 [[FluxBot]]
 deps = ["GitHub", "Glob", "Pkg", "Sockets"]
-git-tree-sha1 = "a0397497faaa49c88222611a4ee928e93e904b6a"
+git-tree-sha1 = "a327944c0977a4c9e14a0ed10e5a56f06a0280bd"
 repo-rev = "master"
 repo-url = "https://github.com/dhairyagandhi96/FluxBot.jl.git"
 uuid = "352bd040-0f98-11ea-1faf-6f930ca83554"
@@ -37,9 +37,9 @@ version = "0.1.0"
 
 [[GitHub]]
 deps = ["Base64", "Dates", "HTTP", "JSON", "MbedTLS", "Sockets"]
-git-tree-sha1 = "477818ab174a14d4730b3d15ac8719dbc98555d2"
+git-tree-sha1 = "f8f9c05004861b6680c1bd363e7e2fcff602a283"
 uuid = "bc5e4493-9b4d-5f90-b8aa-2b2bcaad7a26"
-version = "5.1.3"
+version = "5.1.4"
 
 [[Glob]]
 deps = ["Compat", "Test"]
@@ -104,9 +104,9 @@ uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 
 [[Parsers]]
 deps = ["Dates", "Test"]
-git-tree-sha1 = "0139ba59ce9bc680e2925aec5b7db79065d60556"
+git-tree-sha1 = "d112c19ccca00924d5d3a38b11ae2b4b268dda39"
 uuid = "69de0a69-1ddd-5017-9359-2bf0b02dc9f0"
-version = "0.3.10"
+version = "0.3.11"
 
 [[Pkg]]
 deps = ["Dates", "LibGit2", "Markdown", "Printf", "REPL", "Random", "SHA", "UUIDs"]
