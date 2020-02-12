@@ -8,7 +8,6 @@
 
 using Flux, Flux.Data.MNIST, Statistics
 using Flux: onehotbatch, onecold, crossentropy
-using Zygote: @adjoint
 using Base.Iterators: repeated, partition
 using Printf, BSON
 using CUDAapi
@@ -76,9 +75,7 @@ model = gpu(model)
 model(train_set[1][1])
 
 # We augment `x` a little bit here, adding in random noise. 
-# Zygote gannot differentiate the `gpu` call, so we work around by providing a custom adjoint
 augment(x) = x .+ gpu(0.1f0*randn(eltype(x), size(x)))
-@adjoint augment(x) = augment(x), Δ->(Δ,)
 
 paramvec(m) = vcat(map(p->p[:], params(m))...)
 anynan(x::AbstractArray{<:AbstractFloat}) = any(isnan.(x))
