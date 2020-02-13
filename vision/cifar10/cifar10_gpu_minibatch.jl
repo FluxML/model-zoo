@@ -246,8 +246,8 @@ m(train_set[1][1] |> gpu)
 opt = ADAM(0.001)
 
 @info "Training model...";flush(log)
-best_acc = 0.0
-last_improvement = 0
+best_acc = acc
+last_improvement = epoch
 # used for plots
 for epoch_idx in 1+epoch:(epochs+=epoch)
   accs = Array{Float32}(undef,0)
