@@ -29,45 +29,22 @@ using Metalhead: trainimgs
 using Images: channelview
 using Statistics: mean
 using Base.Iterators: partition
-using ArgParse
-#=
-Argument parsing 
-=#
 
-function parse_commandline()
-    s = ArgParseSettings()
-    @add_arg_table s begin
-        "--epoch","-e"
-            help = "epoch number, default=30"
-            arg_type = Int
-            default = 30
-        "--batch", "-b"
-            help = "mini-batch size, default=200"
-            arg_type = Int
-            default = 100
-        "--gpu", "-g"
-            help = "gpu index to use , 0,1,2,3,.., default=0"
-            arg_type = Int
-            default = 0
-        "--model", "-m"
-            help = "use saved model file"
-            arg_type = Bool
-            default = true
-        "--log","-l"
-            help = "create log file"
-            arg_type = Bool
-            default = true            
-    end
+working_path = dirname(@__FILE__)
+file_path(file_name) = joinpath(working_path,file_name)
+include(file_path("cmd_parser.jl"))
 
-    return parse_args(s)
-end
-parsed_args = parse_commandline()
+model_file = file_path("cifar10_vgg16_model.bson")
 
-epochs = parsed_args["epoch"]
+# Get arguments
+parsed_args = CmdParser.parse_commandline()
+
+epochs = parsed_args["epochs"]
 batch_size = parsed_args["batch"]
 use_saved_model = parsed_args["model"]
 gpu_device = parsed_args["gpu"]
 create_log_file = parsed_args["log"]
+
 
 if create_log_file
   log_file ="./cifar10_vgg16_$(Dates.format(now(),"yyyymmdd-HHMMSS")).log"
@@ -79,7 +56,6 @@ global_logger(ConsoleLogger(log))
 
 @info "Start - $(now())";flush(log)
 
-
 @info "=============== Arguments ==============="
 @info "epochs=$(epochs)"
 @info "batch_size=$(batch_size)"
@@ -87,10 +63,8 @@ global_logger(ConsoleLogger(log))
 @info "gpu_device=$(gpu_device)"
 @info "=========================================";flush(log)
 
-const model_file = "./cifar10_vgg16_model.bson"
-
 # Very important : this prevent loss NaN
-const ϵ = 1.0f-10
+ϵ = 1.0f-10
 
 
 # use 1nd GPU : default
@@ -100,12 +74,14 @@ CuArrays.allowscalar(false)
 
 @info "Config VGG16, VGG19 models ...";flush(log)
 
-if use_saved_model && isfile(model_file)
+acc = 0; epoch = 0
+if use_saved_model && isfile(model_file) && filesize(model_file) > 0
   # flush : 버퍼링 없이 즉각 log를 파일 또는 console에 write하도록 함
   @info "Load saved model $(model_file) ...";flush(log)
   # model : @save시 사용한 object명
-  @load model_file model
+  @load model_file model acc epoch  
   m = model |> gpu
+  @info " -> accuracy : $(acc), epochs : $(epoch)";flush(log)
 else
   @info "Create new model ...";flush(log)
   # VGG16 and VGG19 models
@@ -210,12 +186,12 @@ getarray(X) = Float32.(permutedims(channelview(X), (2, 3, 1)))
 
 @info "Data download and preparing ...";flush(log)
 function make_minibatch(imgs,labels,batch_size)
-  data_set = [(cat(imgs[i]..., dims = 4) |> gpu, 
-          labels[:,i]) |> gpu 
+  data_set = [(cat(imgs[i]..., dims = 4), 
+          labels[:,i]) 
           for i in partition(1:length(imgs), batch_size)]
   return data_set
 end
-# Fetching the train and validation data and getting them into proper shape
+# Fetching the train and verify data and getting them into proper shape
 #=
 trainimgs(모듈명) : 
  - 모듈명이 들어 가면 모듈명에 관련된 train용 데이터를 다운받아 리턴한다.
@@ -229,63 +205,109 @@ X = trainimgs(CIFAR10)
 train_idxs = 1:49000
 train_imgs = [getarray(X[i].img) for i in train_idxs]
 train_labels = float.(onehotbatch([X[i].ground_truth.class for i in train_idxs],1:10))
-train_dataset = make_minibatch(train_imgs,train_labels,batch_size)
+train_set = make_minibatch(train_imgs,train_labels,batch_size)
 
-valid_idxs = 49001:50000
-valX = cat([getarray(X[i].img) for i in valid_idxs]..., dims = 4) |> gpu
-valY = float.(onehotbatch([X[i].ground_truth.class for i in valid_idxs],1:10)) |> gpu
+verify_idxs = 49001:50000
+verify_imgs = cat([getarray(X[i].img) for i in verify_idxs]..., dims = 4)
+verify_labels = float.(onehotbatch([X[i].ground_truth.class for i in verify_idxs],1:10))
+verify_set = [(verify_imgs,verify_labels)]
 
+# Fetch the test data from Metalhead and get it into proper shape.
+# CIFAR-10 does not specify a verify set so valimgs fetch the testdata instead of testimgs
+tX = valimgs(CIFAR10)
+test_idxs = 1:10000
+test_imgs = [getarray(tX[i].img) for i in test_idxs]
+test_labels = float.(onehotbatch([tX[i].ground_truth.class for i in test_idxs], 1:10))
+test_set = make_minibatch(test_imgs,test_labels,batch_size)
 # Defining the loss and accuracy functions
 
 @info "VGG16 models instantiation ...";flush(log)
 
 loss(x, y) = crossentropy(m(x) .+ ϵ, y .+ ϵ)
 
-accuracy(x, y) = mean(onecold(m(x)|>cpu, 1:10) .== onecold(y|>cpu, 1:10))
+# accuracy(x, y) = mean(onecold(m(x)|>cpu, 1:10) .== onecold(y|>cpu, 1:10))
+function accuracy(data_set) 
+  batch_size = size(data_set[1][1])[end]
+  l = length(data_set)*batch_size
+  s = 0f0
+  for (x,y) in data_set
+    s += sum((onecold(m(x|>gpu) |> cpu) .== onecold(y|>cpu)))
+  end
+  return s/l
+end
+
+# Make sure our is nicely precompiled befor starting our training loop
+# train_set[1][1] : (28,28,1,batch_size)
+@info "Model pre-compile...";flush(log)
+m(train_set[1][1] |> gpu)
 
 # Defining the callback and the optimizer
-
-evalcb = throttle(() -> @info(accuracy(valX, valY)), 10)
-
-opt = ADAM()
+# evalcb = throttle(() -> @info(accuracy(verify_set)), 10)
+opt = ADAM(0.001)
 
 @info "Training model...";flush(log)
-
+best_acc = 0.0
+last_improvement = 0
 # used for plots
-# accs = Array{Float32}(undef,0)
-@time begin
-dataset_len = length(train_dataset)
-shuffle_idxs = collect(1:dataset_len)
-shuffle!(shuffle_idxs)
-for i in 1:epochs
-  for (idx,data_idx) in enumerate(shuffle_idxs)
-    dataset = train_dataset[data_idx]
-    Flux.train!(loss,params(m),[dataset],opt)
-    #Flux.train!(loss,params(m),[dataset],opt,cb = evalcb)    
-    acc = accuracy(valX,valY)
-    @info "Epoch# $(i)/$(epochs) - #$(idx)/$(dataset_len) loss: $(loss(dataset...)), accuracy: $(acc)";flush(log)
-    # push!(accs,acc)
-  end
-  model = m |> cpu  
-  # @load 시 여기에서 사용한 "model" 로 로딩 해야 함
-  @save model_file model
-end
-end # end of @time
-# Fetch the test data from Metalhead and get it into proper shape.
-# CIFAR-10 does not specify a validation set so valimgs fetch the testdata instead of testimgs
-tX = valimgs(CIFAR10)
-test_idxs = 1:10000
-test_imgs = [getarray(tX[i].img) for i in test_idxs]
-test_labels = float.(onehotbatch([tX[i].ground_truth.class for i in test_idxs], 1:10))
-test_dataset = make_minibatch(test_imgs,test_labels,batch_size)
+for epoch_idx in 1+epoch:(epochs+=epoch)
+  accs = Array{Float32}(undef,0)
+  global best_acc, last_improvement
+  train_set_len = length(train_set)
+  shuffle_idxs = collect(1:train_set_len)
+  shuffle!(shuffle_idxs)  
 
-test_accs = Array{Float32}(undef,0)
-dataset_len = length(test_dataset)
-for (idx,dataset) in enumerate(test_dataset)
-  acc = accuracy(dataset...)
-  push!(test_accs,acc)
-end
-@info "Test accuracy : $(mean(test_accs))"
+  for (idx,data_idx) in enumerate(shuffle_idxs)
+    (x,y) = train_set[data_idx]
+    # We augment `x` a little bit here, adding in random noise
+    x = (x .+ 0.1f0*randn(eltype(x),size(x))) |> gpu
+    y = y|> gpu    
+    Flux.train!(loss,params(m),[(x,y)],opt)
+    #Flux.train!(loss,params(m),[(x,y)],opt,cb = evalcb)    
+    v_acc = accuracy(verify_set)
+    @info "Epoch# $(epoch_idx)/$(epochs) - #$(idx)/$(train_set_len) loss: $(loss(x,y)), accuracy: $(v_acc)";flush(log)
+    # @info "Epoch# $(epoch_idx)/$(epochs) - #$(idx)/$(train_set_len) accuracy: $(v_acc)";flush(log)
+    push!(accs,v_acc)
+  end # for
+
+  m_acc = mean(accs)
+  @info " -> Verify accuracy(mean) : $(m_acc)";flush(log)
+  test_acc = accuracy(test_set)
+  @info "Test accuracy : $(test_acc)";flush(log)  
+  
+  # If our accuracy is good enough, quit out.
+  if test_acc >= 0.98
+    @info " -> Early-exiting: We reached our target accuracy of 98%";flush(log)
+    model = m |> cpu;acc = test_acc;epoch = epoch_idx
+    @save model_file model acc epoch
+    break
+  end
+  
+  # If this is the best accuracy we've seen so far, save the model out
+  if test_acc >= best_acc
+    @info " -> New best accuracy! saving model out to $(model_file)"; flush(log)
+    model = m |> cpu;acc = test_acc;epoch = epoch_idx
+    # @save,@load 시 같은 이름을 사용해야 함, 여기서는 "model"을 사용함
+    @save model_file model acc epoch
+    best_acc = test_acc
+    last_improvement = epoch_idx    
+  end
+  
+  # If we haven't seen improvement in 5 epochs, drop out learning rate:
+  if epoch_idx - last_improvement >= 5 && opt.eta > 1e-6
+    opt.eta /= 10.0
+    @info " -> Haven't improved in a while, dropping learning rate to $(opt.eta)!";flush(log)
+    # After dropping learning rate, give it a  few epochs to improve
+    last_improvement = epoch_idx
+  end  
+  
+  if epoch_idx - last_improvement >= 10  
+    @info " -> We're calling this converged."; flush(log)
+    break
+  end
+end # end of for
+
 @info "End - $(now())"
-close(log)
+if create_log_file
+  close(log)
+end
 
