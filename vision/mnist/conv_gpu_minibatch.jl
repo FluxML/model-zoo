@@ -128,12 +128,7 @@ m = model |> gpu
  a bit, adding gaussian random noise to our image to make it more robust.
  =#
 function loss(x,y)
-  # We augment `x` a little bit here, adding in random noise
-  # x : (28,28,1,batch_size)
-  # y : (10,batch_size)
-  # aug = 0.1f0*randn(eltype(x),size(x)) |> gpu
-  # ŷ = m(x .+ aug)
-  ŷ = m(x)
+ ŷ = m(x)
  return crossentropy(ŷ,y)
 end
 # Make sure our model is nicely precompiled befor starting our training loop
