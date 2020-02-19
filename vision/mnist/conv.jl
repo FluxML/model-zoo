@@ -77,8 +77,8 @@ model(train_set[1][1])
 # We augment `x` a little bit here, adding in random noise. 
 augment(x) = x .+ gpu(0.1f0*randn(eltype(x), size(x)))
 
-paramvec(m) = vcat(map(p->p[:], params(m))...)
-anynan(x::AbstractArray{<:AbstractFloat}) = any(isnan.(x))
+paramvec(m) = vcat(map(p->reshape(p, :), params(m))...)
+anynan(x) = any(isnan.(x))
 
 # `loss()` calculates the crossentropy loss between our prediction `y_hat`
 # (calculated from `model(x)`) and the ground truth `y`.  We augment the data
