@@ -8,7 +8,6 @@ using Random
 
 ϵ = 1.0f-32
 
-# Get arguments
 epochs = 2
 batch_size = 50
 sequence = 50
