@@ -119,7 +119,7 @@ f(5)
 # In simple cases it's pretty easy to work out the gradient by hand – here it's
 # `6x+2`. But it's much easier to make Flux do the work for us!
 
-using Flux.Tracker: gradient
+using Flux: gradient
 
 df(x) = gradient(f, x; nest =true)[1]
 
@@ -153,8 +153,6 @@ sin(x), cos(x)
 # inputs, rather than just a single number. For example, here's a function that
 # takes a matrix and two vectors (the definition itself is arbitrary)
 
-using Flux.Tracker: gradient
-
 myloss(W, b, x) = sum(W * x .+ b)
 
 W = randn(3, 5)
@@ -171,20 +169,16 @@ gradient(myloss, W, b, x)
 # indicate that we want their derivatives. `W` and `b` represent the weight and
 # bias respectively.
 
-using Flux.Tracker: param, back!, grad
-
-W = param(randn(3, 5))
-b = param(zeros(3))
+W = randn(3, 5)
+b = zeros(3)
 x = rand(5)
 
-y = sum(W * x .+ b)
+y(x) = sum(W * x .+ b)
 
-# Anything marked `param` becomes *tracked*, indicating that Flux keeping an eye
-# on its gradient. We can now call
+grads = gradient(()->y(x), params(W, b))
 
-back!(y) # Run backpropagation
+grads[W], grads[b]
 
-grad(W), grad(b)
 
 # We can now grab the gradients of `W` and `b` directly from those parameters.
 
@@ -198,24 +192,23 @@ m = Dense(10, 5)
 
 x = rand(Float32, 10)
 
-m(x)
-#-
-m(x) == m.W * x .+ m.b
-
 # We can easily get the parameters of any layer or model with params with
 # `params`.
 
 params(m)
 
-# This makes it very easy to do backpropagation and get the gradient for all
+# This makes it very easy to calculate the gradient for all
 # parameters in a network, even if it has many parameters.
-
+x = rand(Float32, 10)
 m = Chain(Dense(10, 5, relu), Dense(5, 2), softmax)
+l(x) = sum(Flux.crossentropy(m(x), [0.5, 0.5]))
+grads = gradient(Params(params(m))) do
+    l(x)
+end
+for p in params(m)
+    println(grads[p])
+end
 
-l = sum(Flux.crossentropy(m(x), [0.5, 0.5]))
-back!(l)
-
-grad.(params(m))
 
 # You don't have to use layers, but they can be convient for many simple kinds
 # of models and fast iteration.
@@ -223,12 +216,10 @@ grad.(params(m))
 # The next step is to update our weights and perform optimisation. As you might be
 # familiar, *Gradient Descent* is a simple algorithm that takes the weights and steps
 # using a learning rate and the gradients. `weights = weights - learning_rate * gradient`.
-
-using Flux.Tracker: update!
-
+using Flux.Optimise: update!, Descent
 η = 0.1
 for p in params(m)
-  update!(p, -η * grad(p))
+  update!(p, -η * grads[p])
 end
 
 # While this is a valid way of updating our weights, it can get more complicated as the
@@ -252,9 +243,10 @@ Flux.train!(loss, params(m), [(data,labels)], opt)
 # ```julia
 #   for d in training_set # assuming d looks like (data, labels)
 #     # our super logic
-#     l = loss(d...)
-#     Tracker.back!(l)
-#     opt()
+#     gs = gradient(params(m)) do #m is our model
+#       l = loss(d...)
+#     end
+#     update!(opt, params(m), gs)
 #   end
 # ```
 
@@ -280,7 +272,8 @@ Flux.train!(loss, params(m), [(data,labels)], opt)
 
 using Statistics
 # using CuArrays
-using Flux, Flux.Tracker, Flux.Optimise
+using Zygote
+using Flux, Flux.Optimise
 using Metalhead, Images
 using Metalhead: trainimgs
 using Images.ImageCore
@@ -371,9 +364,10 @@ epochs = 10
 
 for epoch = 1:epochs
   for d in train
-    l = loss(d...)
-    back!(l)
-    opt()
+    gs = gradient(params(m)) do
+      l = loss(d...)
+    end
+    update!(opt, params(m), gs)
     @show accuracy(valX, valY)
   end
 end
