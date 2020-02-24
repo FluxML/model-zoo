@@ -31,7 +31,7 @@ m = gpu(m)
 
 function loss(xs, ys)
   l = sum(crossentropy.(m.(gpu.(xs)), gpu.(ys)))
-  Flux.truncate!(m)
+  Flux.reset!(m)
   return l
 end
 
