@@ -4,9 +4,9 @@
 # This is a quick intro to [Flux](https://github.com/FluxML/Flux.jl) loosely
 # based on [PyTorch's
 # tutorial](https://pytorch.org/tutorials/beginner/deep_learning_60min_blitz.html).
-# It introduces basic Julia programming, as well as source-to-source automatic
-# differentiation (AD) in Julia using Zygote Framework, which we'll use to build machine learning models. We'll
-# use this to build a very simple neural network.
+# It introduces basic Julia programming, as well Zygote, a source-to-source 
+# automatic differentiation (AD) framework in Julia.
+# We'll use these tools to build a very simple neural network.
 
 # Arrays
 # -------
