@@ -4,8 +4,8 @@
 # This is a quick intro to [Flux](https://github.com/FluxML/Flux.jl) loosely
 # based on [PyTorch's
 # tutorial](https://pytorch.org/tutorials/beginner/deep_learning_60min_blitz.html).
-# It introduces basic Julia programming, as well as Flux's automatic
-# differentiation (AD), which we'll use to build machine learning models. We'll
+# It introduces basic Julia programming, as well as source-to-source automatic
+# differentiation (AD) in Julia using Zygote Framework, which we'll use to build machine learning models. We'll
 # use this to build a very simple neural network.
 
 # Arrays
@@ -121,7 +121,7 @@ f(5)
 
 using Flux: gradient
 
-df(x) = gradient(f, x; nest =true)[1]
+df(x) = gradient(f, x)[1]
 
 df(5)
 
@@ -175,7 +175,7 @@ x = rand(5)
 
 y(x) = sum(W * x .+ b)
 
-grads = gradient(()->y(x), params(W, b))
+grads = gradient(()->y(x), params([W, b]))
 
 grads[W], grads[b]
 
@@ -202,7 +202,7 @@ params(m)
 x = rand(Float32, 10)
 m = Chain(Dense(10, 5, relu), Dense(5, 2), softmax)
 l(x) = sum(Flux.crossentropy(m(x), [0.5, 0.5]))
-grads = gradient(Params(params(m))) do
+grads = gradient(params(m)) do
     l(x)
 end
 for p in params(m)
