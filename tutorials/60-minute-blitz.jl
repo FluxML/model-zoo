@@ -169,6 +169,8 @@ gradient(myloss, W, b, x)
 # indicate that we want their derivatives. `W` and `b` represent the weight and
 # bias respectively.
 
+using Flux: params
+
 W = randn(3, 5)
 b = zeros(3)
 x = rand(5)
