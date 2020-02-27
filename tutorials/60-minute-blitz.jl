@@ -273,7 +273,7 @@ Flux.train!(loss, params(m), [(data,labels)], opt)
 # It also has a number of dataloaders that come in handy to load datasets.
 
 using Statistics
-# using CuArrays
+#using CuArrays
 using Zygote
 using Flux, Flux.Optimise
 using Metalhead, Images
@@ -313,7 +313,7 @@ imgs = [getarray(X[i].img) for i in 1:50000]
 # (1000 in this case). `cat` is a shorthand for concatenating multi-dimensional arrays along
 # any dimension.
 
-train = gpu.([(cat(imgs[i]..., dims = 4), labels[:,i]) for i in partition(1:49000, 1000)])
+train = ([(cat(imgs[i]..., dims = 4), labels[:,i]) for i in partition(1:49000, 1000)]) |> gpu
 valset = 49001:50000
 valX = cat(imgs[valset]..., dims = 4) |> gpu
 valY = labels[:, valset] |> gpu
@@ -348,7 +348,7 @@ m = Chain(
 using Flux: crossentropy, Momentum
 
 loss(x, y) = sum(crossentropy(m(x), y))
-opt = Momentum(params(m), 0.01)
+opt = Momentum(0.01)
 
 # We can start writing our train loop where we will keep track of some basic accuracy
 # numbers about our model. We can define an `accuracy` function for it like so.
@@ -370,8 +370,8 @@ for epoch = 1:epochs
       l = loss(d...)
     end
     update!(opt, params(m), gs)
-    @show accuracy(valX, valY)
   end
+  @show accuracy(valX, valY)
 end
 
 # Seeing our training routine unfold gives us an idea of how the network learnt the
