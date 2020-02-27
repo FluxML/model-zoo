@@ -4,9 +4,9 @@
 # This is a quick intro to [Flux](https://github.com/FluxML/Flux.jl) loosely
 # based on [PyTorch's
 # tutorial](https://pytorch.org/tutorials/beginner/deep_learning_60min_blitz.html).
-# It introduces basic Julia programming, as well as Flux's automatic
-# differentiation (AD), which we'll use to build machine learning models. We'll
-# use this to build a very simple neural network.
+# It introduces basic Julia programming, as well Zygote, a source-to-source 
+# automatic differentiation (AD) framework in Julia.
+# We'll use these tools to build a very simple neural network.
 
 # Arrays
 # -------
@@ -119,9 +119,9 @@ f(5)
 # In simple cases it's pretty easy to work out the gradient by hand – here it's
 # `6x+2`. But it's much easier to make Flux do the work for us!
 
-using Flux.Tracker: gradient
+using Flux: gradient
 
-df(x) = gradient(f, x; nest =true)[1]
+df(x) = gradient(f, x)[1]
 
 df(5)
 
@@ -153,8 +153,6 @@ sin(x), cos(x)
 # inputs, rather than just a single number. For example, here's a function that
 # takes a matrix and two vectors (the definition itself is arbitrary)
 
-using Flux.Tracker: gradient
-
 myloss(W, b, x) = sum(W * x .+ b)
 
 W = randn(3, 5)
@@ -171,20 +169,18 @@ gradient(myloss, W, b, x)
 # indicate that we want their derivatives. `W` and `b` represent the weight and
 # bias respectively.
 
-using Flux.Tracker: param, back!, grad
+using Flux: params
 
-W = param(randn(3, 5))
-b = param(zeros(3))
+W = randn(3, 5)
+b = zeros(3)
 x = rand(5)
 
-y = sum(W * x .+ b)
+y(x) = sum(W * x .+ b)
 
-# Anything marked `param` becomes *tracked*, indicating that Flux keeping an eye
-# on its gradient. We can now call
+grads = gradient(()->y(x), params([W, b]))
 
-back!(y) # Run backpropagation
+grads[W], grads[b]
 
-grad(W), grad(b)
 
 # We can now grab the gradients of `W` and `b` directly from those parameters.
 
@@ -198,24 +194,23 @@ m = Dense(10, 5)
 
 x = rand(Float32, 10)
 
-m(x)
-#-
-m(x) == m.W * x .+ m.b
-
 # We can easily get the parameters of any layer or model with params with
 # `params`.
 
 params(m)
 
-# This makes it very easy to do backpropagation and get the gradient for all
+# This makes it very easy to calculate the gradient for all
 # parameters in a network, even if it has many parameters.
-
+x = rand(Float32, 10)
 m = Chain(Dense(10, 5, relu), Dense(5, 2), softmax)
+l(x) = sum(Flux.crossentropy(m(x), [0.5, 0.5]))
+grads = gradient(params(m)) do
+    l(x)
+end
+for p in params(m)
+    println(grads[p])
+end
 
-l = sum(Flux.crossentropy(m(x), [0.5, 0.5]))
-back!(l)
-
-grad.(params(m))
 
 # You don't have to use layers, but they can be convient for many simple kinds
 # of models and fast iteration.
@@ -223,12 +218,10 @@ grad.(params(m))
 # The next step is to update our weights and perform optimisation. As you might be
 # familiar, *Gradient Descent* is a simple algorithm that takes the weights and steps
 # using a learning rate and the gradients. `weights = weights - learning_rate * gradient`.
-
-using Flux.Tracker: update!
-
+using Flux.Optimise: update!, Descent
 η = 0.1
 for p in params(m)
-  update!(p, -η * grad(p))
+  update!(p, -η * grads[p])
 end
 
 # While this is a valid way of updating our weights, it can get more complicated as the
@@ -252,9 +245,10 @@ Flux.train!(loss, params(m), [(data,labels)], opt)
 # ```julia
 #   for d in training_set # assuming d looks like (data, labels)
 #     # our super logic
-#     l = loss(d...)
-#     Tracker.back!(l)
-#     opt()
+#     gs = gradient(params(m)) do #m is our model
+#       l = loss(d...)
+#     end
+#     update!(opt, params(m), gs)
 #   end
 # ```
 
@@ -279,8 +273,9 @@ Flux.train!(loss, params(m), [(data,labels)], opt)
 # It also has a number of dataloaders that come in handy to load datasets.
 
 using Statistics
-# using CuArrays
-using Flux, Flux.Tracker, Flux.Optimise
+#using CuArrays
+using Zygote
+using Flux, Flux.Optimise
 using Metalhead, Images
 using Metalhead: trainimgs
 using Images.ImageCore
@@ -318,7 +313,7 @@ imgs = [getarray(X[i].img) for i in 1:50000]
 # (1000 in this case). `cat` is a shorthand for concatenating multi-dimensional arrays along
 # any dimension.
 
-train = gpu.([(cat(imgs[i]..., dims = 4), labels[:,i]) for i in partition(1:49000, 1000)])
+train = ([(cat(imgs[i]..., dims = 4), labels[:,i]) for i in partition(1:49000, 1000)]) |> gpu
 valset = 49001:50000
 valX = cat(imgs[valset]..., dims = 4) |> gpu
 valY = labels[:, valset] |> gpu
@@ -353,7 +348,7 @@ m = Chain(
 using Flux: crossentropy, Momentum
 
 loss(x, y) = sum(crossentropy(m(x), y))
-opt = Momentum(params(m), 0.01)
+opt = Momentum(0.01)
 
 # We can start writing our train loop where we will keep track of some basic accuracy
 # numbers about our model. We can define an `accuracy` function for it like so.
@@ -371,11 +366,12 @@ epochs = 10
 
 for epoch = 1:epochs
   for d in train
-    l = loss(d...)
-    back!(l)
-    opt()
-    @show accuracy(valX, valY)
+    gs = gradient(params(m)) do
+      l = loss(d...)
+    end
+    update!(opt, params(m), gs)
   end
+  @show accuracy(valX, valY)
 end
 
 # Seeing our training routine unfold gives us an idea of how the network learnt the
