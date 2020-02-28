@@ -1,8 +1,12 @@
 using Flux, Flux.Data.MNIST
 using Flux: @epochs, onehotbatch, mse, throttle
 using Base.Iterators: partition
-using Juno: @progress
-# using CuArrays
+using CUDAapi
+if has_cuda()
+    @info "CUDA is on"
+    import CuArrays
+    CuArrays.allowscalar(false)
+end
 
 # Encode MNIST images as compressed vectors that can later be decoded back into
 # images.
@@ -49,4 +53,4 @@ end
 
 cd(@__DIR__)
 
-save("sample.png", sample())
+save("sample_ae.png", sample())

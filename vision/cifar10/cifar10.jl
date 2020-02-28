@@ -110,7 +110,7 @@ m = vgg16()
 
 loss(x, y) = crossentropy(m(x), y)
 
-accuracy(x, y) = mean(onecold(m(x), 1:10) .== onecold(y, 1:10))
+accuracy(x, y) = mean(onecold(cpu(m(x)), 1:10) .== onecold(cpu(y), 1:10))
 
 # Defining the callback and the optimizer
 
