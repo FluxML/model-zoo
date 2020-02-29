@@ -9,10 +9,12 @@ using Printf
 
 const BATCH_SIZE = 128
 const NOISE_DIM = 100
-const EPOCHS = 15
+const EPOCHS = 20
 const VERBOSE_FREQ = 1000
-const ANIMATION_X = 6
-const ANIMATION_Y = 6
+const OUTPUT_X = 6
+const OUTPUT_Y = 6
+const LR_DSCR = 0.0002
+const LR_GEN = 0.0002
 
 # Taking vector of images and return minibatch
 function make_minibatch(xs)
@@ -20,11 +22,11 @@ function make_minibatch(xs)
     return @. 2f0 * ys - 1f0
 end
 
-function create_output_image(gen, animation_noise, train_steps)
+function create_output_image(gen, fixed_noise)
     @eval Flux.istraining() = false
-    fake_images = @. cpu(gen(animation_noise))
+    fake_images = @. cpu(gen(fixed_noise))
     @eval Flux.istraining() = true
-    image_array = dropdims(reduce(vcat, reduce.(hcat, partition(fake_images, ANIMATION_Y))); dims=(3, 4))
+    image_array = dropdims(reduce(vcat, reduce.(hcat, partition(fake_images, OUTPUT_Y))); dims=(3, 4))
     image_array = @. Gray(image_array + 1f0) / 2f0
     return image_array
 end
@@ -68,7 +70,7 @@ function train()
     images = MNIST.images()
     data = [make_minibatch(xs) |> gpu for xs in partition(images, BATCH_SIZE)]
 
-    animation_noise = [randn(NOISE_DIM, 1) |> gpu for _=1:ANIMATION_X*ANIMATION_Y]
+    fixed_noise = [randn(NOISE_DIM, 1) |> gpu for _=1:OUTPUT_X*OUTPUT_Y]
 
     # Discriminator
     dscr =  Chain(
@@ -94,8 +96,8 @@ function train()
         ) |> gpu
 
     # Optimizers
-    opt_dscr = ADAM(0.0002)
-    opt_gen = ADAM(0.0002)
+    opt_dscr = ADAM(LR_DSCR)
+    opt_gen = ADAM(LR_GEN)
 
     # Training
     train_steps = 0
@@ -103,19 +105,21 @@ function train()
         @info "Epoch $ep"
         for batch in data
             # Update discriminator and generator
-            disc_loss = train_discriminator!(gen, dscr, batch, opt_dscr)
-            gen_loss = train_generator!(gen, dscr, batch, opt_gen)
+            loss_dscr = train_discriminator!(gen, dscr, batch, opt_dscr)
+            loss_gen = train_generator!(gen, dscr, batch, opt_gen)
 
             if train_steps % VERBOSE_FREQ == 0
-                @info("Train step $(train_steps), Discriminator loss = $(disc_loss), Generator loss = $(gen_loss)")
+                @info("Train step $(train_steps), Discriminator loss = $(loss_dscr), Generator loss = $(loss_gen)")
                 # Save generated fake image
-                output_image = create_output_image(gen, animation_noise, train_steps)
+                output_image = create_output_image(gen, fixed_noise)
                 save(@sprintf("dcgan_steps_%06d.png", train_steps), output_image)
             end
             train_steps += 1
         end
     end
 
+    output_image = create_output_image(gen, fixed_noise)
+    save(@sprintf("dcgan_steps_%06d.png", train_steps), output_image)
 end
 
 cd(@__DIR__)

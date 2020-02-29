@@ -38,6 +38,7 @@ We welcome contributions of new models. They should be in a folder with a projec
     * [Simple ConvNets](vision/mnist/conv.jl)
     * [Simple Auto-Encoder](vision/mnist/autoencoder.jl)
     * [Variational Auto-Encoder](vision/mnist/vae.jl)
+    * [Deep Convolutional Generative Adversarial Networks](vision/mnist/dcgan.jl)
   * [VGG 16/19 on CIFAR10](vision/cifar10)
   * [CPPN](vision/cppn) ([Blog](http://blog.otoro.net/2016/03/25/generating-abstract-patterns-with-tensorflow/))
 * Text
