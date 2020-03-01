@@ -114,7 +114,6 @@ function train(; kws...)
             if train_steps % hparams.verbose_freq == 0
                 @info("Train step $(train_steps), Discriminator loss = $(loss_dscr), Generator loss = $(loss_gen)")
                 # Save generated fake image
-                # Sample outputs can be found at https://github.com/FluxML/model-zoo/pull/207
                 output_image = create_output_image(gen, fixed_noise, hparams)
                 save(@sprintf("dcgan_steps_%06d.png", train_steps), output_image)
             end
