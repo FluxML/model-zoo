@@ -1,26 +1,20 @@
 using Base.Iterators: partition
 using Flux
-using Flux.Data.MNIST
 using Flux.Optimise: update!
 using Flux: logitbinarycrossentropy
 using Images
+using MLDatasets
 using Statistics
 using Printf
 
 const BATCH_SIZE = 128
-const NOISE_DIM = 100
+const LATENT_DIM = 100
 const EPOCHS = 20
 const VERBOSE_FREQ = 1000
 const OUTPUT_X = 6
 const OUTPUT_Y = 6
 const LR_DSCR = 0.0002
 const LR_GEN = 0.0002
-
-# Taking vector of images and return minibatch
-function make_minibatch(xs)
-    ys = reshape(Float32.(reduce(hcat, xs)), 28, 28, 1, :)
-    return @. 2f0 * ys - 1f0
-end
 
 function create_output_image(gen, fixed_noise)
     @eval Flux.istraining() = false
@@ -41,7 +35,7 @@ end
 generator_loss(fake_output) = mean(logitbinarycrossentropy.(fake_output, 1f0))
 
 function train_discriminator!(gen, dscr, batch, opt_dscr)
-    noise = randn(Float32, NOISE_DIM, BATCH_SIZE) |> gpu
+    noise = randn(Float32, LATENT_DIM, BATCH_SIZE) |> gpu
     fake_input = gen(noise)
     ps = Flux.params(dscr)
     # Taking gradient
@@ -54,7 +48,7 @@ function train_discriminator!(gen, dscr, batch, opt_dscr)
 end
 
 function train_generator!(gen, dscr, batch, opt_gen)
-    noise = randn(Float32, NOISE_DIM, BATCH_SIZE) |> gpu
+    noise = randn(Float32, LATENT_DIM, BATCH_SIZE) |> gpu
     ps = Flux.params(gen)
     # Taking gradient
     loss, back = Flux.pullback(ps) do
@@ -66,11 +60,14 @@ function train_generator!(gen, dscr, batch, opt_gen)
 end
 
 function train()
-    # MNIST dataset
-    images = MNIST.images()
-    data = [make_minibatch(xs) |> gpu for xs in partition(images, BATCH_SIZE)]
+    # Load MNIST dataset
+    images, _ = MLDatasets.MNIST.traindata(Float32)
+    # Normalize to [-1, 1] and convert it to WHCN
+    image_tensor = permutedims(reshape(@.(2f0 * images - 1f0), 28, 28, 1, :), (2, 1, 3, 4))
+    # Partition into batches
+    data = [image_tensor[:, :, :, r] |> gpu for r in partition(1:60000, BATCH_SIZE)]
 
-    fixed_noise = [randn(NOISE_DIM, 1) |> gpu for _=1:OUTPUT_X*OUTPUT_Y]
+    fixed_noise = [randn(LATENT_DIM, 1) |> gpu for _=1:OUTPUT_X*OUTPUT_Y]
 
     # Discriminator
     dscr =  Chain(
@@ -85,7 +82,7 @@ function train()
 
     # Generator
     gen = Chain(
-        Dense(NOISE_DIM, 7 * 7 * 256),
+        Dense(LATENT_DIM, 7 * 7 * 256),
         BatchNorm(7 * 7 * 256, relu),
         x->reshape(x, 7, 7, 256, :),
         ConvTranspose((5, 5), 256 => 128; stride = 1, pad = 2),
@@ -122,7 +119,6 @@ function train()
     output_image = create_output_image(gen, fixed_noise)
     save(@sprintf("dcgan_steps_%06d.png", train_steps), output_image)
 end
-
 
 cd(@__DIR__)
 train()
