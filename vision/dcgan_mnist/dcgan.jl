@@ -5,7 +5,7 @@ using Flux: logitbinarycrossentropy
 using Images
 using MLDatasets
 using Statistics
-using Parameters
+using Parameters: @with_kw
 using Printf
 
 @with_kw struct HyperParams
