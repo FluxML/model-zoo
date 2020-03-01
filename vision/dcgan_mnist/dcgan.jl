@@ -62,9 +62,9 @@ function train_generator!(gen, dscr, batch, opt_gen, hparams)
     return loss
 end
 
-function train()
+function train(; kws...)
     # Model Parameters
-    hparams = HyperParams()
+    hparams = HyperParams(; kws...)
 
     # Load MNIST dataset
     images, _ = MLDatasets.MNIST.traindata(Float32)
