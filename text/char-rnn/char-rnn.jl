@@ -31,7 +31,6 @@ m = gpu(m)
 
 function loss(xs, ys)
   l = sum(crossentropy.(m.(gpu.(xs)), gpu.(ys)))
-  Flux.reset!(m)
   return l
 end
 
@@ -51,7 +50,7 @@ function sample(m, alphabet, len)
   c = rand(alphabet)
   for i = 1:len
     write(buf, c)
-    c = wsample(alphabet, m(onehot(c, alphabet)).data)
+    c = wsample(alphabet, m(onehot(c, alphabet)))
   end
   return String(take!(buf))
 end
