@@ -7,6 +7,7 @@ using MLDatasets
 using Statistics
 using Parameters: @with_kw
 using Printf
+using Random
 
 @with_kw struct HyperParams
     batch_size::Int = 128
@@ -37,21 +38,21 @@ end
 
 generator_loss(fake_output) = mean(logitbinarycrossentropy.(fake_output, 1f0))
 
-function train_discriminator!(gen, dscr, batch, opt_dscr, hparams)
-    noise = randn(Float32, hparams.latent_dim, hparams.batch_size) |> gpu
+function train_discriminator!(gen, dscr, x, opt_dscr, hparams)
+    noise = randn!(similar(x, (hparams.latent_dim, hparams.batch_size))) 
     fake_input = gen(noise)
     ps = Flux.params(dscr)
     # Taking gradient
     loss, back = Flux.pullback(ps) do
-        discriminator_loss(dscr(batch), dscr(fake_input))
+        discriminator_loss(dscr(x), dscr(fake_input))
     end
     grad = back(1f0)
     update!(opt_dscr, ps, grad)
     return loss
 end
 
-function train_generator!(gen, dscr, batch, opt_gen, hparams)
-    noise = randn(Float32, hparams.latent_dim, hparams.batch_size) |> gpu
+function train_generator!(gen, dscr, x, opt_gen, hparams)
+    noise = randn!(similar(x, (hparams.latent_dim, hparams.batch_size))) 
     ps = Flux.params(gen)
     # Taking gradient
     loss, back = Flux.pullback(ps) do
@@ -106,23 +107,23 @@ function train(; kws...)
     train_steps = 0
     for ep in 1:hparams.epochs
         @info "Epoch $ep"
-        for batch in data
+        for x in data
             # Update discriminator and generator
-            loss_dscr = train_discriminator!(gen, dscr, batch, opt_dscr, hparams)
-            loss_gen = train_generator!(gen, dscr, batch, opt_gen, hparams)
+            loss_dscr = train_discriminator!(gen, dscr, x, opt_dscr, hparams)
+            loss_gen = train_generator!(gen, dscr, x, opt_gen, hparams)
 
             if train_steps % hparams.verbose_freq == 0
                 @info("Train step $(train_steps), Discriminator loss = $(loss_dscr), Generator loss = $(loss_gen)")
                 # Save generated fake image
                 output_image = create_output_image(gen, fixed_noise, hparams)
-                save(@sprintf("dcgan_steps_%06d.png", train_steps), output_image)
+                save(@sprintf("output/dcgan_steps_%06d.png", train_steps), output_image)
             end
             train_steps += 1
         end
     end
 
     output_image = create_output_image(gen, fixed_noise, hparams)
-    save(@sprintf("dcgan_steps_%06d.png", train_steps), output_image)
+    save(@sprintf("output/dcgan_steps_%06d.png", train_steps), output_image)
 end
 
 cd(@__DIR__)
