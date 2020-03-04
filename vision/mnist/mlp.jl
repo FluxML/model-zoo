@@ -1,43 +1,84 @@
-using Flux, Flux.Data.MNIST, Statistics
-using Flux: onehotbatch, onecold, crossentropy, throttle
+using Flux, Statistics
+using Flux.Data: DataLoader
+using Flux: onehotbatch, onecold, crossentropy, throttle, @epochs
 using Base.Iterators: repeated
+using Parameters: @with_kw
 using CUDAapi
+using MLDatasets
 if has_cuda()
     @info "CUDA is on"
     import CuArrays
     CuArrays.allowscalar(false)
 end
 
+@with_kw mutable struct Args
+	η::Float64 = 3e-4       # learning rate
+	batchsize::Int = 128    # batch size
+	epochs::Int = 10        # number of epochs
+	device::Function = cpu  # set as gpu, if gpu available
+end
 
-# Classify MNIST digits with a simple multi-layer-perceptron
+function get_data(args)
+    xtrain, ytrain = MLDatasets.MNIST.traindata(Float32)
+    xtest, ytest = MLDatasets.MNIST.testdata(Float32)
+	
+    
+    xtrain = reshape(xtrain,:,size(xtrain,3))
+    xtest = reshape(xtest,:,size(xtest,3))
 
-imgs = MNIST.images()
-# Stack images into one large batch
-X = hcat(float.(reshape.(imgs, :))...) |> gpu
+	# One-hot-encode the labels
+    ytrain, ytest = onehotbatch(ytrain, 0:9), onehotbatch(ytest, 0:9)
 
-labels = MNIST.labels()
-# One-hot-encode the labels
-Y = onehotbatch(labels, 0:9) |> gpu
+	train_data = DataLoader(xtrain, ytrain, batchsize=args.batchsize, shuffle=true)
+	test_data = DataLoader(xtest, ytest, batchsize=args.batchsize,)
+	
+    return train_data, test_data
+end
 
-m = Chain(
-  Dense(28^2, 32, relu),
-  Dense(32, 10),
-  softmax) |> gpu
+function model(; imgsize=(28,28,1), nclasses=10)
+	return Chain(
+  			Dense(prod(imgsize), 32, relu),
+  			Dense(32, nclasses),
+  			softmax)
+end
 
-loss(x, y) = crossentropy(m(x), y)
+function loss_all(dataloader, model)
+	l = 0f0
+	for (x,y) in dataloader
+		l += crossentropy(model(x), y)
+	end
+	l/length(dataloader)
+end
 
-accuracy(x, y) = mean(onecold(cpu(m(x))) .== onecold(cpu(y)))
+function accuracy(data_loader, model)
+	acc = 0
+	for (x,y) in data_loader
+		acc += sum(onecold(cpu(model(x))) .== onecold(cpu(y)))*1 / size(x,2)
+	end
+	acc/length(data_loader)
+end
 
-dataset = repeated((X, Y), 200)
-evalcb = () -> @show(loss(X, Y))
-opt = ADAM()
+function train(; kws...)
+		args = Args(; kws...)
 
-Flux.train!(loss, params(m), dataset, opt, cb = throttle(evalcb, 10))
+		#Load Data
+		train_data,test_data = get_data(args)
 
-@show accuracy(X, Y)
+		#Construct model
+		m = model(args)
+    
+        loss(x,y) = crossentropy(m(x), y)
+    
+		#Training
+		evalcb = () -> @show(loss_all(train_data, m))
+		opt = ADAM(args.η)
+		
+		@epochs args.epochs Flux.train!(loss, params(m), train_data, opt, cb = evalcb)
 
-# Test set accuracy
-tX = hcat(float.(reshape.(MNIST.images(:test), :))...) |> gpu
-tY = onehotbatch(MNIST.labels(:test), 0:9) |> gpu
+		@show accuracy(train_data, m)
 
-@show accuracy(tX, tY)
+		@show accuracy(test_data, m)
+end
+
+cd(@__DIR__)
+train()
