@@ -61,11 +61,6 @@ function train(; kws...)
     # progress bar
     p = Progress(hparams.epochs * length(Xs))
 
-    function loss(xs, ys)
-        l = sum(crossentropy.(m.(gpu.(xs)), gpu.(ys)))
-        return l
-    end
-    
     for ep in 1:hparams.epochs
         iter = 0
         # train
