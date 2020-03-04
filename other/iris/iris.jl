@@ -41,7 +41,7 @@ accuracy(x, y, model) = mean(onecold(model(x)) .== onecold(y))
 # Function to build confusion matrix
 function confusion_matrix(X, y, model)
     ŷ = onehotbatch(onecold(model(X)), 1:3)
-    y * ŷ'
+    y * ŷ
 end
 
 function train(; kws...)
@@ -56,9 +56,11 @@ function train(; kws...)
 	model = Chain(
     		 Dense(4, 3),
     		 softmax)
-
+	
+	# Defining loss function to be used in training
 	loss(x, y) = crossentropy(model(x), y)
-
+	
+	# Training
 	# Gradient descent optimiser with learning rate `args.lr`
 	optimiser = Descent(args.lr)
 
@@ -70,6 +72,7 @@ end
 
 function test(model, test)
 	
+	# Testing model performance on test data 
 	X_test, y_test = test
 	accuracy_score = accuracy(X_test, y_test, model)
 
@@ -78,7 +81,7 @@ function test(model, test)
 	# Sanity check.
 	@assert accuracy_score > 0.8
 
-	#To avoid confusion, here is the definition of a Confusion Matrix: https://en.wikipedia.org/wiki/Confusion_matrix
+	# To avoid confusion, here is the definition of a Confusion Matrix: https://en.wikipedia.org/wiki/Confusion_matrix
 	println("\nConfusion Matrix:\n")
 	display(confusion_matrix(X_test, y_test, model))
 end
