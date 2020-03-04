@@ -33,7 +33,7 @@ function get_data(args)
     # Batching
     train_data = DataLoader(xtrain, ytrain, batchsize=args.batchsize, shuffle=true)
     test_data = DataLoader(xtest, ytest, batchsize=args.batchsize,)
-	
+
     return train_data, test_data
 end
 

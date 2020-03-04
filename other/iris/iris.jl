@@ -45,45 +45,45 @@ function confusion_matrix(X, y, model)
 end
 
 function train(; kws...)
-	# Initialize hyperparameter arguments
-	args = Args(; kws...)	
+    # Initialize hyperparameter arguments
+    args = Args(; kws...)	
 
-	#Loading processed data
-	train_data, test_data = get_processed_data(args)
+    #Loading processed data
+    train_data, test_data = get_processed_data(args)
 
-	# Declare model taking 4 features as inputs and outputting 3 probabiltiies, 
-	# one for each species of iris.
-	model = Chain(
-    		 Dense(4, 3))
+    # Declare model taking 4 features as inputs and outputting 3 probabiltiies, 
+    # one for each species of iris.
+    model = Chain(
+             Dense(4, 3))
 	
-	# Defining loss function to be used in training
-	# For numerical stability, we use here logitcrossentropy
-	loss(x, y) = logitcrossentropy(model(x), y)
+    # Defining loss function to be used in training
+    # For numerical stability, we use here logitcrossentropy
+    loss(x, y) = logitcrossentropy(model(x), y)
 	
-	# Training
-	# Gradient descent optimiser with learning rate `args.lr`
-	optimiser = Descent(args.lr)
+    # Training
+    # Gradient descent optimiser with learning rate `args.lr`
+    optimiser = Descent(args.lr)
 
-	println("Starting training.")
-	Flux.train!(loss, params(model), train_data, optimiser)
+    println("Starting training.")
+    Flux.train!(loss, params(model), train_data, optimiser)
 	
-	return model, test_data
+    return model, test_data
 end
 
 function test(model, test)
 	
-	# Testing model performance on test data 
-	X_test, y_test = test
-	accuracy_score = accuracy(X_test, y_test, model)
+    # Testing model performance on test data 
+    X_test, y_test = test
+    accuracy_score = accuracy(X_test, y_test, model)
 
-	println("\nAccuracy: $accuracy_score")
+    println("\nAccuracy: $accuracy_score")
 
-	# Sanity check.
-	@assert accuracy_score > 0.8
+    # Sanity check.
+    @assert accuracy_score > 0.8
 
-	# To avoid confusion, here is the definition of a Confusion Matrix: https://en.wikipedia.org/wiki/Confusion_matrix
-	println("\nConfusion Matrix:\n")
-	display(confusion_matrix(X_test, y_test, model))
+    # To avoid confusion, here is the definition of a Confusion Matrix: https://en.wikipedia.org/wiki/Confusion_matrix
+    println("\nConfusion Matrix:\n")
+    display(confusion_matrix(X_test, y_test, model))
 end
 
 cd(@__DIR__)
