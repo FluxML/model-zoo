@@ -5,79 +5,82 @@ using Base.Iterators: repeated
 using Parameters: @with_kw
 using CUDAapi
 using MLDatasets
-if has_cuda()
+if has_cuda()		# Check if CUDA is available
     @info "CUDA is on"
-    import CuArrays
+    import CuArrays		# If CUDA is available, import CuArrays
     CuArrays.allowscalar(false)
 end
 
 @with_kw mutable struct Args
-	η::Float64 = 3e-4       # learning rate
-	batchsize::Int = 128    # batch size
-	epochs::Int = 10        # number of epochs
-	device::Function = cpu  # set as gpu, if gpu available
+    η::Float64 = 3e-4       # learning rate
+    batchsize::Int = 128    # batch size
+    epochs::Int = 10        # number of epochs
+    device::Function = cpu  # set as gpu, if gpu available
 end
 
 function get_data(args)
+    # Loading Dataset	
     xtrain, ytrain = MLDatasets.MNIST.traindata(Float32)
     xtest, ytest = MLDatasets.MNIST.testdata(Float32)
 	
-    
+    # Reshape Data for flatten the each image into linear array
     xtrain = reshape(xtrain,:,size(xtrain,3))
     xtest = reshape(xtest,:,size(xtest,3))
 
-	# One-hot-encode the labels
+    # One-hot-encode the labels
     ytrain, ytest = onehotbatch(ytrain, 0:9), onehotbatch(ytest, 0:9)
 
-	train_data = DataLoader(xtrain, ytrain, batchsize=args.batchsize, shuffle=true)
-	test_data = DataLoader(xtest, ytest, batchsize=args.batchsize,)
+    # Batching
+    train_data = DataLoader(xtrain, ytrain, batchsize=args.batchsize, shuffle=true)
+    test_data = DataLoader(xtest, ytest, batchsize=args.batchsize,)
 	
     return train_data, test_data
 end
 
 function model(; imgsize=(28,28,1), nclasses=10)
-	return Chain(
-  			Dense(prod(imgsize), 32, relu),
-  			Dense(32, nclasses),
-  			softmax)
+    return Chain(
+ 	    Dense(prod(imgsize), 32, relu),
+            Dense(32, nclasses),
+  	    softmax)
 end
 
 function loss_all(dataloader, model)
-	l = 0f0
-	for (x,y) in dataloader
-		l += crossentropy(model(x), y)
-	end
-	l/length(dataloader)
+    l = 0f0
+    for (x,y) in dataloader
+        l += crossentropy(model(x), y)
+    end
+    l/length(dataloader)
 end
 
 function accuracy(data_loader, model)
-	acc = 0
-	for (x,y) in data_loader
-		acc += sum(onecold(cpu(model(x))) .== onecold(cpu(y)))*1 / size(x,2)
-	end
-	acc/length(data_loader)
+    acc = 0
+    for (x,y) in data_loader
+        acc += sum(onecold(cpu(model(x))) .== onecold(cpu(y)))*1 / size(x,2)
+    end
+    acc/length(data_loader)
 end
 
 function train(; kws...)
-		args = Args(; kws...)
+    # Initializing Model parameters 
+    args = Args(; kws...)
 
-		#Load Data
-		train_data,test_data = get_data(args)
+    # Load Data
+    train_data,test_data = get_data(args)
 
-		#Construct model
-		m = model(args)
+    # Construct model
+    m = model(args)
     
-        loss(x,y) = crossentropy(m(x), y)
+    loss(x,y) = crossentropy(m(x), y)
     
-		#Training
-		evalcb = () -> @show(loss_all(train_data, m))
-		opt = ADAM(args.η)
+    ## Training
+    evalcb = () -> @show(loss_all(train_data, m))
+    opt = ADAM(args.η)
 		
-		@epochs args.epochs Flux.train!(loss, params(m), train_data, opt, cb = evalcb)
+    @epochs args.epochs Flux.train!(loss, params(m), train_data, opt, cb = evalcb)
 
-		@show accuracy(train_data, m)
+    @show accuracy(train_data, m)
 
-		@show accuracy(test_data, m)
+    @show accuracy(test_data, m)
 end
 
 cd(@__DIR__)
