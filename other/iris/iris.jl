@@ -1,5 +1,5 @@
 using Flux
-using Flux: crossentropy, normalise, onecold, onehotbatch
+using Flux: logitcrossentropy,logsoftmax, normalise, onecold, onehotbatch, softmax
 using Statistics: mean
 using Parameters: @with_kw
 
@@ -41,7 +41,7 @@ accuracy(x, y, model) = mean(onecold(model(x)) .== onecold(y))
 # Function to build confusion matrix
 function confusion_matrix(X, y, model)
     ŷ = onehotbatch(onecold(model(X)), 1:3)
-    y * ŷ
+    y * transpose(ŷ)
 end
 
 function train(; kws...)
@@ -54,11 +54,11 @@ function train(; kws...)
 	# Declare model taking 4 features as inputs and outputting 3 probabiltiies, 
 	# one for each species of iris.
 	model = Chain(
-    		 Dense(4, 3),
-    		 softmax)
+    		 Dense(4, 3))
 	
 	# Defining loss function to be used in training
-	loss(x, y) = crossentropy(model(x), y)
+	# For numerical stability, we use here logitcrossentropy
+	loss(x, y) = logitcrossentropy(model(x), y)
 	
 	# Training
 	# Gradient descent optimiser with learning rate `args.lr`
