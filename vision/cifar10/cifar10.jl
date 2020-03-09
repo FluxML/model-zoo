@@ -1,136 +1,178 @@
 using Flux, Metalhead, Statistics
 using Flux: onehotbatch, onecold, crossentropy, throttle
 using Metalhead: trainimgs
+using Parameters: @with_kw
 using Images: channelview
 using Statistics: mean
 using Base.Iterators: partition
 
-# VGG16 and VGG19 models
-
-vgg16() = Chain(
-  Conv((3, 3), 3 => 64, relu, pad=(1, 1), stride=(1, 1)),
-  BatchNorm(64),
-  Conv((3, 3), 64 => 64, relu, pad=(1, 1), stride=(1, 1)),
-  BatchNorm(64),
-  MaxPool((2,2)),
-  Conv((3, 3), 64 => 128, relu, pad=(1, 1), stride=(1, 1)),
-  BatchNorm(128),
-  Conv((3, 3), 128 => 128, relu, pad=(1, 1), stride=(1, 1)),
-  BatchNorm(128),
-  MaxPool((2,2)),
-  Conv((3, 3), 128 => 256, relu, pad=(1, 1), stride=(1, 1)),
-  BatchNorm(256),
-  Conv((3, 3), 256 => 256, relu, pad=(1, 1), stride=(1, 1)),
-  BatchNorm(256),
-  Conv((3, 3), 256 => 256, relu, pad=(1, 1), stride=(1, 1)),
-  BatchNorm(256),
-  MaxPool((2,2)),
-  Conv((3, 3), 256 => 512, relu, pad=(1, 1), stride=(1, 1)),
-  BatchNorm(512),
-  Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-  BatchNorm(512),
-  Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-  BatchNorm(512),
-  MaxPool((2,2)),
-  Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-  BatchNorm(512),
-  Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-  BatchNorm(512),
-  Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-  BatchNorm(512),
-  MaxPool((2,2)),
-  x -> reshape(x, :, size(x, 4)),
-  Dense(512, 4096, relu),
-  Dropout(0.5),
-  Dense(4096, 4096, relu),
-  Dropout(0.5),
-  Dense(4096, 10),
-  softmax) |> gpu
-
-vgg19() = Chain(
-  Conv((3, 3), 3 => 64, relu, pad=(1, 1), stride=(1, 1)),
-  BatchNorm(64),
-  Conv((3, 3), 64 => 64, relu, pad=(1, 1), stride=(1, 1)),
-  BatchNorm(64),
-  MaxPool((2,2)),
-  Conv((3, 3), 64 => 128, relu, pad=(1, 1), stride=(1, 1)),
-  BatchNorm(128),
-  Conv((3, 3), 128 => 128, relu, pad=(1, 1), stride=(1, 1)),
-  BatchNorm(128),
-  MaxPool((2,2)),
-  Conv((3, 3), 128 => 256, relu, pad=(1, 1), stride=(1, 1)),
-  BatchNorm(256),
-  Conv((3, 3), 256 => 256, relu, pad=(1, 1), stride=(1, 1)),
-  BatchNorm(256),
-  Conv((3, 3), 256 => 256, relu, pad=(1, 1), stride=(1, 1)),
-  BatchNorm(256),
-  Conv((3, 3), 256 => 256, relu, pad=(1, 1), stride=(1, 1)),
-  MaxPool((2,2)),
-  Conv((3, 3), 256 => 512, relu, pad=(1, 1), stride=(1, 1)),
-  BatchNorm(512),
-  Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-  BatchNorm(512),
-  Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-  BatchNorm(512),
-  Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-  MaxPool((2,2)),
-  Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-  BatchNorm(512),
-  Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-  BatchNorm(512),
-  Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-  BatchNorm(512),
-  Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-  MaxPool((2,2)),
-  x -> reshape(x, :, size(x, 4)),
-  Dense(512, 4096, relu),
-  Dropout(0.5),
-  Dense(4096, 4096, relu),
-  Dropout(0.5),
-  Dense(4096, 10),
-  softmax) |> gpu
+@with_kw mutable struct Args
+	batchsize::Int = 100
+    throttle::Int = 10
+    lr::Float64 = 1e-3
+    splitr_::Float64 = 0.2
+end
 
 # Function to convert the RGB image to Float64 Arrays
+function getarray(X)
+    Float32.(permutedims(channelview(X), (2, 3, 1)))
+end
 
-getarray(X) = Float32.(permutedims(channelview(X), (2, 3, 1)))
+function get_processed_data(args)
+	# Fetching the train and validation data and getting them into proper shape	
+	X = trainimgs(CIFAR10)
+	imgs = [getarray(X[i].img) for i in 1:1000]
+	#onehot encode labels of batch
+    
+	labels = onehotbatch([X[i].ground_truth.class for i in 1:1000],1:10)
+	
+	train_pop = Int((1-args.splitr_)* 1000)
+	train = gpu.([(cat(imgs[i]..., dims = 4), labels[:,i]) for i in partition(1:train_pop, args.batchsize)])
+	valset = collect(train_pop+1:1000)
+	valX = cat(imgs[valset]..., dims = 4) |> gpu
+	valY = labels[:, valset] |> gpu
+	
+	val = (valX,valY)	
+	return train, val
+end
 
-# Fetching the train and validation data and getting them into proper shape
+function get_test_data()
+	# Fetch the test data from Metalhead and get it into proper shape.
+	test = valimgs(CIFAR10)
 
-X = trainimgs(CIFAR10)
-imgs = [getarray(X[i].img) for i in 1:50000]
-labels = onehotbatch([X[i].ground_truth.class for i in 1:50000],1:10)
-train = gpu.([(cat(imgs[i]..., dims = 4), labels[:,i]) for i in partition(1:49000, 100)])
-valset = collect(49001:50000)
-valX = cat(imgs[valset]..., dims = 4) |> gpu
-valY = labels[:, valset] |> gpu
+	# CIFAR-10 does not specify a validation set so valimgs fetch the testdata instead of testimgs
+	testimgs = [getarray(test[i].img) for i in 1:1000]
+	testY = onehotbatch([test[i].ground_truth.class for i in 1:1000], 1:10) |> gpu
+	testX = cat(testimgs..., dims = 4) |> gpu
 
-# Defining the loss and accuracy functions
+	test = (testX,testY)
+	return test
+end
 
-m = vgg16()
+# VGG16 and VGG19 models
+function vgg16()
+    return Chain(
+		Conv((3, 3), 3 => 64, relu, pad=(1, 1), stride=(1, 1)),
+		BatchNorm(64),
+		Conv((3, 3), 64 => 64, relu, pad=(1, 1), stride=(1, 1)),
+		BatchNorm(64),
+		MaxPool((2,2)),
+		Conv((3, 3), 64 => 128, relu, pad=(1, 1), stride=(1, 1)),
+		BatchNorm(128),
+		Conv((3, 3), 128 => 128, relu, pad=(1, 1), stride=(1, 1)),
+		BatchNorm(128),
+		MaxPool((2,2)),
+		Conv((3, 3), 128 => 256, relu, pad=(1, 1), stride=(1, 1)),
+		BatchNorm(256),
+		Conv((3, 3), 256 => 256, relu, pad=(1, 1), stride=(1, 1)),
+		BatchNorm(256),
+		Conv((3, 3), 256 => 256, relu, pad=(1, 1), stride=(1, 1)),
+		BatchNorm(256),
+		MaxPool((2,2)),
+		Conv((3, 3), 256 => 512, relu, pad=(1, 1), stride=(1, 1)),
+		BatchNorm(512),
+		Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
+		BatchNorm(512),
+		Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
+		BatchNorm(512),
+		MaxPool((2,2)),
+		Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
+		BatchNorm(512),
+		Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
+		BatchNorm(512),
+		Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
+		BatchNorm(512),
+		MaxPool((2,2)),
+		x -> reshape(x, :, size(x, 4)),
+		Dense(512, 4096, relu),
+		Dropout(0.5),
+		Dense(4096, 4096, relu),
+		Dropout(0.5),
+		Dense(4096, 10),
+		softmax) |> gpu
+end
 
-loss(x, y) = crossentropy(m(x), y)
+function vgg19()
+    return Chain(
+        Conv((3, 3), 3 => 64, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(64),
+        Conv((3, 3), 64 => 64, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(64),
+        MaxPool((2,2)),
+        Conv((3, 3), 64 => 128, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(128),
+        Conv((3, 3), 128 => 128, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(128),
+        MaxPool((2,2)),
+        Conv((3, 3), 128 => 256, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(256),
+        Conv((3, 3), 256 => 256, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(256),
+        Conv((3, 3), 256 => 256, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(256),
+        Conv((3, 3), 256 => 256, relu, pad=(1, 1), stride=(1, 1)),
+        MaxPool((2,2)),
+        Conv((3, 3), 256 => 512, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(512),
+        Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(512),
+        Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(512),
+        Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
+        MaxPool((2,2)),
+        Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(512),
+        Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(512),
+        Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(512),
+        Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
+        MaxPool((2,2)),
+        x -> reshape(x, :, size(x, 4)),
+        Dense(512, 4096, relu),
+        Dropout(0.5),
+        Dense(4096, 4096, relu),
+        Dropout(0.5),
+        Dense(4096, 10),
+        softmax) |> gpu
+end
 
-accuracy(x, y) = mean(onecold(cpu(m(x)), 1:10) .== onecold(cpu(y), 1:10))
+accuracy(x, y, m) = mean(onecold(cpu(m(x)), 1:10) .== onecold(cpu(y), 1:10))
 
-# Defining the callback and the optimizer
+function train(; kws...)
+	# Initialize the hyperparameters
+	args = Args(; kws...)
+	
+	# Load the train, validation data 
+	train,val = get_processed_data(args)
 
-evalcb = throttle(() -> @show(accuracy(valX, valY)), 10)
+	@info("Constructing Model")	
+	# Defining the loss and accuracy functions
+	m = vgg16()
 
-opt = ADAM()
+	loss(x, y) = crossentropy(m(x), y)
 
-# Starting to train models
+	## Training
 
-Flux.train!(loss, params(m), train, opt, cb = evalcb)
+	# Defining the callback and the optimizer
+	evalcb = throttle(() -> @show(accuracy(val...,m)), args.throttle)
+	opt = ADAM(args.lr)
+	@info("Training....")
+	# Starting to train models
+	Flux.train!(loss, params(m), train, opt, cb = evalcb)
+	
+	return m
+end
 
-# Fetch the test data from Metalhead and get it into proper shape.
-# CIFAR-10 does not specify a validation set so valimgs fetch the testdata instead of testimgs
+function test(m)
+	
+	test_data = get_test_data()
 
-test = valimgs(CIFAR10)
+	# Print the final accuracy
+	@show(accuracy(test_data..., m))
+	
+end
 
-testimgs = [getarray(test[i].img) for i in 1:10000]
-testY = onehotbatch([test[i].ground_truth.class for i in 1:10000], 1:10) |> gpu
-testX = cat(testimgs..., dims = 4) |> gpu
-
-# Print the final accuracy
-
-@show(accuracy(testX, testY))
+cd(@__DIR__)
+m = train()
+test(m)
