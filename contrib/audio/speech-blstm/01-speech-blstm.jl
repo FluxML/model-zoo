@@ -140,7 +140,8 @@ function main()
   # Begin training
   println("Beginning training")
 
-  opt = Momentum(params((forward, backward, output)), 10.0^-5; ρ=0.9)
+  opt = Momentum(10.0^-5, 0.9)
+  ps = params((forward, backward, output))
 
   i = 0
 
@@ -151,7 +152,7 @@ function main()
     shuffle!(data)
     valData = valData[shuffle(1:length(valData))]
     
-    Flux.train!(loss, data, opt)
+    Flux.train!(loss, ps, data, opt)
     
     BSON.@save "model_epoch$(i).bson" forward backward output
 
