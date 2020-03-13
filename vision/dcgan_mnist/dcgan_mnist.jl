@@ -29,6 +29,31 @@ function create_output_image(gen, fixed_noise, hparams)
     return image_array
 end
 
+function Discriminaror()
+    return Chain(
+            Conv((4, 4), 1 => 64; stride = 2, pad = 1),
+            x->leakyrelu.(x, 0.2f0),
+            Dropout(0.25),
+            Conv((4, 4), 64 => 128; stride = 2, pad = 1),
+            x->leakyrelu.(x, 0.2f0),
+            Dropout(0.25), 
+            x->reshape(x, 7 * 7 * 128, :),
+            Dense(7 * 7 * 128, 1))	
+end
+
+function Generator()
+    return Chain(
+            Dense(hparams.latent_dim, 7 * 7 * 256),
+            BatchNorm(7 * 7 * 256, relu),
+            x->reshape(x, 7, 7, 256, :),
+            ConvTranspose((5, 5), 256 => 128; stride = 1, pad = 2),
+            BatchNorm(128, relu),
+            ConvTranspose((4, 4), 128 => 64; stride = 2, pad = 1),
+            BatchNorm(64, relu),
+            ConvTranspose((4, 4), 64 => 1, tanh; stride = 2, pad = 1),
+            )
+end
+
 # Loss functions
 function discriminator_loss(real_output, fake_output)
     real_loss = mean(logitbinarycrossentropy.(real_output, 1f0))
@@ -77,27 +102,10 @@ function train(; kws...)
     fixed_noise = [randn(hparams.latent_dim, 1) |> gpu for _=1:hparams.output_x*hparams.output_y]
 
     # Discriminator
-    dscr =  Chain(
-        Conv((4, 4), 1 => 64; stride = 2, pad = 1),
-        x->leakyrelu.(x, 0.2f0),
-        Dropout(0.25),
-        Conv((4, 4), 64 => 128; stride = 2, pad = 1),
-        x->leakyrelu.(x, 0.2f0),
-        Dropout(0.25), 
-        x->reshape(x, 7 * 7 * 128, :),
-        Dense(7 * 7 * 128, 1)) |> gpu
+    dscr = Discriminator() |> gpu
 
     # Generator
-    gen = Chain(
-        Dense(hparams.latent_dim, 7 * 7 * 256),
-        BatchNorm(7 * 7 * 256, relu),
-        x->reshape(x, 7, 7, 256, :),
-        ConvTranspose((5, 5), 256 => 128; stride = 1, pad = 2),
-        BatchNorm(128, relu),
-        ConvTranspose((4, 4), 128 => 64; stride = 2, pad = 1),
-        BatchNorm(64, relu),
-        ConvTranspose((4, 4), 64 => 1, tanh; stride = 2, pad = 1),
-        ) |> gpu
+    gen =  Generator() |> gpu
 
     # Optimizers
     opt_dscr = ADAM(hparams.lr_dscr)
