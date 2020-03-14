@@ -20,14 +20,14 @@ using CUDAapi
 # The model can be adapted to any image size
 # and number of output classes.
 function LeNet5(; imgsize=(28,28,1), nclasses=10) 
-    out_conv_size =  (imgsize[1]÷4 - 3, imgsize[2]÷4 - 3, 16)
+    out_conv_size = (imgsize[1]÷4 - 3, imgsize[2]÷4 - 3, 16)
     
     return Chain(
             x -> reshape(x, imgsize..., :),
             Conv((5, 5), imgsize[end]=>6, relu),
-            MaxPool((2,2)),
+            MaxPool((2, 2)),
             Conv((5, 5), 6=>16, relu),
-            MaxPool((2,2)),
+            MaxPool((2, 2)),
             x -> reshape(x, :, size(x, 4)),
             Dense(prod(out_conv_size), 120, relu), 
             Dense(120, 84, relu), 
@@ -69,9 +69,7 @@ end
 
 ## utility functions
 
-nobs(loader) = sum(size(x)[end] for (x, y) in loader) # == size(loader.data[1])[end] but more generic
-
-num_params(model) = sum(length(p) for p in Flux.params(model))
+num_params(model) = sum(length, Flux.params(model)) 
 
 round4(x) = round(x, digits=4)
 
@@ -79,7 +77,7 @@ round4(x) = round(x, digits=4)
 # arguments for the `train` function 
 @with_kw mutable struct Args
     η = 3e-4             # learning rate
-    λ = 5e-4             # L2 regularizer param, implemented as weight decay
+    λ = 0                # L2 regularizer param, implemented as weight decay
     batchsize = 128      # batch size
     epochs = 20          # number of epochs
     seed = 0             # set seed > 0 for reproducibility
@@ -105,7 +103,7 @@ function train(; kws...)
 
     ## DATA
     train_loader, test_loader = get_data(args)
-    @info "Dataset MNIST: $(nobs(train_loader)) train and $(nobs(test_loader)) test examples"
+    @info "Dataset MNIST: $(train_loader.nobs) train and $(test_loader.nobs) test examples"
 
     ## MODEL AND OPTIMIZER
     model = LeNet5() |> device
@@ -115,13 +113,13 @@ function train(; kws...)
 
     opt = ADAM(args.η) 
     if args.λ > 0 
-        opt = Optimiser(opt, WeightDecay(args.η))
+        opt = Optimiser(opt, WeightDecay(args.λ))
     end
     
     ## LOGGING UTILITIES
     if args.savepath == nothing
-        experiment_folder = savename("lenet", args, 
-                    accesses=[:batchsize, :η, :seed]) # construct path from these fields
+        experiment_folder = savename("lenet", args, scientific=4,
+                    accesses=[:batchsize, :η, :seed, :λ]) # construct path from these fields
         args.savepath = joinpath("runs", experiment_folder)
     end
     if args.tblogger 
@@ -133,7 +131,7 @@ function train(; kws...)
     function report(epoch)
         train = eval_loss_accuracy(train_loader, model, device)
         test = eval_loss_accuracy(test_loader, model, device)        
-        println("Epoch $epoch.  Train:$(train)   Test:$(test)")
+        println("Epoch: $epoch   Train: $(train)   Test: $(test)")
         if args.tblogger
             set_step!(tblogger, epoch)
             with_logger(tblogger) do

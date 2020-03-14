@@ -108,9 +108,9 @@ version = "0.2.0+1"
 
 [[CuArrays]]
 deps = ["AbstractFFTs", "Adapt", "CEnum", "CUDAapi", "CUDAdrv", "CUDAnative", "DataStructures", "GPUArrays", "Libdl", "LinearAlgebra", "MacroTools", "NNlib", "Printf", "Random", "Requires", "SparseArrays", "TimerOutputs"]
-git-tree-sha1 = "7c20c5a45bb245cf248f454d26966ea70255b271"
+git-tree-sha1 = "7fa1331a0e0cd10e43b94b280027bda45990cb63"
 uuid = "3a865a2d-5b23-5a0f-bc46-62713ec82fae"
-version = "1.7.2"
+version = "1.7.3"
 
 [[DataAPI]]
 git-tree-sha1 = "674b67f344687a88310213ddfa8a2b3c76cc4252"
@@ -155,9 +155,9 @@ uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
 [[DrWatson]]
 deps = ["FileIO", "LibGit2", "Pkg", "Random", "Requires"]
-git-tree-sha1 = "70d27ea7e619a707fa722119c89d6ca8cc69159f"
+git-tree-sha1 = "c04127a9d9b04f2a6306f3491d510724f9ef0db9"
 uuid = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
-version = "1.9.1"
+version = "1.9.2"
 
 [[FFTW]]
 deps = ["AbstractFFTs", "FFTW_jll", "IntelOpenMP_jll", "Libdl", "LinearAlgebra", "MKL_jll", "Reexport"]
@@ -173,9 +173,9 @@ version = "3.3.9+4"
 
 [[FileIO]]
 deps = ["Pkg"]
-git-tree-sha1 = "2c84c57aced468fa21763c66d3bef33adcd09ec7"
+git-tree-sha1 = "250ac7dfd54b5ce47372505b392756633d4e9732"
 uuid = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
-version = "1.2.2"
+version = "1.2.3"
 
 [[FileWatching]]
 uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
@@ -363,15 +363,15 @@ uuid = "77ba4419-2d1f-58cd-9bb1-8ffee604a2e3"
 version = "0.3.3"
 
 [[OffsetArrays]]
-git-tree-sha1 = "707e34562700b81e8aa13548eb6b23b18112e49b"
+git-tree-sha1 = "6a35d9446b40ae5004cd7bd0f1ae3505528c7fd6"
 uuid = "6fe1bfb0-de20-5000-8ca7-80f57d26f881"
-version = "1.0.2"
+version = "1.0.3"
 
 [[OpenSpecFun_jll]]
 deps = ["CompilerSupportLibraries_jll", "Libdl", "Pkg"]
-git-tree-sha1 = "d110040968b9afe95c6bd9c6233570b0fe8abd22"
+git-tree-sha1 = "d51c416559217d974a1113522d5919235ae67a87"
 uuid = "efe28fd5-8261-553b-a9e1-b2916fc3738e"
-version = "0.5.3+2"
+version = "0.5.3+3"
 
 [[OrderedCollections]]
 deps = ["Random", "Serialization", "Test"]
@@ -381,9 +381,9 @@ version = "1.1.0"
 
 [[PaddedViews]]
 deps = ["OffsetArrays"]
-git-tree-sha1 = "ec6add2adab1abc9a2dbf27912da3022b0c55592"
+git-tree-sha1 = "12c091a0f201d8b048270bbf5d6b0625188a3257"
 uuid = "5432bcbf-9aad-5242-b902-cca2824c8663"
-version = "0.5.1"
+version = "0.5.3"
 
 [[Parameters]]
 deps = ["OrderedCollections"]
@@ -436,9 +436,9 @@ version = "1.0.1"
 
 [[Revise]]
 deps = ["CodeTracking", "Distributed", "FileWatching", "JuliaInterpreter", "LibGit2", "LoweredCodeUtils", "OrderedCollections", "Pkg", "REPL", "UUIDs", "Unicode"]
-git-tree-sha1 = "8767d2bf0b4e47185f6a501265d73393f2f334c0"
+git-tree-sha1 = "3c04c929f8720c2fabb12534cd102a2356a7705c"
 uuid = "295af30f-e4ad-537b-8983-00126c2a3abe"
-version = "2.5.3"
+version = "2.5.4"
 
 [[SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
