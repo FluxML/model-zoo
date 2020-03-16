@@ -1,27 +1,34 @@
 # Based on https://arxiv.org/abs/1409.0473
-
-using Flux: flip, crossentropy, reset!, throttle
-
 include("0-data.jl")
+using Flux: flip, crossentropy, reset!, throttle
+using Parameters: @with_kw
+using StatsBase: wsample
 
-Nin = length(alphabet)
-Nh = 30 # size of hidden layer
+@with_kw mutable struct Args
+    lr::Float64 = 1e-3      # learning rate
+    Nin::Int = 0            # size of input layer, will be assigned as length(alphabet)
+    Nh::Int = 30            # size of hidden layer
+    phones_len::Int = 0     # length of phonemes
+    throttle::Int = 30      # throttle timeout
+end
 
-# A recurrent model which takes a token and returns a context-dependent
-# annotation.
+function Construct_model(args)
+    # A recurrent model which takes a token and returns a context-dependent
+    # annotation.
+    forward  = LSTM(args.Nin, args.Nh÷2)
+    backward = LSTM(args.Nin, args.Nh÷2)
+    encode(tokens) = vcat.(forward.(tokens), flip(backward, tokens))
 
-forward  = LSTM(Nin, Nh÷2)
-backward = LSTM(Nin, Nh÷2)
-encode(tokens) = vcat.(forward.(tokens), flip(backward, tokens))
+    alignnet = Dense(2*args.Nh, 1)
 
-alignnet = Dense(2Nh, 1)
-align(s, t) = alignnet(vcat(t, s .* trues(1, size(t, 2))))
+    # A recurrent model which takes a sequence of annotations, attends, and returns
+    # a predicted output token.
+    recur   = LSTM(args.Nh+args.phones_len, args.Nh)
+    toalpha = Dense(args.Nh, args.phones_len)
+    return (forward, backward, alignnet, recur, toalpha), encode
+end
 
-# A recurrent model which takes a sequence of annotations, attends, and returns
-# a predicted output token.
-
-recur   = LSTM(Nh+length(phones), Nh)
-toalpha = Dense(Nh, length(phones))
+align(s, t, alignnet) = alignnet(vcat(t, s .* Int.(ones(1, size(t, 2)))))
 
 function asoftmax(xs)
   xs = [exp.(x) for x in xs]
@@ -29,46 +36,58 @@ function asoftmax(xs)
   return [x ./ s for x in xs]
 end
 
-function decode1(tokens, phone)
-  weights = asoftmax([align(recur.state[2], t) for t in tokens])
-  context = sum(map((a, b) -> a .* b, weights, tokens))
-  y = recur(vcat(Float32.(phone), context))
-  return softmax(toalpha(y))
+function decode1(tokens, phone, state)
+    # Unpack models
+    forward, backward, alignnet, recur, toalpha = state
+    weights = asoftmax([align(recur.state[2], t, alignnet) for t in tokens])
+    context = sum(map((a, b) -> a .* b, weights, tokens))
+    y = recur(vcat(Float32.(phone), context))
+    return softmax(toalpha(y))
 end
 
-decode(tokens, phones) = [decode1(tokens, phone) for phone in phones]
+decode(tokens, phones, state) = [decode1(tokens, phone, state) for phone in phones]
 
-# The full model
-
-state = (forward, backward, alignnet, recur, toalpha)
-
-function model(x, y)
-  ŷ = decode(encode(x), y)
-  reset!(state)
-  return ŷ
+function model(x, y, state, encode)
+    # Unpack models
+    forward, backward, alignnet, recur, toalpha = state
+    ŷ = decode(encode(x), y, state)
+    reset!(state)
+    return ŷ
 end
 
-loss(x, yo, y) = sum(crossentropy.(model(x, yo), y))
-
-evalcb = () -> @show loss(data[500]...)
-opt = ADAM()
-
-Flux.train!(loss, params(state), data, opt, cb = throttle(evalcb, 10))
-
-# Prediction
-
-using StatsBase: wsample
-
-function predict(s)
-  ts = encode(tokenise(s, alphabet))
-  ps = Any[:start]
-  for i = 1:50
-    dist = decode1(ts, onehot(ps[end], phones))
-    next = wsample(phones, vec(Tracker.data(dist)))
-    next == :end && break
-    push!(ps, next)
-  end
-  return ps[2:end]
+function predict(s, state, encode, alphabet, phones)
+    ts = encode(tokenise(s, alphabet))
+    ps = Any[:start]
+    for i = 1:50
+      dist = decode1(ts, onehot(ps[end], phones), state)
+      next = wsample(phones, vec(dist))
+      next == :end && break
+      push!(ps, next)
+    end
+    reset!(state)
+    return ps[2:end]
 end
 
-predict("PHYLOGENY")
+function train(; kws...)
+    # Initialize Hyperparameters
+    args = Args(; kws...)
+    @info("Loading Data...")
+    data,alphabet,phones = getData(args)
+
+    # The full model
+    # state = (forward, backward, alignnet, recur, toalpha)
+    @info("Constructing Model...")
+    state, encode = Construct_model(args)
+
+    loss(x, yo, y) = sum(crossentropy.(model(x, yo, state, encode), y))
+    evalcb = () -> @show loss(data[500]...)
+    opt = ADAM(args.lr)
+    @info("Training...")
+    Flux.train!(loss, params(state), data, opt, cb = throttle(evalcb, args.throttle))
+    return state, encode, alphabet, phones
+end
+
+cd(@__DIR__)
+state, encode, alphabet, phones = train()
+@info("Testing...")
+predict("PHYLOGENY", state, encode, alphabet, phones)
