@@ -10,20 +10,20 @@ import Distributions: logpdf
 logpdf(b::Bernoulli, y::Bool) = y * log(b.p + eps(Float32)) + (1f0 - y) * log(1 - b.p + eps(Float32))
 
 @with_kw mutable struct Args
-	lr::Float64 = 3e-3    # learning rate
-	epochs::Int = 20    # Number of epochs for training model
-	Dz::Int = 5    # latent dimensionality
-	Dh::Int = 500    # Hidden units
-	throttle::Int = 30
+    lr::Float64 = 3e-3    # learning rate
+    epochs::Int = 20    # Number of epochs for training model
+    Dz::Int = 5    # latent dimensionality
+    Dh::Int = 500    # Hidden units
+    throttle::Int = 30
     batchsize::Int = 100 
 end
 
 function get_processed_data(args)
-	# Load data, binarise it, and partition into mini-batches of M.
-	X = float.(hcat(vec.(MNIST.images())...)) .> 0.5
-	N = size(X, 2)
-	data = [X[:,i] for i in Iterators.partition(1:N, args.batchsize)]
-	return data, X
+    # Load data, binarise it, and partition into mini-batches of M.
+    X = float.(hcat(vec.(MNIST.images())...)) .> 0.5
+    N = size(X, 2)
+    data = [X[:,i] for i in Iterators.partition(1:N, args.batchsize)]
+    return data, X
 end
 
 # Function for generative model
@@ -36,39 +36,39 @@ logp_x_z(x, z, f) = sum(logpdf.(Bernoulli.(f(z)), x))
 kl_q_p(μ, logσ) = 0.5f0 * sum(exp.(2f0 .* logσ) + μ.^2 .- 1f0 .- (2 .* logσ))
 
 function train(; kws...)
-	args = Args(; kws...)
+    args = Args(; kws...)
 	
-	# Loading Data
-	data, X = get_processed_data(args)
-	
-	@info("Constructing Encoder-Decoder models....")
-	# Components of recognition model / "encoder" MLP.
-	A, μ, logσ = Dense(28^2, args.Dh, tanh), Dense(args.Dh, args.Dz), Dense(args.Dh, args.Dz)
-	g(X) = (h = A(X); (μ(h), logσ(h)))
-	z(μ, logσ) = μ + exp(logσ) * randn(Float32)
+    # Loading Data
+    data, X = get_processed_data(args)
+    
+    @info("Constructing Encoder-Decoder models....")
+    # Components of recognition model / "encoder" MLP.
+    A, μ, logσ = Dense(28^2, args.Dh, tanh), Dense(args.Dh, args.Dz), Dense(args.Dh, args.Dz)
+    g(X) = (h = A(X); (μ(h), logσ(h)))
+    z(μ, logσ) = μ + exp(logσ) * randn(Float32)
 
-	# Generative model / "decoder" MLP.
-	f = Generative_model(args)
+    # Generative model / "decoder" MLP.
+    f = Generative_model(args)
 
-	## Define ways of doing things with the model
+    ## Define ways of doing things with the model
 	
-	# Monte Carlo estimator of mean ELBO using M samples.
-	L̄(X) = ((μ̂, logσ̂) = g(X); (logp_x_z(X, z.(μ̂, logσ̂), f) - kl_q_p(μ̂, logσ̂)) * 1 // args.batchsize)
+    # Monte Carlo estimator of mean ELBO using M samples.
+    L̄(X) = ((μ̂, logσ̂) = g(X); (logp_x_z(X, z.(μ̂, logσ̂), f) - kl_q_p(μ̂, logσ̂)) * 1 // args.batchsize)
 	
     loss(X) = -L̄(X) + 0.01f0 * sum(x->sum(x.^2), params(f))
 
-	## Training
-	evalcb = throttle(() -> @show(-L̄(X[:, rand(1:size(X, 2), args.batchsize)])), args.throttle)	# Callback function
-	opt = ADAM(args.lr)    # ADAM optimizer
-	ps = params(A, μ, logσ, f)    # Defining parmeters to be trained
+    ## Training
+    evalcb = throttle(() -> @show(-L̄(X[:, rand(1:size(X, 2), args.batchsize)])), args.throttle)	# Callback function
+    opt = ADAM(args.lr)    # ADAM optimizer
+    ps = params(A, μ, logσ, f)    # Defining parmeters to be trained
 	
-	@info("Beginning Training.....")
-	@progress for i = 1:args.epochs
-  		@info "Epoch $i"
-  		Flux.train!(loss, ps, zip(data), opt, cb=evalcb)
-	end
+    @info("Beginning Training.....")
+      @progress for i = 1:args.epochs
+        @info "Epoch $i"
+        Flux.train!(loss, ps, zip(data), opt, cb=evalcb)
+    end
 	
-	return f, z, args
+    return f, z, args
 end
 
 # Sample from the learned model.

@@ -19,9 +19,9 @@ if has_cuda()
 end
 
 @with_kw mutable struct Args
-	lr::Float64 = 3e-3
-	epochs::Int = 20
-	savepath::String = "./" 
+    lr::Float64 = 3e-3
+    epochs::Int = 20
+    savepath::String = "./" 
 end
 
 # Bundle images together with labels and group into minibatchess
@@ -53,28 +53,28 @@ end
 
 # Construct model
 function Construct_model(args; imgsize = (28,28,1), nclasses = 10)
-	CNN_output_size = Int.(floor.([imgsize[1]/8,imgsize[2]/8,32]))	
+    CNN_output_size = Int.(floor.([imgsize[1]/8,imgsize[2]/8,32]))	
 
-	return Chain(
-    	# First convolution, operating upon a 28x28 image
-    	Conv((3, 3), imgsize[3]=>16, pad=(1,1), relu),
-    	MaxPool((2,2)),
+    return Chain(
+    # First convolution, operating upon a 28x28 image
+    Conv((3, 3), imgsize[3]=>16, pad=(1,1), relu),
+    MaxPool((2,2)),
 
-    	# Second convolution, operating upon a 14x14 image
-    	Conv((3, 3), 16=>32, pad=(1,1), relu),
-    	MaxPool((2,2)),
+    # Second convolution, operating upon a 14x14 image
+    Conv((3, 3), 16=>32, pad=(1,1), relu),
+    MaxPool((2,2)),
 
-    	# Third convolution, operating upon a 7x7 image
-    	Conv((3, 3), 32=>32, pad=(1,1), relu),
-    	MaxPool((2,2)),
+    # Third convolution, operating upon a 7x7 image
+    Conv((3, 3), 32=>32, pad=(1,1), relu),
+    MaxPool((2,2)),
 
-    	# Reshape 3d tensor into a 2d one, at this point it should be (3, 3, 32, N)
-    	# which is where we get the 288 in the `Dense` layer below:
-    	x -> reshape(x, :, size(x, 4)),
-    	Dense(prod(CNN_output_size), 10),
+    # Reshape 3d tensor into a 2d one, at this point it should be (3, 3, 32, N)
+    # which is where we get the 288 in the `Dense` layer below:
+    x -> reshape(x, :, size(x, 4)),
+    Dense(prod(CNN_output_size), 10),
 
-    	# Finally, softmax to get nice probabilities
-    	softmax)
+    # Finally, softmax to get nice probabilities
+    softmax)
 end
 
 # We augment `x` a little bit here, adding in random noise. 
@@ -89,84 +89,84 @@ anynan(x) = any(isnan.(x))
 accuracy(x, y, model) = mean(onecold(cpu(model(x))) .== onecold(cpu(y)))
 
 function train(; kws...)	
-	args = Args(; kws...)
+    args = Args(; kws...)
 
-	@info("Loading data set")
-	train_set, test_set = get_processed_data(args)
+    @info("Loading data set")
+    train_set, test_set = get_processed_data(args)
 
-	# Define our model.  We will use a simple convolutional architecture with
-	# three iterations of Conv -> ReLU -> MaxPool, followed by a final Dense
-	# layer that feeds into a softmax probability output.
-	@info("Constructing model...")
-	model = Construct_model(args) 
+    # Define our model.  We will use a simple convolutional architecture with
+    # three iterations of Conv -> ReLU -> MaxPool, followed by a final Dense
+    # layer that feeds into a softmax probability output.
+    @info("Constructing model...")
+    model = Construct_model(args) 
 
-	# Load model and datasets onto GPU, if enabled
-	train_set = gpu.(train_set)
-	test_set = gpu.(test_set)
-	model = gpu(model)
+    # Load model and datasets onto GPU, if enabled
+    train_set = gpu.(train_set)
+    test_set = gpu.(test_set)
+    model = gpu(model)
     
-	# Make sure our model is nicely precompiled before starting our training loop
-	model(train_set[1][1])
+    # Make sure our model is nicely precompiled before starting our training loop
+    model(train_set[1][1])
 
-	# `loss()` calculates the crossentropy loss between our prediction `y_hat`
-	# (calculated from `model(x)`) and the ground truth `y`.  We augment the data
-	# a bit, adding gaussian random noise to our image to make it more robust.
-	function loss(x, y)    
-	    x̂ = augment(x)
-	    ŷ = model(x̂)
-	    return crossentropy(ŷ, y)
-	end
+    # `loss()` calculates the crossentropy loss between our prediction `y_hat`
+    # (calculated from `model(x)`) and the ground truth `y`.  We augment the data
+    # a bit, adding gaussian random noise to our image to make it more robust.
+    function loss(x, y)    
+        x̂ = augment(x)
+        ŷ = model(x̂)
+        return crossentropy(ŷ, y)
+    end
 	
-	# Train our model with the given training set using the ADAM optimizer and
-	# printing out performance against the test set as we go.
-	opt = ADAM(args.lr)
+    # Train our model with the given training set using the ADAM optimizer and
+    # printing out performance against the test set as we go.
+    opt = ADAM(args.lr)
 	
-	@info("Beginning training loop...")
-	best_acc = 0.0
-	last_improvement = 0
-	for epoch_idx in 1:args.epochs
-	    # Train for a single epoch
-	    Flux.train!(loss, params(model), train_set, opt)
+    @info("Beginning training loop...")
+    best_acc = 0.0
+    last_improvement = 0
+    for epoch_idx in 1:args.epochs
+        # Train for a single epoch
+        Flux.train!(loss, params(model), train_set, opt)
 	    
-		# Terminate on NaN
-	    if anynan(paramvec(model))
-	        @error "NaN params"
-	        break
-	    end
+        # Terminate on NaN
+        if anynan(paramvec(model))
+            @error "NaN params"
+            break
+        end
 	
-    	# Calculate accuracy:
-	    acc = accuracy(test_set..., model)
+        # Calculate accuracy:
+        acc = accuracy(test_set..., model)
 		
-	    @info(@sprintf("[%d]: Test accuracy: %.4f", epoch_idx, acc))
+        @info(@sprintf("[%d]: Test accuracy: %.4f", epoch_idx, acc))
 	
-	    # If our accuracy is good enough, quit out.
-	    if acc >= 0.999
-	        @info(" -> Early-exiting: We reached our target accuracy of 99.9%")
-	        break
-	    end
+        # If our accuracy is good enough, quit out.
+        if acc >= 0.999
+            @info(" -> Early-exiting: We reached our target accuracy of 99.9%")
+            break
+        end
 	
-	    # If this is the best accuracy we've seen so far, save the model out
-	    if acc >= best_acc
-	        @info(" -> New best accuracy! Saving model out to mnist_conv.bson")
-	        BSON.@save joinpath(args.savepath, "mnist_conv.bson") params=cpu.(params(model)) epoch_idx acc
-	        best_acc = acc
-	        last_improvement = epoch_idx
-	    end
+        # If this is the best accuracy we've seen so far, save the model out
+        if acc >= best_acc
+            @info(" -> New best accuracy! Saving model out to mnist_conv.bson")
+            BSON.@save joinpath(args.savepath, "mnist_conv.bson") params=cpu.(params(model)) epoch_idx acc
+            best_acc = acc
+            last_improvement = epoch_idx
+        end
 	
-	    # If we haven't seen improvement in 5 epochs, drop our learning rate:
-	    if epoch_idx - last_improvement >= 5 && opt.eta > 1e-6
-	        opt.eta /= 10.0
-	        @warn(" -> Haven't improved in a while, dropping learning rate to $(opt.eta)!")
+        # If we haven't seen improvement in 5 epochs, drop our learning rate:
+        if epoch_idx - last_improvement >= 5 && opt.eta > 1e-6
+            opt.eta /= 10.0
+            @warn(" -> Haven't improved in a while, dropping learning rate to $(opt.eta)!")
+   
+            # After dropping learning rate, give it a few epochs to improve
+            last_improvement = epoch_idx
+        end
 	
-	        # After dropping learning rate, give it a few epochs to improve
-	        last_improvement = epoch_idx
-	    end
-	
-	    if epoch_idx - last_improvement >= 10
-	        @warn(" -> We're calling this converged.")
-	        break
-	    end
-	end
+        if epoch_idx - last_improvement >= 10
+            @warn(" -> We're calling this converged.")
+            break
+        end
+    end
 end
 
 # Testing the model, from saved model
@@ -176,17 +176,18 @@ function test(; kws...)
     # Loading the test data
     _,test_set = get_processed_data(args)
     
-	# Re-constructing the model with random initial weights
+    # Re-constructing the model with random initial weights
     model = Construct_model(args)
     
-	# Loading the saved parameters
+    # Loading the saved parameters
     BSON.@load joinpath(args.savepath, "mnist_conv.bson") params
     
-	# Loading parameters onto the model
+    # Loading parameters onto the model
     Flux.loadparams!(model, params)
     
-	
-    print(accuracy(test_set...,model))
+    test_set = gpu.(test_set)
+    model = gpu(model)
+    @show accuracy(test_set...,model)
 end
 
 cd(@__DIR__) 
