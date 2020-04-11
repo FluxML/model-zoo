@@ -1,4 +1,5 @@
-image: julia
+image:
+  file: .gitpod.Dockerfile
 
 vscode:
   extensions:
