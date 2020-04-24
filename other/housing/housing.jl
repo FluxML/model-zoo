@@ -1,5 +1,6 @@
-using Flux.Tracker, Statistics, DelimitedFiles
-using Flux.Tracker: Params, gradient, update!
+using Flux, Statistics, DelimitedFiles
+using Flux.Zygote: Params, gradient
+using Flux.Optimise: update!
 using DelimitedFiles, Statistics
 using Flux: gpu
 
@@ -33,15 +34,15 @@ x_test = x[:,split_index+1:size(x,2)]
 y_test = y[:,split_index+1:size(x,2)]
 
 # The model
-W = param(randn(1,13)/10) |> gpu
-b = param([0.]) |> gpu
+W = randn(1,13)/10 |> gpu
+b = [0.] |> gpu
 
 predict(x) = W*x .+ b
 meansquarederror(ŷ, y) = sum((ŷ .- y).^2)/size(y, 2)
 loss(x, y) = meansquarederror(predict(x), y)
 
 η = 0.1
-θ = Params([W, b])
+θ = Flux.params(W, b)
 
 for i = 1:10
   g = gradient(() -> loss(x_train, y_train), θ)

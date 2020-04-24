@@ -1,13 +1,9 @@
 using Flux, Flux.Data.MNIST, Statistics
 using Flux: onehotbatch, onecold, crossentropy, throttle
 using Base.Iterators: repeated
-using CUDAapi
-if has_cuda()
-    @info "CUDA is on"
-    import CuArrays
-    CuArrays.allowscalar(false)
-end
 
+# Disallow scalar indexing on GPU, because that is slow
+Flux.CuArrays.functional() && Flux.CuArrays.allowscalar(false)
 
 # Classify MNIST digits with a simple multi-layer-perceptron
 

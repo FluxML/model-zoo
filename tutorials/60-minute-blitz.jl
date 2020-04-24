@@ -177,7 +177,7 @@ x = rand(5)
 
 y(x) = sum(W * x .+ b)
 
-grads = gradient(()->y(x), params([W, b]))
+grads = gradient(()->y(x), params(W, b))
 
 grads[W], grads[b]
 
@@ -273,9 +273,9 @@ Flux.train!(loss, params(m), [(data,labels)], opt)
 # It also has a number of dataloaders that come in handy to load datasets.
 
 using Statistics
-#using CuArrays
-using Zygote
+using Flux.Zygote
 using Flux, Flux.Optimise
+# using Flux.CuArrays
 using Metalhead, Images
 using Metalhead: trainimgs
 using Images.ImageCore
@@ -313,7 +313,7 @@ imgs = [getarray(X[i].img) for i in 1:50000]
 # (1000 in this case). `cat` is a shorthand for concatenating multi-dimensional arrays along
 # any dimension.
 
-train = ([(cat(imgs[i]..., dims = 4), labels[:,i]) for i in partition(1:49000, 1000)]) |> gpu
+train = ([(cat(imgs[i]..., dims = 4), labels[:,i]) for i in partition(1:49000, 1000)]) .|> gpu
 valset = 49001:50000
 valX = cat(imgs[valset]..., dims = 4) |> gpu
 valY = labels[:, valset] |> gpu
