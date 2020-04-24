@@ -273,9 +273,8 @@ Flux.train!(loss, params(m), [(data,labels)], opt)
 # It also has a number of dataloaders that come in handy to load datasets.
 
 using Statistics
-using Flux.Zygote
+using Zygote
 using Flux, Flux.Optimise
-# using Flux.CuArrays
 using Metalhead, Images
 using Metalhead: trainimgs
 using Images.ImageCore
