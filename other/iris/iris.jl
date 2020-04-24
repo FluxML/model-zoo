@@ -1,5 +1,5 @@
 using Flux
-using Flux: logitcrossentropy,logsoftmax, normalise, onecold, onehotbatch, softmax
+using Flux: logitcrossentropy, normalise, onecold, onehotbatch
 using Statistics: mean
 using Parameters: @with_kw
 
@@ -53,8 +53,7 @@ function train(; kws...)
 
     # Declare model taking 4 features as inputs and outputting 3 probabiltiies, 
     # one for each species of iris.
-    model = Chain(
-             Dense(4, 3))
+    model = Chain(Dense(4, 3))
 	
     # Defining loss function to be used in training
     # For numerical stability, we use here logitcrossentropy

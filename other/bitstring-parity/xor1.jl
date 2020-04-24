@@ -1,6 +1,6 @@
 include("data.jl")
 using Flux, Statistics
-using Flux: onehot, onehotbatch, throttle, crossentropy, reset!, onecold
+using Flux: onehot, onehotbatch, throttle, logitcrossentropy, reset!, onecold
 using Parameters: @with_kw
 
 @with_kw mutable struct Args
@@ -27,7 +27,7 @@ end
 function model(x, scanner, encoder)
     state = scanner.(x.data)[end]
     reset!(scanner)
-    softmax(encoder(state))
+    encoder(state)
 end
 
 function train(; kws...)
@@ -41,7 +41,7 @@ function train(; kws...)
     scanner,encoder = Construct_Model()
    
     
-    loss(x, y) = crossentropy(model(x, scanner, encoder), y)
+    loss(x, y) = logitcrossentropy(model(x, scanner, encoder), y)
     batch_loss(data) = mean(loss(d...) for d in data)
 
     opt = ADAM(args.lr)

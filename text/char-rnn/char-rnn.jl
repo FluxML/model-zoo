@@ -1,5 +1,5 @@
 using Flux
-using Flux: onehot, chunk, batchseq, throttle, crossentropy
+using Flux: onehot, chunk, batchseq, throttle, logitcrossentropy
 using StatsBase: wsample
 using Base.Iterators: partition
 using Parameters: @with_kw
@@ -30,7 +30,7 @@ function getData(args)
     # Partitioning the data as sequence of batches, which are then collected as array of batches
     Xs = collect(partition(batchseq(chunk(text, args.nbatch), stop), args.seqlen))
     Ys = collect(partition(batchseq(chunk(text[2:end], args.nbatch), stop), args.seqlen))
-    return Xs, Ys, N
+    return Xs, Ys, N, alphabet
 end
 
 # Function to construct model
@@ -38,8 +38,7 @@ function Construct_model(N)
     return Chain(
             LSTM(N, 128),
             LSTM(128, 128),
-            Dense(128, N),
-            softmax)
+            Dense(128, N))
 end 
 
 function train(; kws...)
@@ -47,14 +46,13 @@ function train(; kws...)
     args = Args(; kws...)
     
     # Get Data
-    Xs, Ys, N = getData(args)
+    Xs, Ys, N, alphabet = getData(args)
 
     # Constructing Model
     m = Construct_model(N)
-    m = gpu(m)
 
     function loss(xs, ys)
-      l = sum(crossentropy.(m.(gpu.(xs)), gpu.(ys)))
+      l = sum(logitcrossentropy.(m.(xs), ys))
       return l
     end
     
@@ -64,7 +62,7 @@ function train(; kws...)
     evalcb = () -> @show loss(tx, ty)
 
     Flux.train!(loss, params(m), zip(Xs, Ys), opt, cb = throttle(evalcb, args.throttle))
-    return m
+    return m, alphabet
 end
 
 # Sampling
@@ -75,11 +73,11 @@ function sample(m, alphabet, len)
     c = rand(alphabet)
     for i = 1:len
         write(buf, c)
-        c = wsample(alphabet, m(onehot(c, alphabet)))
+        c = wsample(alphabet, softmax(m(onehot(c, alphabet))))
     end
     return String(take!(buf))
 end
 
 cd(@__DIR__)
-m = train()
+m, alphabet = train()
 sample(m, alphabet, 1000) |> println

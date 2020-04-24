@@ -1,6 +1,6 @@
 # Inspired by "Fizz Buzz in Tensorflow" blog by Joel Grus
 # http://joelgrus.com/2016/05/23/fizz-buzz-in-tensorflow/
-using Flux: Chain, Dense, params, crossentropy, onehotbatch, ADAM, train!, softmax
+using Flux: Chain, Dense, params, logitcrossentropy, onehotbatch, ADAM, train!, softmax
 using Test
 
 # Data preparation
@@ -43,8 +43,8 @@ function train()
     X, y = getData()
 
     # Model	
-    m = Chain(Dense(3, 10), Dense(10, 4), softmax)
-    loss(x, y) = crossentropy(m(x), y)
+    m = Chain(Dense(3, 10), Dense(10, 4))
+    loss(x, y) = logitcrossentropy(m(x), y)
 
     # Helpers
     deepbuzz(x) = (a = argmax(m(features(x))); a == 4 ? x : LABELS[a])	

@@ -1,6 +1,6 @@
 # Based on https://arxiv.org/abs/1409.0473
 include("0-data.jl")
-using Flux: flip, crossentropy, reset!, throttle
+using Flux: flip, logitcrossentropy, reset!, throttle
 using Parameters: @with_kw
 using StatsBase: wsample
 
@@ -42,7 +42,7 @@ function decode1(tokens, phone, state)
     weights = asoftmax([align(recur.state[2], t, alignnet) for t in tokens])
     context = sum(map((a, b) -> a .* b, weights, tokens))
     y = recur(vcat(Float32.(phone), context))
-    return softmax(toalpha(y))
+    return toalpha(y)
 end
 
 decode(tokens, phones, state) = [decode1(tokens, phone, state) for phone in phones]
@@ -59,7 +59,7 @@ function predict(s, state, encode, alphabet, phones)
     ts = encode(tokenise(s, alphabet))
     ps = Any[:start]
     for i = 1:50
-      dist = decode1(ts, onehot(ps[end], phones), state)
+      dist = softmax(decode1(ts, onehot(ps[end], phones), state))
       next = wsample(phones, vec(dist))
       next == :end && break
       push!(ps, next)
@@ -79,7 +79,7 @@ function train(; kws...)
     @info("Constructing Model...")
     state, encode = Construct_model(args)
 
-    loss(x, yo, y) = sum(crossentropy.(model(x, yo, state, encode), y))
+    loss(x, yo, y) = sum(logitcrossentropy.(model(x, yo, state, encode), y))
     evalcb = () -> @show loss(data[500]...)
     opt = ADAM(args.lr)
     @info("Training...")

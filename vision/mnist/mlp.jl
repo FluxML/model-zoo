@@ -1,6 +1,6 @@
 using Flux, Statistics
 using Flux.Data: DataLoader
-using Flux: onehotbatch, onecold, crossentropy, throttle, @epochs
+using Flux: onehotbatch, onecold, logitcrossentropy, throttle, @epochs
 using Base.Iterators: repeated
 using Parameters: @with_kw
 using CUDAapi
@@ -40,14 +40,13 @@ end
 function model(; imgsize=(28,28,1), nclasses=10)
     return Chain(
  	    Dense(prod(imgsize), 32, relu),
-            Dense(32, nclasses),
-  	    softmax)
+            Dense(32, nclasses))
 end
 
 function loss_all(dataloader, model)
     l = 0f0
     for (x,y) in dataloader
-        l += crossentropy(model(x), y)
+        l += logitcrossentropy(model(x), y)
     end
     l/length(dataloader)
 end
@@ -72,7 +71,7 @@ function train(; kws...)
     train_data = args.device.(train_data)
     test_data = args.device.(train_data)
     m = args.device(m)
-    loss(x,y) = crossentropy(m(x), y)
+    loss(x,y) = logitcrossentropy(m(x), y)
     
     ## Training
     evalcb = () -> @show(loss_all(train_data, m))

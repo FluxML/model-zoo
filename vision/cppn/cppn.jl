@@ -5,12 +5,12 @@ using Parameters: @with_kw
 
 # set parameters
 @with_kw mutable struct Args
-	z_dim::Int = 2		# Dim of Latent Vector
-	x_dim::Int = 512	# X-Dimension of Image
-	y_dim::Int = 512	# Y-Dimension of Image
-	N::Int = 14			#
-	hidden::Int = 9		# Number of hidden layers in the image
-	batch_size::Int = 1024	# Batch Size for prediction
+    z_dim::Int = 2		# Dim of Latent Vector
+    x_dim::Int = 512	# X-Dimension of Image
+    y_dim::Int = 512	# Y-Dimension of Image
+    N::Int = 14			#
+    hidden::Int = 9		# Number of hidden layers in the image
+    batch_size::Int = 1024	# Batch Size for prediction
 end
 
 # cast 0:x-1 to -0.5:0.5
@@ -22,7 +22,7 @@ function getData(args)
     ys = repeat(ys, outer=(args.x_dim))
 	# Radius term for each point of input
     rs = sqrt.(xs.^2 + ys.^2)
-	return xs,ys,rs
+    return xs,ys,rs
 end
 
 #Definition for each individual layer
@@ -71,12 +71,12 @@ function saveImg(z, model, args, image_path=joinpath(dirname(@__FILE__),"sample.
 end
 
 function generateImg(; kws...)
-	args = Args(; kws...)
+    args = Args(; kws...)
 	
-	model = Construct_model(args)
+    model = Construct_model(args)
 	
-	#Saving image as "sample.png"
-	saveImg(rand(args.z_dim), model, args)
+    #Saving image as "sample.png"
+    saveImg(rand(args.z_dim), model, args)
 end
 
 cd(@__DIR__)

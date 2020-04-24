@@ -7,7 +7,7 @@
 # accuracy after training for approximately 20 epochs.
 
 using Flux, Flux.Data.MNIST, Statistics
-using Flux: onehotbatch, onecold, crossentropy
+using Flux: onehotbatch, onecold, logitcrossentropy
 using Base.Iterators: partition
 using Printf, BSON
 using Parameters: @with_kw
@@ -71,10 +71,7 @@ function Construct_model(args; imgsize = (28,28,1), nclasses = 10)
     # Reshape 3d tensor into a 2d one, at this point it should be (3, 3, 32, N)
     # which is where we get the 288 in the `Dense` layer below:
     x -> reshape(x, :, size(x, 4)),
-    Dense(prod(CNN_output_size), 10),
-
-    # Finally, softmax to get nice probabilities
-    softmax)
+    Dense(prod(CNN_output_size), 10))
 end
 
 # We augment `x` a little bit here, adding in random noise. 
@@ -95,8 +92,7 @@ function train(; kws...)
     train_set, test_set = get_processed_data(args)
 
     # Define our model.  We will use a simple convolutional architecture with
-    # three iterations of Conv -> ReLU -> MaxPool, followed by a final Dense
-    # layer that feeds into a softmax probability output.
+    # three iterations of Conv -> ReLU -> MaxPool, followed by a final Dense layer.
     @info("Constructing model...")
     model = Construct_model(args) 
 
@@ -114,7 +110,7 @@ function train(; kws...)
     function loss(x, y)    
         x̂ = augment(x)
         ŷ = model(x̂)
-        return crossentropy(ŷ, y)
+        return logitcrossentropy(ŷ, y)
     end
 	
     # Train our model with the given training set using the ADAM optimizer and

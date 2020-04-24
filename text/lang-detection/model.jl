@@ -1,5 +1,5 @@
 using Flux
-using Flux: onehot, onehotbatch, crossentropy, reset!, throttle
+using Flux: onehot, onehotbatch, logitcrossentropy, reset!, throttle
 using Statistics: mean
 using Random
 using Unicode
@@ -48,7 +48,7 @@ end
 function model(x, scanner, encoder)
     state = scanner.(x.data)[end]
     reset!(scanner)
-    softmax(encoder(state))
+    encoder(state)
 end
 
 function train(; kws...)
@@ -60,7 +60,7 @@ function train(; kws...)
     @info("Constructing Model...")
     scanner, encoder = Construct_Model(args)
 
-    loss(x, y) = crossentropy(model(x, scanner, encoder), y)
+    loss(x, y) = logitcrossentropy(model(x, scanner, encoder), y)
 
     testloss() = mean(loss(t...) for t in test_data)
     

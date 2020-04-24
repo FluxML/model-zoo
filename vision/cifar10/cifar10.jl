@@ -1,5 +1,5 @@
 using Flux, Metalhead, Statistics
-using Flux: onehotbatch, onecold, crossentropy, throttle
+using Flux: onehotbatch, onecold, logitcrossentropy, throttle
 using Metalhead: trainimgs
 using Parameters: @with_kw
 using Images: channelview
@@ -95,8 +95,7 @@ function vgg16()
             Dropout(0.5),
             Dense(4096, 4096, relu),
             Dropout(0.5),
-            Dense(4096, 10),
-            softmax) |> gpu
+            Dense(4096, 10)) |> gpu
 end
 
 function vgg19()
@@ -140,8 +139,7 @@ function vgg19()
             Dropout(0.5),
             Dense(4096, 4096, relu),
             Dropout(0.5),
-            Dense(4096, 10),
-            softmax) |> gpu
+            Dense(4096, 10)) |> gpu
 end
 
 accuracy(x, y, m) = mean(onecold(cpu(m(x)), 1:10) .== onecold(cpu(y), 1:10))
@@ -157,7 +155,7 @@ function train(; kws...)
     # Defining the loss and accuracy functions
     m = vgg16()
 
-    loss(x, y) = crossentropy(m(x), y)
+    loss(x, y) = logitcrossentropy(m(x), y)
 
     ## Training
 
