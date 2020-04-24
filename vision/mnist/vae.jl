@@ -63,5 +63,5 @@ using Images
 img(x) = Gray.(reshape(x, 28, 28))
 
 cd(@__DIR__)
-sample = hcat(img.([modelsample() for i = 1:10])...)
+sample = hcat(img.([float.(modelsample()) for i = 1:10])...)
 save("sample.png", sample)

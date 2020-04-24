@@ -43,7 +43,7 @@ opt = ADAM()
 deepbuzz(x) = (a = argmax(m(features(x))); a == 4 ? x : LABELS[a])
 
 function monitor(e)
-    print("epoch $(lpad(e, 4)): loss = $(round(loss(X,y).data; digits=4)) | ")
+    print("epoch $(lpad(e, 4)): loss = $(round(loss(X,y); digits=4)) | ")
     @show deepbuzz.([3, 5, 15, 98])
 end
 

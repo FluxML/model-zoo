@@ -1,12 +1,9 @@
 using Flux, Flux.Data.MNIST
 using Flux: @epochs, onehotbatch, mse, throttle
 using Base.Iterators: partition
-using CUDAapi
-if has_cuda()
-    @info "CUDA is on"
-    import CuArrays
-    CuArrays.allowscalar(false)
-end
+
+# Disallow scalar indexing on GPU, because that is slow
+Flux.CuArrays.functional() && Flux.CuArrays.allowscalar(false)
 
 # Encode MNIST images as compressed vectors that can later be decoded back into
 # images.

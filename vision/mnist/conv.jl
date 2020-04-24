@@ -10,12 +10,9 @@ using Flux, Flux.Data.MNIST, Statistics
 using Flux: onehotbatch, onecold, crossentropy
 using Base.Iterators: repeated, partition
 using Printf, BSON
-using CUDAapi
-if has_cuda()
-    @info "CUDA is on"
-    import CuArrays
-    CuArrays.allowscalar(false)
-end
+
+# Disallow scalar indexing on GPU, because that is slow
+Flux.CuArrays.functional() && Flux.CuArrays.allowscalar(false)
 
 # Load labels and images from Flux.Data.MNIST
 @info("Loading data set")
