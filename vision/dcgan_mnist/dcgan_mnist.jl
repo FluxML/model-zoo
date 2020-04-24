@@ -29,7 +29,7 @@ function create_output_image(gen, fixed_noise, hparams)
     return image_array
 end
 
-function Discriminaror()
+function Discriminator()
     return Chain(
             Conv((4, 4), 1 => 64; stride = 2, pad = 1),
             x->leakyrelu.(x, 0.2f0),
