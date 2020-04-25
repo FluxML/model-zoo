@@ -160,7 +160,7 @@ function train(; kws...)
         @info "Image saved: $(image_path)"
     end
 
-    # save mos
+    # save model
     model_path = joinpath(args.save_path, "model.bson") 
     let encoder = cpu(encoder), decoder = cpu(decoder), args=struct2dict(args)
         BSON.@save model_path encoder decoder args
