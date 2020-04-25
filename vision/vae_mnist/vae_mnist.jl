@@ -22,8 +22,7 @@ using Random
 # load MNIST images and return loader
 function get_data(batch_size)
     xtrain, ytrain = MLDatasets.MNIST.traindata(Float32)
-    # MLDatasets uses HWCN format, Flux works with WHCN 
-    xtrain = reshape(permutedims(xtrain, (2, 1, 3)), 28^2, :)
+    xtrain = reshape(xtrain, 28^2, :)
     DataLoader(xtrain, ytrain, batchsize=batch_size, shuffle=true)
 end
 
@@ -67,7 +66,9 @@ function model_loss(encoder, decoder, λ, x, device)
     -logp_x_z + kl_q_p + reg
 end
 
-convert_to_image(x, y_size) = Gray.(vcat(reshape.(chunk(x |> cpu, y_size), 28, :)...))
+function convert_to_image(x, y_size)
+    Gray.(permutedims(vcat(reshape.(chunk(x |> cpu, y_size), 28, :)...), (2, 1)))
+end
 
 # arguments for the `train` function 
 @with_kw mutable struct Args
