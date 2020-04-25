@@ -28,15 +28,10 @@ function aim(wind, target)
 end
 
 distance(wind, target) =
-  shoot(Tracker.collect([wind, aim(wind, target)...]))
+  shoot(collect([wind, aim(wind, target)...]))
 
 function loss(wind, target)
-  try
     (distance(wind, target) - target)^2
-  catch e
-    # Roots.jl sometimes give convergence errors, ignore them
-    param(0)
-  end
 end
 
 DIST  = (20, 100)	# Maximum target distance
