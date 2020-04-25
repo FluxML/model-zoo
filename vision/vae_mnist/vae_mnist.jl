@@ -9,7 +9,7 @@ using BSON
 using CUDAapi: has_cuda_gpu
 using DrWatson: struct2dict
 using Flux
-using Flux: binarycrossentropy, chunk
+using Flux: logitbinarycrossentropy, chunk
 using Flux.Data: DataLoader
 using Images
 using Logging: with_logger
@@ -44,7 +44,7 @@ end
 
 Decoder(input_dim, latent_dim, hidden_dim, device) = Chain(
     Dense(latent_dim, hidden_dim, tanh),
-    Dense(hidden_dim, input_dim, sigmoid)
+    Dense(hidden_dim, input_dim)
 ) |> device
 
 function reconstuct(encoder, decoder, x, device)
@@ -59,7 +59,7 @@ function model_loss(encoder, decoder, λ, x, device)
     # KL-divergence
     kl_q_p = 0.5f0 * sum(@. (exp(2f0 * logσ) + μ^2 -1f0 - 2f0 * logσ)) / len
 
-    logp_x_z = -sum(binarycrossentropy.(decoder_z, x)) / len
+    logp_x_z = -sum(logitbinarycrossentropy.(decoder_z, x)) / len
     # regularization
     reg = λ * sum(x->sum(x.^2), Flux.params(decoder))
     
@@ -67,7 +67,7 @@ function model_loss(encoder, decoder, λ, x, device)
 end
 
 function convert_to_image(x, y_size)
-    Gray.(permutedims(vcat(reshape.(chunk(x |> cpu, y_size), 28, :)...), (2, 1)))
+    Gray.(permutedims(vcat(reshape.(chunk(sigmoid.(x |> cpu), y_size), 28, :)...), (2, 1)))
 end
 
 # arguments for the `train` function 
