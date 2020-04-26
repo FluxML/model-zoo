@@ -81,11 +81,11 @@ p = [4.0, 1.0, 2.0, 0.4]
 
 # Loss function is the total squared error
 # (the number of points is constant - mean is not necessary)
-function loss_function()
-  prediction = DiffEqBase.concrete_solve(prob0, Tsit5(), u0, p;
+loss_function = function()
+    prediction = DiffEqBase.concrete_solve(prob0, Tsit5(), u0, p;
     sensealg = TrackerAdjoint(), saveat = 0.0:0.1:10.0)
 
-  # Calculate squared error
+    # Calculate squared error
   return sum(abs2, prediction - target_data)
 end
 
@@ -115,4 +115,4 @@ data = Iterators.repeated((), 1000)
 optimiser = Flux.ADAM(0.1)
 
 # train! is a function that hides some of the complexity of the library
-Flux.train!(loss_rd, p, data, optimiser; cb = callback)
+Flux.train!(loss_function, p, data, optimiser; cb = callback)
