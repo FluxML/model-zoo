@@ -1,8 +1,7 @@
 # WARNING:
 # ========
-# A previous version of this file was described in this blog post:
-# https://julialang.org/blog/2019/01/fluxdiffeq/
-# Since then, Flux has evolved and the code described in the post no longer works.
+# This blog post https://julialang.org/blog/2019/01/fluxdiffeq/ gives a high level
+# description of this file.
 
 # Many function calls are fully qualified. This is not necessary. The package name is
 # included to get a better sense of the role of the different packages.
@@ -64,20 +63,17 @@ plot(sol0)
 # Solve the ODE (again) and collect solutions at fixed intervals
 target_data = DiffEqBase.solve(prob0, Tsit5(), saveat = 0.1)
 rabbits = target_data[1, :]                     # vector of 101 data points
-wolves = target_data[2, :]                    # vector of 101 data points
+wolves  = target_data[2, :]                    # vector of 101 data points
 
 # Plot the data on top of the full solution
 t_steps = 0:0.1:10.0
 scatter!(t_steps, rabbits, color = [1], label = "rabbits")
-scatter!(t_steps, wolves, color = [2], label = "wolves")
+scatter!(t_steps, wolves,  color = [2], label = "wolves")
 
 
 ##
 ## Parameter optimisation
 ##
-
-# Vector of new parameters different from p0
-p = [4.0, 1.0, 2.0, 0.4]
 
 # Loss function is the total squared error
 # (the number of points is constant - mean is not necessary)
@@ -89,30 +85,42 @@ loss_function = function()
   return sum(abs2, prediction - target_data)
 end
 
-##
-## Optimmisation
-##
 
-# Optimize the parameters so the ODE's solution stays near 1
+# Callback function to observe training
+iter = 0
+callback = function ()
+  global iter += 1
+  if iter % 10 == 1
+    # Plot the training data
+    scatter(t_steps,  rabbits, color = [1], label = "rabbit data")
+    scatter!(t_steps, wolves,  color = [2], label = "wolves data")
 
-callback = function () # callback function to observe training
-  # Plot the training data
-  scatter(t_steps, rabbits, color = [1], label = "rabbit data")
-  scatter!(t_steps, wolves, color = [2], label = "wolves data")
-
-  # Use `remake` to re-create our `prob0` with current parameters `p`
-  remade_sol = DiffEqBase.solve(remake(prob0, p = p), Tsit5(), saveat = 0.1)
-  remade_rabbits = remade_sol[1, :]
-  remade_wolves = remade_sol[2, :]
-  plot!(t_steps, remade_rabbits, ylim = (0, 6), labels = "rabbit model", color = 1)
-  display(plot!(t_steps, remade_wolves, ylim = (0, 6), labels = "wolf model", color = 2))
+    # Use `remake` to re-create the original `prob0` with different current parameters `p`
+    remade_sol = DiffEqBase.solve(remake(prob0, p = p), Tsit5(), saveat = 0.1)
+    remade_rabbits = remade_sol[1, :]
+    remade_wolves  = remade_sol[2, :]
+    plot!(t_steps, remade_rabbits, ylim = (0, 6), labels = "rabbit model", color = 1)
+    display(plot!(t_steps, remade_wolves, ylim = (0, 6), labels = "wolf model", color = 2))
+  end
 end
+
+
+# Vector of new parameters different from p0
+p = [4.0, 1.0, 2.0, 0.4]
+ODEparams = Flux.params(p)
 
 # Display the ODE with the initial parameter values.
 callback()
 
-data = Iterators.repeated((), 1000)
+
+# The parameter `loss_data` in `train!` (below) contains a list of data that are provided
+# to the loss function. `train!`` works by iterating over that list. In our case, the
+# calculation of the loss function does not require any additional data.
+# Therefore `loss_data` is filled with a whole bunch of nothing.
+loss_data = Iterators.repeated((), 1000)
+
+# ADAM is a great default optimiser
 optimiser = Flux.ADAM(0.1)
 
 # train! is a function that hides some of the complexity of the library
-Flux.train!(loss_function, p, data, optimiser; cb = callback)
+Flux.train!(loss_function, ODEparams, loss_data, optimiser; cb = callback)
