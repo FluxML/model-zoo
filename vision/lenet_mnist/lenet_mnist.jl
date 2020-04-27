@@ -39,9 +39,8 @@ function get_data(args)
     xtrain, ytrain = MLDatasets.MNIST.traindata(Float32, dir=args.datapath)
     xtest, ytest = MLDatasets.MNIST.testdata(Float32, dir=args.datapath)
 
-    # MLDatasets uses HWCN format, Flux works with WHCN 
-    xtrain = permutedims(reshape(xtrain, 28, 28, 1, :), (2, 1, 3, 4))
-    xtest = permutedims(reshape(xtest, 28, 28, 1, :), (2, 1, 3, 4))
+    xtrain = reshape(xtrain, 28, 28, 1, :)
+    xtest = reshape(xtest, 28, 28, 1, :)
 
     ytrain, ytest = onehotbatch(ytrain, 0:9), onehotbatch(ytest, 0:9)
 

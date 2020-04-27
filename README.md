@@ -37,7 +37,7 @@ We welcome contributions of new models. They should be in a folder with a projec
     * [Simple multi-layer perceptron](vision/mnist/mlp.jl)
     * [Simple ConvNets](vision/mnist/conv.jl)
     * [Simple Auto-Encoder](vision/mnist/autoencoder.jl)
-    * [Variational Auto-Encoder](vision/mnist/vae.jl)
+    * [Variational Auto-Encoder](vision/vae_mnist/)
     * [Deep Convolutional Generative Adversarial Networks](vision/dcgan_mnist/dcgan_mnist.jl)
     * [LeNet](vision/lenet_mnist/lenet_mnist.jl)
   * [VGG 16/19 on CIFAR10](vision/cifar10)

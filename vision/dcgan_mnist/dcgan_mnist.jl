@@ -24,7 +24,7 @@ function create_output_image(gen, fixed_noise, hparams)
     @eval Flux.istraining() = false
     fake_images = @. cpu(gen(fixed_noise))
     @eval Flux.istraining() = true
-    image_array = dropdims(reduce(vcat, reduce.(hcat, partition(fake_images, hparams.output_y))); dims=(3, 4))
+    image_array = permutedims(dropdims(reduce(vcat, reduce.(hcat, partition(fake_images, hparams.output_y))); dims=(3, 4)), (2, 1))
     image_array = @. Gray(image_array + 1f0) / 2f0
     return image_array
 end
@@ -69,8 +69,8 @@ function train(; kws...)
 
     # Load MNIST dataset
     images, _ = MLDatasets.MNIST.traindata(Float32)
-    # Normalize to [-1, 1] and convert it to WHCN
-    image_tensor = permutedims(reshape(@.(2f0 * images - 1f0), 28, 28, 1, :), (2, 1, 3, 4))
+    # Normalize to [-1, 1]
+    image_tensor = reshape(@.(2f0 * images - 1f0), 28, 28, 1, :)
     # Partition into batches
     data = [image_tensor[:, :, :, r] |> gpu for r in partition(1:60000, hparams.batch_size)]
 
