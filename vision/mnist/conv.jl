@@ -69,7 +69,7 @@ function build_model(args; imgsize = (28,28,1), nclasses = 10)
     MaxPool((2,2)),
 
     # Reshape 3d tensor into a 2d one using `Flux.flatten`, at this point it should be (3, 3, 32, N)
-    x -> Flux.flatten(x),
+    flatten,
     Dense(prod(cnn_output_size), 10))
 end
 
