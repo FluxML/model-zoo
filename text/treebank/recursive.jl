@@ -15,12 +15,12 @@ function train(; kws...)
     args = Args(; kws...)
     # load data
     @info("Loading Data...")
-    train_data = getData(args)    
+    train_data = getdata(args)    
 
     @info("Constructing model....")
     embedding = param(randn(Float32, N, length(alphabet)))
 
-    W = Dense(2N, N, tanh)
+    W = Dense(2*N, N, tanh)
     combine(a, b) = W([a; b])
 
     sentiment = Chain(Dense(N, 5))

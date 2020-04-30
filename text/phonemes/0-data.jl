@@ -4,7 +4,7 @@ using Base.Iterators: partition
 
 tokenise(s, α) = [onehot(c, α) for c in s]
 
-function getData(args)
+function getdata(args)
     dict = cmudict()
     alphabet = [:end, CMUDict.alphabet()...]
     args.Nin = length(alphabet)

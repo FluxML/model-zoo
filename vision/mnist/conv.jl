@@ -21,6 +21,7 @@ end
 @with_kw mutable struct Args
     lr::Float64 = 3e-3
     epochs::Int = 20
+    batch_size = 128
     savepath::String = "./" 
 end
 
@@ -38,8 +39,7 @@ function get_processed_data(args)
     # Load labels and images from Flux.Data.MNIST
     train_labels = MNIST.labels()
     train_imgs = MNIST.images()
-    batch_size = 128
-    mb_idxs = partition(1:length(train_imgs), batch_size)
+    mb_idxs = partition(1:length(train_imgs), args.batch_size)
     train_set = [make_minibatch(train_imgs, train_labels, i) for i in mb_idxs] 
     
     # Prepare test set as one giant minibatch:
@@ -51,9 +51,9 @@ function get_processed_data(args)
 
 end
 
-# Construct model
-function Construct_model(args; imgsize = (28,28,1), nclasses = 10)
-    CNN_output_size = Int.(floor.([imgsize[1]/8,imgsize[2]/8,32]))	
+# Build model
+function build_model(args; imgsize = (28,28,1), nclasses = 10)
+    cnn_output_size = Int.(floor.([imgsize[1]/8,imgsize[2]/8,32]))	
 
     return Chain(
     # First convolution, operating upon a 28x28 image
@@ -68,10 +68,9 @@ function Construct_model(args; imgsize = (28,28,1), nclasses = 10)
     Conv((3, 3), 32=>32, pad=(1,1), relu),
     MaxPool((2,2)),
 
-    # Reshape 3d tensor into a 2d one, at this point it should be (3, 3, 32, N)
-    # which is where we get the 288 in the `Dense` layer below:
-    x -> reshape(x, :, size(x, 4)),
-    Dense(prod(CNN_output_size), 10))
+    # Reshape 3d tensor into a 2d one using `Flux.flatten`, at this point it should be (3, 3, 32, N)
+    x -> Flux.flatten(x),
+    Dense(prod(cnn_output_size), 10))
 end
 
 # We augment `x` a little bit here, adding in random noise. 
@@ -93,8 +92,8 @@ function train(; kws...)
 
     # Define our model.  We will use a simple convolutional architecture with
     # three iterations of Conv -> ReLU -> MaxPool, followed by a final Dense layer.
-    @info("Constructing model...")
-    model = Construct_model(args) 
+    @info("Building model...")
+    model = build_model(args) 
 
     # Load model and datasets onto GPU, if enabled
     train_set = gpu.(train_set)
@@ -172,7 +171,7 @@ function test(; kws...)
     _,test_set = get_processed_data(args)
     
     # Re-constructing the model with random initial weights
-    model = Construct_model(args)
+    model = build_model(args)
     
     # Loading the saved parameters
     BSON.@load joinpath(args.savepath, "mnist_conv.bson") params

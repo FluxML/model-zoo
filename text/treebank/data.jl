@@ -3,7 +3,7 @@ using Flux: onehot
 using Flux.Data.Sentiment
 using Flux.Data: Tree, leaves
 
-function getData()
+function getdata()
     traintrees = Sentiment.train()
 
     # Get the raw labels and phrases as separate trees.

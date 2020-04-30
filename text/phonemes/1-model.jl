@@ -12,7 +12,7 @@ using StatsBase: wsample
     throttle::Int = 30      # throttle timeout
 end
 
-function Construct_model(args)
+function build_model(args)
     # A recurrent model which takes a token and returns a context-dependent
     # annotation.
     forward  = LSTM(args.Nin, args.Nh÷2)
@@ -72,12 +72,12 @@ function train(; kws...)
     # Initialize Hyperparameters
     args = Args(; kws...)
     @info("Loading Data...")
-    data,alphabet,phones = getData(args)
+    data,alphabet,phones = getdata(args)
 
     # The full model
     # state = (forward, backward, alignnet, recur, toalpha)
     @info("Constructing Model...")
-    state, encode = Construct_model(args)
+    state, encode = build_model(args)
 
     loss(x, yo, y) = sum(logitcrossentropy.(model(x, yo, state, encode), y))
     evalcb = () -> @show loss(data[500]...)

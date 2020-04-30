@@ -12,7 +12,7 @@ using Parameters: @with_kw
     throttle::Int = 30	# Throttle timeout
 end
 
-function getData(args)
+function getdata(args)
     # Download the data if not downloaded as 'input.txt'
     isfile("input.txt") ||
         download("https://cs.stanford.edu/people/karpathy/char-rnn/shakespeare_input.txt","input.txt")
@@ -35,7 +35,7 @@ function getData(args)
 end
 
 # Function to construct model
-function Construct_model(N)
+function build_model(N)
     return Chain(
             LSTM(N, 128),
             LSTM(128, 128),
@@ -47,10 +47,10 @@ function train(; kws...)
     args = Args(; kws...)
     
     # Get Data
-    Xs, Ys, N, alphabet = getData(args)
+    Xs, Ys, N, alphabet = getdata(args)
 
     # Constructing Model
-    m = Construct_model(N)
+    m = build_model(N)
 
     function loss(xs, ys)
       l = sum(logitcrossentropy.(m.(xs), ys))

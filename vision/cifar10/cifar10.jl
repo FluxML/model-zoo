@@ -1,5 +1,5 @@
 using Flux, Metalhead, Statistics
-using Flux: onehotbatch, onecold, logitcrossentropy, throttle
+using Flux: onehotbatch, onecold, logitcrossentropy, throttle, flatten
 using Metalhead: trainimgs
 using Parameters: @with_kw
 using Images: channelview
@@ -90,7 +90,7 @@ function vgg16()
             Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
             BatchNorm(512),
             MaxPool((2,2)),
-            x -> reshape(x, :, size(x, 4)),
+            flatten,
             Dense(512, 4096, relu),
             Dropout(0.5),
             Dense(4096, 4096, relu),
@@ -134,7 +134,7 @@ function vgg19()
             BatchNorm(512),
             Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
             MaxPool((2,2)),
-            x -> reshape(x, :, size(x, 4)),
+            flatten,
             Dense(512, 4096, relu),
             Dropout(0.5),
             Dense(4096, 4096, relu),
@@ -158,7 +158,6 @@ function train(; kws...)
     loss(x, y) = logitcrossentropy(m(x), y)
 
     ## Training
-
     # Defining the callback and the optimizer
     evalcb = throttle(() -> @show(loss(val...)), args.throttle)
     opt = ADAM(args.lr)

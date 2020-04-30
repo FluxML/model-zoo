@@ -25,7 +25,7 @@ const LABELS = ["fizz", "buzz", "fizzbuzz", "else"];
 features(x) = float.([x % 3, x % 5, x % 15])
 features(x::AbstractArray) = hcat(features.(x)...)
 
-function getData()
+function getdata()
     
     @test fizzbuzz.([3, 5, 15, 98]) == LABELS
     
@@ -40,7 +40,7 @@ end
 function train()
 
     # Get Data
-    X, y = getData()
+    X, y = getdata()
 
     # Model	
     m = Chain(Dense(3, 10), Dense(10, 4))

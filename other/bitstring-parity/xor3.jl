@@ -11,7 +11,7 @@ using Parameters: @with_kw
     throttle::Int = 10    # Throttle timeout
 end
 
-function getData(args)
+function getdata(args)
     # training data of bit strings from length 2 to 50
     train = gendata(args.train_len, 1:50)
     # validation data of bit strings of length 50
@@ -19,7 +19,7 @@ function getData(args)
     return train, val
 end
 
-function Construct_Model()
+function build_model()
     scanner = LSTM(length(alphabet), 20)
     encoder = Dense(20, length(alphabet))
     return scanner, encoder
@@ -36,10 +36,10 @@ function train(; kws...)
     args = Args(; kws...)
     
     # Load Data 
-    train_data, val_data = getData(args)
+    train_data, val_data = getdata(args)
 
     @info("Constructing Model...")
-    scanner,encoder = Construct_Model()
+    scanner,encoder = build_model()
    
     loss(x, y) = logitcrossentropy(model(x, scanner, encoder), y)
     batch_loss(data) = mean(loss(d...) for d in data)

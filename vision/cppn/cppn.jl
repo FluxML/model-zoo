@@ -16,7 +16,7 @@ end
 # cast 0:x-1 to -0.5:0.5
 cast(x) = [range(-0.5, stop=0.5, step=1/(x - 1))...]
 
-function getData(args)
+function getdata(args)
     xs, ys = cast(args.x_dim), cast(args.y_dim)
     xs = repeat(xs, inner=(args.y_dim))
     ys = repeat(ys, outer=(args.x_dim))
@@ -29,7 +29,7 @@ end
 # sample weigths from a gaussian distribution
 unit(args, in=args.N, out=args.N, f=tanh) = Dense(in, out, f, initW=randn)
 
-function Construct_model(args)
+function build_model(args)
     # input -> [x, y, r, z...]
     layers = Any[unit(args, 3 + args.z_dim)]
     for i=1:args.hidden
@@ -49,35 +49,35 @@ function batch(arr, s)
     batches
 end
 
-function getImage(z, model, args) 
+function get_image(z, model, args) 
     n = args.x_dim * args.y_dim   
     z = repeat(reshape(z, 1, args.z_dim), outer=(n, 1))
-	xs, ys, rs = getData(args)
+    xs, ys, rs = getdata(args)
     coords = hcat(xs, ys, rs, z)'
     
     coords = batch(coords, args.batch_size)
     
-	# Pixel value at a position x is defined as output of model at that point 
+    # Pixel value at a position x is defined as output of model at that point 
     getColorAt(x) = model(x)
 
     pixels = [Gray.(hcat(getColorAt.(coords)...))...]
     reshape(pixels, args.y_dim, args.x_dim)
 end
 
-function saveImg(z, model, args, image_path=joinpath(dirname(@__FILE__),"sample.png"))
-    imgg = getImage(z, model, args)
+function save_img(z, model, args, image_path=joinpath(dirname(@__FILE__),"sample.png"))
+    imgg = get_image(z, model, args)
     save(image_path, imgg)
     imgg
 end
 
-function generateImg(; kws...)
+function generate_img(; kws...)
     args = Args(; kws...)
 	
-    model = Construct_model(args)
+    model = build_model(args)
 	
     #Saving image as "sample.png"
-    saveImg(rand(args.z_dim), model, args)
+    save_img(rand(args.z_dim), model, args)
 end
 
 cd(@__DIR__)
-generateImg()
+generate_img()

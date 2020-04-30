@@ -39,7 +39,7 @@ function get_processed_data(args)
     return train, test
 end
 
-function Construct_Model(args)
+function build_model(args)
     scanner = Chain(Dense(args.alphabet_len, args.N, σ), LSTM(args.N, args.N))
     encoder = Dense(args.N, args.langs_len)
     return scanner, encoder
@@ -58,7 +58,7 @@ function train(; kws...)
     train_data, test_data = get_processed_data(args)
 
     @info("Constructing Model...")
-    scanner, encoder = Construct_Model(args)
+    scanner, encoder = build_model(args)
 
     loss(x, y) = logitcrossentropy(model(x, scanner, encoder), y)
     testloss() = mean(loss(t...) for t in test_data)

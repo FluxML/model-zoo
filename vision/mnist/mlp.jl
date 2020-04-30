@@ -18,14 +18,14 @@ end
     device::Function = gpu  # set as gpu, if gpu available
 end
 
-function get_data(args)
+function getdata(args)
     # Loading Dataset	
     xtrain, ytrain = MLDatasets.MNIST.traindata(Float32)
     xtest, ytest = MLDatasets.MNIST.testdata(Float32)
 	
     # Reshape Data for flatten the each image into linear array
-    xtrain = reshape(xtrain,:,size(xtrain,3))
-    xtest = reshape(xtest,:,size(xtest,3))
+    xtrain = Flux.flatten(xtrain)
+    xtest = Flux.flatten(xtest)
 
     # One-hot-encode the labels
     ytrain, ytest = onehotbatch(ytrain, 0:9), onehotbatch(ytest, 0:9)
@@ -37,7 +37,7 @@ function get_data(args)
     return train_data, test_data
 end
 
-function model(; imgsize=(28,28,1), nclasses=10)
+function build_model(; imgsize=(28,28,1), nclasses=10)
     return Chain(
  	    Dense(prod(imgsize), 32, relu),
             Dense(32, nclasses))
@@ -64,10 +64,10 @@ function train(; kws...)
     args = Args(; kws...)
 
     # Load Data
-    train_data,test_data = get_data(args)
+    train_data,test_data = getdata(args)
 
     # Construct model
-    m = model()
+    m = build_model()
     train_data = args.device.(train_data)
     test_data = args.device.(train_data)
     m = args.device(m)
