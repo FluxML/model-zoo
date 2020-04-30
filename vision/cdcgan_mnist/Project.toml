@@ -1,0 +1,11 @@
+[deps]
+CUDAapi = "3895d2a7-ec45-59b8-82bb-cfc6a382f9b3"
+CUDAnative = "be33ccc6-a3ff-5ff2-a52e-74243cff1e17"
+CuArrays = "3a865a2d-5b23-5a0f-bc46-62713ec82fae"
+Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
+ImageMagick = "6218d12a-5da1-5696-b52f-db25d2ecc6d1"
+Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
+MLDatasets = "eb30cadb-4394-5ae3-aed4-317e484a6458"
+Parameters = "d96e819e-fc66-5662-9728-84c9c7592b0a"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
