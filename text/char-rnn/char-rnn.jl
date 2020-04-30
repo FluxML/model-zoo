@@ -30,6 +30,7 @@ function getData(args)
     # Partitioning the data as sequence of batches, which are then collected as array of batches
     Xs = collect(partition(batchseq(chunk(text, args.nbatch), stop), args.seqlen))
     Ys = collect(partition(batchseq(chunk(text[2:end], args.nbatch), stop), args.seqlen))
+
     return Xs, Ys, N, alphabet
 end
 

@@ -61,7 +61,6 @@ function train(; kws...)
     scanner, encoder = Construct_Model(args)
 
     loss(x, y) = logitcrossentropy(model(x, scanner, encoder), y)
-
     testloss() = mean(loss(t...) for t in test_data)
     
     opt = ADAM(args.lr)

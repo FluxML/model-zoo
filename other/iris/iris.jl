@@ -32,7 +32,6 @@ function get_processed_data(args)
     test_data = (X_test,y_test)
 
     return train_data, test_data
-
 end
 
 # Accuracy Function
@@ -70,7 +69,6 @@ function train(; kws...)
 end
 
 function test(model, test)
-	
     # Testing model performance on test data 
     X_test, y_test = test
     accuracy_score = accuracy(X_test, y_test, model)

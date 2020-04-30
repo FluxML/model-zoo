@@ -26,29 +26,29 @@ end
 
 # Bundle images together with labels and group into minibatchess
 function make_minibatch(X, Y, idxs)
-	X_batch = Array{Float32}(undef, size(X[1])..., 1, length(idxs))
-	for i in 1:length(idxs)
-		X_batch[:, :, :, i] = Float32.(X[idxs[i]])
-	end
-	Y_batch = onehotbatch(Y[idxs], 0:9)
-	return (X_batch, Y_batch)
+    X_batch = Array{Float32}(undef, size(X[1])..., 1, length(idxs))
+    for i in 1:length(idxs)
+        X_batch[:, :, :, i] = Float32.(X[idxs[i]])
+    end
+    Y_batch = onehotbatch(Y[idxs], 0:9)
+    return (X_batch, Y_batch)
 end
 
 function get_processed_data(args)
-	# Load labels and images from Flux.Data.MNIST
-	
-	train_labels = MNIST.labels()
-	train_imgs = MNIST.images()
-	batch_size = 128
-	mb_idxs = partition(1:length(train_imgs), batch_size)
-	train_set = [make_minibatch(train_imgs, train_labels, i) for i in mb_idxs]
+    # Load labels and images from Flux.Data.MNIST
+    train_labels = MNIST.labels()
+    train_imgs = MNIST.images()
+    batch_size = 128
+    mb_idxs = partition(1:length(train_imgs), batch_size)
+    train_set = [make_minibatch(train_imgs, train_labels, i) for i in mb_idxs] 
+    
+    # Prepare test set as one giant minibatch:
+    test_imgs = MNIST.images(:test)
+    test_labels = MNIST.labels(:test)
+    test_set = make_minibatch(test_imgs, test_labels, 1:length(test_imgs))
 
-	# Prepare test set as one giant minibatch:
-	test_imgs = MNIST.images(:test)
-	test_labels = MNIST.labels(:test)
-	test_set = make_minibatch(test_imgs, test_labels, 1:length(test_imgs))
-	
-	return train_set, test_set
+    return train_set, test_set
+
 end
 
 # Construct model
@@ -134,7 +134,6 @@ function train(; kws...)
         acc = accuracy(test_set..., model)
 		
         @info(@sprintf("[%d]: Test accuracy: %.4f", epoch_idx, acc))
-	
         # If our accuracy is good enough, quit out.
         if acc >= 0.999
             @info(" -> Early-exiting: We reached our target accuracy of 99.9%")

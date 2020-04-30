@@ -41,7 +41,6 @@ function train(; kws...)
     @info("Constructing Model...")
     scanner,encoder = Construct_Model()
    
-    
     loss(x, y) = logitcrossentropy(model(x, scanner, encoder), y)
     batch_loss(data) = mean(loss(d...) for d in data)
 
