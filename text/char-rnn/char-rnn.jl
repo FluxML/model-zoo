@@ -67,7 +67,7 @@ function train(; kws...)
 end
 
 # Sampling
-function sample(m, alphabet, len, seed="")
+function sample(m, alphabet, len; seed="")
     m = cpu(m)
     Flux.reset!(m)
     buf = IOBuffer()
