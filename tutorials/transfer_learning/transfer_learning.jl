@@ -30,13 +30,13 @@ resnet = ResNet().layers
 # If we intended to add a new class of objects in there, we need only `reshape` the output from the previous layers accordingly.
 # Our model would look something like so:
 
-```julia
-model = Chain(
-  resnet[1:end-2],               # We only need to pull out the dense layer in here
-  x -> reshape(x, size_we_want), # / global_avg_pooling layer
-  Dense(reshaped_input_features, n_classes)
-)
-```
+# ```julia
+# model = Chain(
+#   resnet[1:end-2],               # We only need to pull out the dense layer in here
+#   x -> reshape(x, size_we_want), # / global_avg_pooling layer
+#   Dense(reshaped_input_features, n_classes)
+# )
+# ```
 
 # We will use the [Dogs vs. Cats](https://www.kaggle.com/c/dogs-vs-cats/data) dataset from Kaggle for our use here.
 # Make sure to extract the images in a `train` folder.
@@ -44,7 +44,7 @@ model = Chain(
 # The `datatloader.jl` script contains some functions that will help us load batches of images, shuffled between
 # dogs and cats along with their correct labels.
 
-include(“dataloader.jl”)
+include("dataloader.jl")
 
 # Finally, the model looks something like:
 
@@ -75,7 +75,7 @@ ps = Flux.params(model[2:end])  # ignore the already trained layers of the ResNe
 
 # And now, let's train!
 
-@epcohs 100 Flux.train!(loss, ps, dataset, opt)
+@epochs 10 Flux.train!(loss, ps, dataset, opt)
 
 # And there you have it, a pretrained model, fine tuned to tell the the dogs from the cats.
 
