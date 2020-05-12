@@ -30,11 +30,13 @@ resnet = ResNet().layers
 # If we intended to add a new class of objects in there, we need only `reshape` the output from the previous layers accordingly.
 # Our model would look something like so:
 
+```julia
 model = Chain(
   resnet[1:end-2],               # We only need to pull out the dense layer in here
   x -> reshape(x, size_we_want), # / global_avg_pooling layer
   Dense(reshaped_input_features, n_classes)
 )
+```
 
 # We will use the [Dogs vs. Cats](https://www.kaggle.com/c/dogs-vs-cats/data) dataset from Kaggle for our use here.
 # Make sure to extract the images in a `train` folder.
@@ -54,16 +56,17 @@ model = Chain(
   softmax
 )
 
-# After this, we only need to define the other parts of the training pipeline like we usually do.
-
-opt = Momentum()
-loss(x,y) = Flux.mse(model(x), y)
-
-To speed up training, let’s move everything over to the GPU
+# To speed up training, let’s move everything over to the GPU
 
 model = model |> gpu
 dataset = [gpu.(load_batch(10)) for i in 1:100]
 
+# After this, we only need to define the other parts of the training pipeline like we usually do.
+
+opt = ADAM()
+loss(x,y) = Flux.crossentropy(model(x), y)
+
+# Now to train
 # As discussed earlier, we don’t need to pass all the parameters to our training loop. Only the ones we need to
 # fine-tune. Note that we could have picked and chosen the layers we want to train individually as well, but this
 # is sufficient for our use as of now.
@@ -82,3 +85,4 @@ imgs, labels = gpu.(load_batch(10))
 display(model(imgs))
 
 labels
+
