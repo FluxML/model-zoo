@@ -59,7 +59,7 @@ model = Chain(
 # To speed up training, let’s move everything over to the GPU
 
 model = model |> gpu
-dataset = [gpu.(load_batch(10)) for i in 1:100]
+dataset = [gpu.(load_batch(10)) for i in 1:10]
 
 # After this, we only need to define the other parts of the training pipeline like we usually do.
 
@@ -75,7 +75,7 @@ ps = Flux.params(model[2:end])  # ignore the already trained layers of the ResNe
 
 # And now, let's train!
 
-@epochs 10 Flux.train!(loss, ps, dataset, opt)
+@epochs 2 Flux.train!(loss, ps, dataset, opt)
 
 # And there you have it, a pretrained model, fine tuned to tell the the dogs from the cats.
 
