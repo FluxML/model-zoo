@@ -3,7 +3,7 @@ using Random
 using StatsBase: sample, shuffle
 using Base.Iterators
 
-const PATH = joinpath("/home/dhairyagandhi96/dogsvcats", "train")
+const PATH = joinpath(@__FILE__, "train")
 const FILES = joinpath.(PATH, readdir(PATH))
 if isempty(readdir(PATH))
   error("Empty train folder - perhaps you need to download and extract the kaggle dataset.")
