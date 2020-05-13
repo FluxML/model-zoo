@@ -36,11 +36,6 @@ git-tree-sha1 = "f31f50712cbdf40ee8287f0443b57503e34122ef"
 uuid = "39de3d68-74b9-583c-8d2d-e117c070f3a9"
 version = "0.4.3"
 
-[[BSON]]
-git-tree-sha1 = "dd36d7cf3d185eeaaf64db902c15174b22f5dafb"
-uuid = "fbb218c0-5317-5bc6-957e-2ee96dd4b1f0"
-version = "0.2.6"
-
 [[Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 
@@ -406,12 +401,6 @@ uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 deps = ["MacroTools", "Test"]
 git-tree-sha1 = "75a54abd10709c01f1b86b84ec225d26e840ed58"
 uuid = "e89f7d12-3494-54d1-8411-f7d8b9ae1f27"
-version = "0.5.0"
-
-[[Metalhead]]
-deps = ["BSON", "ColorTypes", "Flux", "ImageFiltering", "Images", "REPL", "Requires", "Statistics"]
-git-tree-sha1 = "3a8d7fdf742e8a90b1e388a9ddd0412a60ed1636"
-uuid = "dbeba491-748d-5e0e-a39e-b530a07fa0cc"
 version = "0.5.0"
 
 [[Missings]]
