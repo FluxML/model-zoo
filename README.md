@@ -49,7 +49,7 @@ We welcome contributions of new models. They should be in a folder with a projec
   * [Seq2Seq phoneme detection on CMUDict](text/phonemes)
   * [Recursive net on IMDB sentiment treebank](text/treebank)
 * Other & contributed models
-  * [Differential Equations](contrib/diffeq)
+  * [Differential Equations](diffeqflux.sciml.ai/dev)
   * [BitString Parity Challenge](other/bitstring-parity)
   * [MLP on housing data](other/housing/housing.jl) (low level API)
   * [FizzBuzz](other/fizzbuzz/fizzbuzz.jl)
