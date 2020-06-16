@@ -67,11 +67,15 @@ function train(; kws...)
 end
 
 # Sampling
-function sample(m, alphabet, len)
+function sample(m, alphabet, len; seed="")
     m = cpu(m)
     Flux.reset!(m)
     buf = IOBuffer()
-    c = rand(alphabet)
+    if seed == ""
+        seed = string(rand(alphabet))
+    end
+    write(buf, seed)
+    c = wsample(alphabet, softmax(m.(map(c -> onehot(c, alphabet), collect(seed)))[end]))
     for i = 1:len
         write(buf, c)
         c = wsample(alphabet, softmax(m(onehot(c, alphabet))))
