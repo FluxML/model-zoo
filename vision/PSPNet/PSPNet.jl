@@ -130,7 +130,6 @@ end
     seed=0
     epochs = 10
     cuda = true
-    infotime = 1 	     # report every `infotime` epochs
     checktime = 5        # Save the model every `checktime` epochs. Set to 0 for no checkpoints.
     savepath = nothing
     train_img_path = joinpath(homedir(), "Downloads", "CityScape_data","TrainImg")  #you can change the path as per your choice
@@ -211,20 +210,6 @@ function get_data(Train_img_path::String, Train_Label_path::String, Test_img_pat
     return train_loader, test_loader
 end
 
-function eval_loss_accuracy(loader , model , device)
-    l = 0f0
-    acc = 0
-    ntot = 0
-    for (x, y) in loader
-        x, y = x |> device, y |> device
-        ŷ = forward(model , x)
-        l += loss(ŷ, y) * size(x)[end]
-        acc += sum(onecold(ŷ |> cpu) .== onecold(y |> cpu))
-        ntot += size(x)[end]
-    end
-    return (loss = l/ntot |> round4, acc = acc/ntot*100 |> round4)
-end
-
 function train(psp_layers::PSPNet, Args::Args)
     args = Args()
     args.seed > 0 && Random.seed!(args.seed)
@@ -259,12 +244,6 @@ function train(psp_layers::PSPNet, Args::Args)
         opt = Optimiser(opt , WeightDecay(args.λ))
     end
 
-    function report(epoch)
-        train = eval_loss_accuracy(train_loader , model, device)
-        test = eval_loss_accuracy(test_loader , model, device)
-        println("Epoch: $epoch   Train: $(train)   Test: $(test)")
-    end
-
     ## TRAINING
     @info "Start Training"
     report(0)
@@ -280,7 +259,7 @@ function train(psp_layers::PSPNet, Args::Args)
             Flux.Optimise.update!(opt, ps, gs)
             ProgressMeter.next!(p)   # comment out for no progress bar
         end
-        epoch % args.infotime == 0 && report(epoch)
+
         if args.checktime > 0 && epoch % args.checktime == 0
             !ispath(args.savepath) && mkpath(args.savepath)
             modelpath = joinpath(args.savepath, "model.bson")
