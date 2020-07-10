@@ -1,7 +1,8 @@
 using Base.Iterators: partition
 using Flux
 using Flux.Optimise: update!
-using Flux: logitbinarycrossentropy
+using Flux.Losses: logitbinarycrossentropy
+using Flux.Data: DataLoader
 using Images
 using MLDatasets
 using Statistics
@@ -41,7 +42,7 @@ function Discriminator()
             Dense(7 * 7 * 128, 1))	
 end
 
-function Generator()
+function Generator(hparams)
     return Chain(
             Dense(hparams.latent_dim, 7 * 7 * 256),
             BatchNorm(7 * 7 * 256, relu),
@@ -56,12 +57,12 @@ end
 
 # Loss functions
 function discriminator_loss(real_output, fake_output)
-    real_loss = mean(logitbinarycrossentropy.(real_output, 1f0))
-    fake_loss = mean(logitbinarycrossentropy.(fake_output, 0f0))
+    real_loss = logitbinarycrossentropy(real_output, 1f0)
+    fake_loss = logitbinarycrossentropy(fake_output, 0f0)
     return real_loss + fake_loss
 end
 
-generator_loss(fake_output) = mean(logitbinarycrossentropy.(fake_output, 1f0))
+generator_loss(fake_output) = logitbinarycrossentropy(fake_output, 1f0)
 
 function train_discriminator!(gen, dscr, x, opt_dscr, hparams)
     noise = randn!(similar(x, (hparams.latent_dim, hparams.batch_size))) 
@@ -97,15 +98,15 @@ function train(; kws...)
     # Normalize to [-1, 1]
     image_tensor = reshape(@.(2f0 * images - 1f0), 28, 28, 1, :)
     # Partition into batches
-    data = [image_tensor[:, :, :, r] |> gpu for r in partition(1:60000, hparams.batch_size)]
-
+    data = DataLoader(image_tensor, batchsize=hparams.batch_size, shuffle=true)
+    
     fixed_noise = [randn(hparams.latent_dim, 1) |> gpu for _=1:hparams.output_x*hparams.output_y]
 
     # Discriminator
     dscr = Discriminator() |> gpu
 
     # Generator
-    gen =  Generator() |> gpu
+    gen =  Generator(hparams) |> gpu
 
     # Optimizers
     opt_dscr = ADAM(hparams.lr_dscr)
