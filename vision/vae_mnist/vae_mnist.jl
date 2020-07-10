@@ -9,7 +9,8 @@ using BSON
 using CUDAapi: has_cuda_gpu
 using DrWatson: struct2dict
 using Flux
-using Flux: logitbinarycrossentropy, chunk
+using Flux: chunk
+using Flux.Losses: logitbinarycrossentropy
 using Flux.Data: DataLoader
 using Images
 using Logging: with_logger
@@ -59,7 +60,7 @@ function model_loss(encoder, decoder, λ, x, device)
     # KL-divergence
     kl_q_p = 0.5f0 * sum(@. (exp(2f0 * logσ) + μ^2 -1f0 - 2f0 * logσ)) / len
 
-    logp_x_z = -sum(logitbinarycrossentropy.(decoder_z, x)) / len
+    logp_x_z = -logitbinarycrossentropy(decoder_z, x)
     # regularization
     reg = λ * sum(x->sum(x.^2), Flux.params(decoder))
     

@@ -7,7 +7,8 @@
 # accuracy after training for approximately 20 epochs.
 
 using Flux, Flux.Data.MNIST, Statistics
-using Flux: onehotbatch, onecold, logitcrossentropy
+using Flux: onehotbatch, onecold
+using Flux.Losses: logitcrossentropy
 using Base.Iterators: partition
 using Printf, BSON
 using Parameters: @with_kw

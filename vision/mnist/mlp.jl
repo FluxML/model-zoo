@@ -1,6 +1,7 @@
 using Flux, Statistics
 using Flux.Data: DataLoader
-using Flux: onehotbatch, onecold, logitcrossentropy, throttle, @epochs
+using Flux: onehotbatch, onecold, throttle, @epochs
+using Flux.Losses: logitcrossentropy
 using Base.Iterators: repeated
 using Parameters: @with_kw
 using CUDAapi

@@ -345,7 +345,8 @@ m = Chain(
 # adaptivity in our optimisation, preventing us from over shooting from our desired destination.
 #-
 
-using Flux: crossentropy, Momentum
+using Flux: Momentum
+using Flux.Losses: crossentropy
 
 loss(x, y) = sum(crossentropy(m(x), y))
 opt = Momentum(0.01)

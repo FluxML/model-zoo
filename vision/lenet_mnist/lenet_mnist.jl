@@ -5,7 +5,8 @@
 using Flux
 using Flux.Data: DataLoader
 using Flux.Optimise: Optimiser, WeightDecay
-using Flux: onehotbatch, onecold, logitcrossentropy
+using Flux: onehotbatch, onecold
+using Flux.Losses: logitcrossentropy
 using Statistics, Random
 using Parameters: @with_kw
 using Logging: with_logger, global_logger
@@ -14,7 +15,7 @@ import ProgressMeter
 import MLDatasets
 import DrWatson: savename, struct2dict
 import BSON
-using CUDAapi
+using CUDA
 
 # LeNet5 "constructor". 
 # The model can be adapted to any image size
@@ -44,8 +45,8 @@ function get_data(args)
 
     ytrain, ytest = onehotbatch(ytrain, 0:9), onehotbatch(ytest, 0:9)
 
-    train_loader = DataLoader(xtrain, ytrain, batchsize=args.batchsize, shuffle=true)
-    test_loader = DataLoader(xtest, ytest,  batchsize=args.batchsize)
+    train_loader = DataLoader((xtrain, ytrain), batchsize=args.batchsize, shuffle=true)
+    test_loader = DataLoader((xtest, ytest),  batchsize=args.batchsize)
     
     return train_loader, test_loader
 end
@@ -91,7 +92,7 @@ end
 function train(; kws...)
     args = Args(; kws...)
     args.seed > 0 && Random.seed!(args.seed)
-    use_cuda = args.cuda && CUDAapi.has_cuda_gpu()
+    use_cuda = args.cuda && CUDA.has_cuda()
     if use_cuda
         device = gpu
         @info "Training on GPU"

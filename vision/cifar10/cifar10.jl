@@ -1,5 +1,6 @@
 using Flux, Metalhead, Statistics
-using Flux: onehotbatch, onecold, logitcrossentropy, throttle, flatten
+using Flux: onehotbatch, onecold, throttle, flatten
+using Flux.Losses: logitcrossentropy
 using Metalhead: trainimgs
 using Parameters: @with_kw
 using Images: channelview

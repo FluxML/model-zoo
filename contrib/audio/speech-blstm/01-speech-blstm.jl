@@ -6,7 +6,8 @@
 # Networks, 18(5-6), 602-610.]).
 
 using Flux
-using Flux: crossentropy, softmax, flip, sigmoid, LSTM, @epochs
+using Flux: softmax, flip, sigmoid, LSTM, @epochs
+using Flux.Losses: crossentropy
 using BSON
 using Random
 
