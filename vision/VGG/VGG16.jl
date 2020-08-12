@@ -52,7 +52,6 @@ double_conv(in_channels, out_channels) = (
 # - ... operator will help us unroll the previously defined blocks
 
 # %%
-collect(Iterators.repeated(conv_block(256, 256),3))
 
 
 # %%
