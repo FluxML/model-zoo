@@ -96,14 +96,14 @@ W * x
 
 # ### CUDA Arrays
 
-# CUDA functionality is provided separately by the [CuArrays
-# package](https://github.com/JuliaGPU/CuArrays.jl). If you have a GPU and CUDA
-# available, you can run `] add CuArrays` in a REPL or IJulia to get it.
+# CUDA functionality is provided separately by the [CUDA
+# package](https://github.com/JuliaGPU/CUDA.jl). If you have a GPU and CUDA
+# available, you can run `] add CUDA` in a REPL or IJulia to get it.
 
-# Once CuArrays is loaded you can move any array to the GPU with the `cu`
+# Once CUDA is loaded you can move any array to the GPU with the `cu`
 # function, and it supports all of the above operations with the same syntax.
 
-## using CuArrays
+## using CUDA
 ## x = cu(rand(5, 3))
 
 # Automatic Differentiation
@@ -273,14 +273,13 @@ Flux.train!(loss, params(m), [(data,labels)], opt)
 # It also has a number of dataloaders that come in handy to load datasets.
 
 using Statistics
-#using CuArrays
-using Zygote
 using Flux, Flux.Optimise
 using Metalhead, Images
 using Metalhead: trainimgs
 using Images.ImageCore
 using Flux: onehotbatch, onecold
 using Base.Iterators: partition
+#using CUDA
 
 # The image will give us an idea of what we are dealing with.
 # ![title](https://pytorch.org/tutorials/_images/cifar10.png)
