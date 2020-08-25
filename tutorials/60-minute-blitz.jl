@@ -279,7 +279,7 @@ using Metalhead: trainimgs
 using Images.ImageCore
 using Flux: onehotbatch, onecold
 using Base.Iterators: partition
-#using CUDA
+# using CUDA
 
 # The image will give us an idea of what we are dealing with.
 # ![title](https://pytorch.org/tutorials/_images/cifar10.png)
