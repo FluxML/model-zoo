@@ -23,7 +23,7 @@ function getdata(args)
     xtrain, ytrain = MLDatasets.MNIST.traindata(Float32)
     xtest, ytest = MLDatasets.MNIST.testdata(Float32)
 	
-    # Reshape Data for flatten the each image into linear array
+    # Reshape Data in order to flatten each image into a linear array
     xtrain = Flux.flatten(xtrain)
     xtest = Flux.flatten(xtest)
 
