@@ -3,12 +3,11 @@ using Flux.Data: DataLoader
 using Flux: onehotbatch, onecold, logitcrossentropy, throttle, @epochs
 using Base.Iterators: repeated
 using Parameters: @with_kw
-using CUDAapi
+using CUDA
 using MLDatasets
 if has_cuda()		# Check if CUDA is available
     @info "CUDA is on"
-    import CuArrays		# If CUDA is available, import CuArrays
-    CuArrays.allowscalar(false)
+    CUDA.allowscalar(false)
 end
 
 @with_kw mutable struct Args
@@ -19,6 +18,7 @@ end
 end
 
 function getdata(args)
+
     # Loading Dataset	
     xtrain, ytrain = MLDatasets.MNIST.traindata(Float32)
     xtest, ytest = MLDatasets.MNIST.testdata(Float32)
@@ -85,4 +85,5 @@ function train(; kws...)
 end
 
 cd(@__DIR__)
+MLDatasets.MNIST.download(i_accept_the_terms_of_use=true)
 train()
