@@ -7,7 +7,7 @@ using CUDAapi
 using MLDatasets
 if has_cuda()		# Check if CUDA is available
     @info "CUDA is on"
-    import CUDA		# If CUDA is available, import CuArrays
+    import CUDA		# If CUDA is available, import CUDA
     CUDA.allowscalar(false)
 end
 
