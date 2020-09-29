@@ -8,8 +8,8 @@ using Base.Iterators: partition
 using CUDAapi
 if has_cuda()
     @info "CUDA is on"
-    import CuArrays
-    CuArrays.allowscalar(false)
+    import CUDA
+    CUDA.allowscalar(false)
 end
 
 @with_kw mutable struct Args

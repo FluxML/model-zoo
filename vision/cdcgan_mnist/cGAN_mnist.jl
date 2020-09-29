@@ -12,8 +12,8 @@ using CUDAapi
 using Zygote
 if has_cuda()		# Check if CUDA is available
     @info "CUDA is on"
-    import CuArrays		# If CUDA is available, import CuArrays
-    CuArrays.allowscalar(false)
+    import CUDA		# If CUDA is available, import CUDA
+    CUDA.allowscalar(false)
 end
 
 @with_kw struct HyperParams
