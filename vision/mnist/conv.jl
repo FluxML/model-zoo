@@ -11,11 +11,10 @@ using Flux: onehotbatch, onecold, logitcrossentropy
 using Base.Iterators: partition
 using Printf, BSON
 using Parameters: @with_kw
-using CUDAapi
+using CUDA
 if has_cuda()
     @info "CUDA is on"
-    import CuArrays
-    CuArrays.allowscalar(false)
+    CUDA.allowscalar(false)
 end
 
 @with_kw mutable struct Args

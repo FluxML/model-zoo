@@ -4,11 +4,11 @@ using Flux, Flux.Data.MNIST
 using Flux: @epochs, onehotbatch, mse, throttle
 using Base.Iterators: partition
 using Parameters: @with_kw
-using CUDAapi
+using Images
+using CUDA
 if has_cuda()
     @info "CUDA is on"
-    import CuArrays
-    CuArrays.allowscalar(false)
+    CUDA.allowscalar(false)
 end
 
 @with_kw mutable struct Args
@@ -60,7 +60,6 @@ function train(; kws...)
     return m, args
 end
 
-using Images
 
 img(x::Vector) = Gray.(reshape(clamp.(x, 0, 1), 28, 28))
 
