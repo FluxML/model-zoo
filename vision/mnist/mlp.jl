@@ -18,6 +18,7 @@ end
 end
 
 function getdata(args)
+    MLDatasets.MNIST.download(i_accept_the_terms_of_use=true)
 
     # Loading Dataset	
     xtrain, ytrain = MLDatasets.MNIST.traindata(Float32)
@@ -85,5 +86,4 @@ function train(; kws...)
 end
 
 cd(@__DIR__)
-MLDatasets.MNIST.download(i_accept_the_terms_of_use=true)
 train()
