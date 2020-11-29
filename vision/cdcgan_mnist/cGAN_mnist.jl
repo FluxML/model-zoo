@@ -1,19 +1,20 @@
 using Base.Iterators: partition
 using Flux
 using Flux.Optimise: update!
-using Flux: logitbinarycrossentropy
+using Flux.Losses: logitbinarycrossentropy
 using Images
+using ImageMagick
 using MLDatasets
 using Statistics
 using Parameters: @with_kw
 using Random
 using Printf
-using CUDAapi
+using CUDA
 using Zygote
+
 if has_cuda()		# Check if CUDA is available
     @info "CUDA is on"
-    import CuArrays		# If CUDA is available, import CuArrays
-    CuArrays.allowscalar(false)
+    CUDA.allowscalar(false)
 end
 
 @with_kw struct HyperParams
@@ -75,6 +76,8 @@ function (m::Generator)(x, y)
 end
 
 function load_data(hparams)
+    MLDatasets.MNIST.download(i_accept_the_terms_of_use=true)
+
     # Load MNIST dataset
     images, labels = MLDatasets.MNIST.traindata(Float32)
     # Normalize to [-1, 1]
