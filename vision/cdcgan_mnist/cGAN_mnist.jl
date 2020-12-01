@@ -76,7 +76,7 @@ function (m::Generator)(x, y)
 end
 
 function load_data(hparams)
-    MLDatasets.MNIST.download(i_accept_the_terms_of_use=true)
+    # MLDatasets.MNIST.download(i_accept_the_terms_of_use=true)
 
     # Load MNIST dataset
     images, labels = MLDatasets.MNIST.traindata(Float32)
@@ -90,12 +90,12 @@ end
 
 # Loss functions
 function discr_loss(real_output, fake_output)
-    real_loss = mean(logitbinarycrossentropy.(real_output, 1f0))
-    fake_loss = mean(logitbinarycrossentropy.(fake_output, 0f0))
+    real_loss = logitbinarycrossentropy(real_output, 1f0)
+    fake_loss = logitbinarycrossentropy(fake_output, 0f0)
     return (real_loss + fake_loss)
 end
 
-generator_loss(fake_output) = mean(logitbinarycrossentropy.(fake_output, 1f0))
+generator_loss(fake_output) = logitbinarycrossentropy(fake_output, 1f0)
 
 function train_discr(discr, fake_data, fake_labels, original_data, label, opt_discr)
     ps = params(discr.d_labels, discr.d_common)
