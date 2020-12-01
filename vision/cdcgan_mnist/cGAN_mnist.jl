@@ -158,8 +158,8 @@ function train(; kws...)
     opt_dscr = ADAM(hparams.lr_dscr, (0.5, 0.99))
     opt_gen = ADAM(hparams.lr_gen, (0.5, 0.99))
 
-    # Check if the `output` directory exists or needed to be created
-    isdir("output")||mkdir("output")
+    # Check if the `results` directory exists or needed to be created
+    isdir("results")||mkdir("results")
 
     # Training
     train_steps = 0
@@ -173,7 +173,7 @@ function train(; kws...)
                 @info("Train step $(train_steps), Discriminator loss = $(loss["discr"]), Generator loss = $(loss["gen"])")
                 # Save generated fake image
                 output_image = create_output_image(gen, fixed_noise, fixed_labels, hparams)
-                save(@sprintf("output/cgan_steps_%06d.png", train_steps), output_image)
+                save(@sprintf("results/cgan_steps_%06d.png", train_steps), output_image)
             end
 
             train_steps += 1
@@ -181,7 +181,7 @@ function train(; kws...)
     end
 
     output_image = create_output_image(gen, fixed_noise, fixed_labels, hparams)
-    save(@sprintf("output/cgan_steps_%06d.png", train_steps), output_image)
+    save(@sprintf("results/cgan_steps_%06d.png", train_steps), output_image)
     return Flux.onecold.(cpu(fixed_labels))
 end    
 
