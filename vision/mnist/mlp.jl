@@ -18,7 +18,7 @@ end
 end
 
 function getdata(args)
-    MLDatasets.MNIST.download(i_accept_the_terms_of_use=true)
+    ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"
 
     # Loading Dataset	
     xtrain, ytrain = MLDatasets.MNIST.traindata(Float32)
