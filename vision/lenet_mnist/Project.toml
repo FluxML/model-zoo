@@ -1,14 +1,11 @@
 [deps]
 BSON = "fbb218c0-5317-5bc6-957e-2ee96dd4b1f0"
-CUDAapi = "3895d2a7-ec45-59b8-82bb-cfc6a382f9b3"
+CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
-LoggingExtras = "e6f89c97-d47a-5376-807f-9c37f3926c36"
 MLDatasets = "eb30cadb-4394-5ae3-aed4-317e484a6458"
-Parameters = "d96e819e-fc66-5662-9728-84c9c7592b0a"
 ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
-Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 TensorBoardLogger = "899adc3e-224a-11e9-021f-63837185c80f"
 
 [compat]
