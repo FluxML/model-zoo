@@ -1,6 +1,5 @@
 [deps]
-CUDAapi = "3895d2a7-ec45-59b8-82bb-cfc6a382f9b3"
-CuArrays = "3a865a2d-5b23-5a0f-bc46-62713ec82fae"
+CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
 Metalhead = "dbeba491-748d-5e0e-a39e-b530a07fa0cc"

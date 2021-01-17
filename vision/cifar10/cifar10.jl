@@ -5,11 +5,10 @@ using Parameters: @with_kw
 using Images: channelview
 using Statistics: mean
 using Base.Iterators: partition
-using CUDAapi
+using CUDA
 if has_cuda()
     @info "CUDA is on"
-    import CuArrays
-    CuArrays.allowscalar(false)
+    CUDA.allowscalar(false)
 end
 
 @with_kw mutable struct Args
