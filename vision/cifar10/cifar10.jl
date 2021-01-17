@@ -1,11 +1,12 @@
-using Flux, Metalhead, Statistics
-using Flux: onehotbatch, onecold, logitcrossentropy, throttle, flatten
-using Metalhead: trainimgs
+using Flux
+using Flux: onehotbatch, onecold, flatten
+using Flux.Losses: logitcrossentropy
 using Parameters: @with_kw
-using Images: channelview
 using Statistics: mean
-using Base.Iterators: partition
 using CUDA
+using MLDatasets: CIFAR10
+using MLDataPattern: splitobs
+
 if has_cuda()
     @info "CUDA is on"
     CUDA.allowscalar(false)
@@ -19,40 +20,26 @@ end
     splitr_::Float64 = 0.1
 end
 
-# Function to convert the RGB image to Float64 Arrays
-function getarray(X)
-    Float32.(permutedims(channelview(X), (2, 3, 1)))
-end
-
 function get_processed_data(args)
-    # Fetching the train and validation data and getting them into proper shape	
-    X = trainimgs(CIFAR10)
-    imgs = [getarray(X[i].img) for i in 1:40000]
-    #onehot encode labels of batch
-   
-    labels = onehotbatch([X[i].ground_truth.class for i in 1:40000],1:10)
-	
-    train_pop = Int((1-args.splitr_)* 40000)
-    train = gpu.([(cat(imgs[i]..., dims = 4), labels[:,i]) for i in partition(1:train_pop, args.batchsize)])
-    valset = collect(train_pop+1:40000)
-    valX = cat(imgs[valset]..., dims = 4) |> gpu
-    valY = labels[:, valset] |> gpu
-	
-    val = (valX,valY)	
-    return train, val
+    x, y = CIFAR10.traindata()
+
+    (train_x, train_y), (val_x, val_y) = splitobs((x, y), at=1-args.splitr_)
+
+    train_x = float(train_x)
+    train_y = onehotbatch(train_y, 0:9)
+    val_x = float(val_x)
+    val_y = onehotbatch(val_y, 0:9)
+    
+    return (train_x, train_y), (val_x, val_y)
 end
 
 function get_test_data()
-    # Fetch the test data from Metalhead and get it into proper shape.
-    test = valimgs(CIFAR10)
-
-    # CIFAR-10 does not specify a validation set so valimgs fetch the testdata instead of testimgs
-    testimgs = [getarray(test[i].img) for i in 1:1000]
-    testY = onehotbatch([test[i].ground_truth.class for i in 1:1000], 1:10) |> gpu
-    testX = cat(testimgs..., dims = 4) |> gpu
-
-    test = (testX,testY)
-    return test
+    test_x, test_y = CIFAR10.traindata()
+   
+    test_x = float(test_x)
+    test_y = onehotbatch(test_y, 0:9)
+    
+    return test_x, test_y
 end
 
 # VGG16 and VGG19 models
@@ -141,14 +128,15 @@ function vgg19()
             Dense(4096, 10)) |> gpu
 end
 
-accuracy(x, y, m) = mean(onecold(cpu(m(x)), 1:10) .== onecold(cpu(y), 1:10))
-
 function train(; kws...)
     # Initialize the hyperparameters
     args = Args(; kws...)
 	
     # Load the train, validation data 
-    train,val = get_processed_data(args)
+    train, val = get_processed_data(args)
+    
+    train_data = Flux.Data.DataLoader(train, batchsize=args.batchsize)
+    val_data = Flux.Data.DataLoader(val, batchsize=args.batchsize)
 
     @info("Constructing Model")	
     # Defining the loss and accuracy functions
@@ -157,21 +145,49 @@ function train(; kws...)
     loss(x, y) = logitcrossentropy(m(x), y)
 
     ## Training
-    # Defining the callback and the optimizer
-    evalcb = throttle(() -> @show(loss(val...)), args.throttle)
+    # Defining the optimizer
     opt = ADAM(args.lr)
+    ps = Flux.params(m)
+
     @info("Training....")
     # Starting to train models
-    Flux.@epochs args.epochs Flux.train!(loss, params(m), train, opt, cb = evalcb)
+    for epoch in 1:args.epochs
+        for (x, y) in train_data
+            x, y = gpu(x), gpu(y)
+
+            gs = Flux.gradient(ps) do 
+                loss(x, y)
+            end
+
+            Flux.update!(opt, ps, gs)
+        end
+
+        validation_loss = 0f0
+        for (x, y) in val_data
+            validation_loss += loss(gpu(x), gpu(y))
+        end
+        @show validation_loss
+    end
 
     return m
 end
 
-function test(m)
+function test(m; kws...)
+    args = Args(kws...)
+
     test_data = get_test_data()
+    test_data = Flux.Data.DataLoader(test_data, batchsize=64)
+
+    correct, total = 0, 0
+    for (x, y) in test_data
+        x, y = gpu(x), gpu(y)
+        correct += sum(onecold(cpu(m(x)), 0:9) .== onecold(cpu(y), 0:9))
+        total += size(y, 2)
+    end
+    test_accuracy = correct / total
 
     # Print the final accuracy
-    @show(accuracy(test_data..., m))
+    @show test_accuracy
 end
 
 cd(@__DIR__)
