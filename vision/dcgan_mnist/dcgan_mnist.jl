@@ -1,7 +1,7 @@
 using Base.Iterators: partition
 using Flux
 using Flux.Optimise: update!
-using Flux: logitbinarycrossentropy
+using Flux.Losses: logitbinarycrossentropy
 using Images
 using MLDatasets
 using Statistics
@@ -56,12 +56,12 @@ end
 
 # Loss functions
 function discriminator_loss(real_output, fake_output)
-    real_loss = mean(logitbinarycrossentropy.(real_output, 1f0))
-    fake_loss = mean(logitbinarycrossentropy.(fake_output, 0f0))
+    real_loss = mean(logitbinarycrossentropy(real_output, 1f0))
+    fake_loss = mean(logitbinarycrossentropy(fake_output, 0f0))
     return real_loss + fake_loss
 end
 
-generator_loss(fake_output) = mean(logitbinarycrossentropy.(fake_output, 1f0))
+generator_loss(fake_output) = mean(logitbinarycrossentropy(fake_output, 1f0))
 
 function train_discriminator!(gen, dscr, x, opt_dscr, hparams)
     noise = randn!(similar(x, (hparams.latent_dim, hparams.batch_size))) 
