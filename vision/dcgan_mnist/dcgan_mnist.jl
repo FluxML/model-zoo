@@ -41,9 +41,9 @@ function Discriminator()
             Dense(7 * 7 * 128, 1))	
 end
 
-function Generator()
+function Generator(latent_dim::Int)
     return Chain(
-            Dense(hparams.latent_dim, 7 * 7 * 256),
+            Dense(latent_dim, 7 * 7 * 256),
             BatchNorm(7 * 7 * 256, relu),
             x->reshape(x, 7, 7, 256, :),
             ConvTranspose((5, 5), 256 => 128; stride = 1, pad = 2),
@@ -105,7 +105,7 @@ function train(; kws...)
     dscr = Discriminator() |> gpu
 
     # Generator
-    gen =  Generator() |> gpu
+    gen =  Generator(hparams.latent_dim) |> gpu
 
     # Optimizers
     opt_dscr = ADAM(hparams.lr_dscr)
