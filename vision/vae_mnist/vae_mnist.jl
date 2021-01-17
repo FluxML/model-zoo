@@ -9,7 +9,7 @@ using BSON
 using CUDA
 using DrWatson: struct2dict
 using Flux
-using Flux: logitbinarycrossentropy, chunk
+using Flux: @functor, chunk
 using Flux.Losses: logitbinarycrossentropy
 using Flux.Data: DataLoader
 using Images
@@ -31,22 +31,24 @@ struct Encoder
     linear
     μ
     logσ
-    Encoder(input_dim, latent_dim, hidden_dim, device) = new(
-        Dense(input_dim, hidden_dim, tanh) |> device,   # linear
-        Dense(hidden_dim, latent_dim) |> device,        # μ
-        Dense(hidden_dim, latent_dim) |> device,        # logσ
-    )
 end
+@functor Encoder
+    
+Encoder(input_dim::Int, latent_dim::Int, hidden_dim::Int) = Encoder(
+    Dense(input_dim, hidden_dim, tanh),   # linear
+    Dense(hidden_dim, latent_dim),        # μ
+    Dense(hidden_dim, latent_dim),        # logσ
+)
 
 function (encoder::Encoder)(x)
     h = encoder.linear(x)
     encoder.μ(h), encoder.logσ(h)
 end
 
-Decoder(input_dim, latent_dim, hidden_dim, device) = Chain(
+Decoder(input_dim::Int, latent_dim::Int, hidden_dim::Int) = Chain(
     Dense(latent_dim, hidden_dim, tanh),
     Dense(hidden_dim, input_dim)
-) |> device
+)
 
 function reconstuct(encoder, decoder, x, device)
     μ, logσ = encoder(x)
@@ -106,8 +108,8 @@ function train(; kws...)
     loader = get_data(args.batch_size)
     
     # initialize encoder and decoder
-    encoder = Encoder(args.input_dim, args.latent_dim, args.hidden_dim, device)
-    decoder = Decoder(args.input_dim, args.latent_dim, args.hidden_dim, device)
+    encoder = Encoder(args.input_dim, args.latent_dim, args.hidden_dim) |> device
+    decoder = Decoder(args.input_dim, args.latent_dim, args.hidden_dim) |> device
 
     # ADAM optimizer
     opt = ADAM(args.η)
