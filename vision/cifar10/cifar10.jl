@@ -162,6 +162,8 @@ function train(; kws...)
     @info("Training....")
     # Starting to train models
     for epoch in 1:args.epochs
+        @info "Epoch $epoch"
+
         for (x, y) in train_data
             x, y = x |> device, y |> device
 
@@ -177,6 +179,7 @@ function train(; kws...)
             x, y = x |> device, y |> device
             validation_loss += loss(x, y)
         end
+        validation_loss /= length(val_data)
         @show validation_loss
     end
 
