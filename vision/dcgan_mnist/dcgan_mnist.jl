@@ -8,6 +8,7 @@ using Statistics
 using Parameters: @with_kw
 using Printf
 using Random
+using CUDA
 
 @with_kw struct HyperParams
     batch_size::Int = 128
@@ -93,20 +94,28 @@ function train(; kws...)
     # Model Parameters
     hparams = HyperParams(; kws...)
 
+    if CUDA.has_cuda()
+        device = gpu
+        @info "Training on GPU"
+    else
+        device = cpu
+        @info "Training on CPU"
+    end
+
     # Load MNIST dataset
     images, _ = MLDatasets.MNIST.traindata(Float32)
     # Normalize to [-1, 1]
     image_tensor = reshape(@.(2f0 * images - 1f0), 28, 28, 1, :)
     # Partition into batches
-    data = [image_tensor[:, :, :, r] |> gpu for r in partition(1:60000, hparams.batch_size)]
+    data = [image_tensor[:, :, :, r] |> device for r in partition(1:60000, hparams.batch_size)]
 
-    fixed_noise = [randn(hparams.latent_dim, 1) |> gpu for _=1:hparams.output_x*hparams.output_y]
+    fixed_noise = [randn(hparams.latent_dim, 1) |> device for _=1:hparams.output_x*hparams.output_y]
 
     # Discriminator
-    dscr = Discriminator() |> gpu
+    dscr = Discriminator() |> device
 
     # Generator
-    gen =  Generator(hparams.latent_dim) |> gpu
+    gen =  Generator(hparams.latent_dim) |> device
 
     # Optimizers
     opt_dscr = ADAM(hparams.lr_dscr)
