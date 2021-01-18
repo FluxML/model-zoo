@@ -50,7 +50,8 @@ function Generator(latent_dim::Int)
             BatchNorm(128, relu),
             ConvTranspose((4, 4), 128 => 64; stride = 2, pad = 1),
             BatchNorm(64, relu),
-            ConvTranspose((4, 4), 64 => 1, tanh; stride = 2, pad = 1),
+            ConvTranspose((4, 4), 64 => 1; stride = 2, pad = 1),
+            x -> tanh.(x)
             )
 end
 
