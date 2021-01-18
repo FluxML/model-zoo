@@ -34,7 +34,7 @@ function get_processed_data(args)
 end
 
 function get_test_data()
-    test_x, test_y = CIFAR10.traindata()
+    test_x, test_y = CIFAR10.testdata()
    
     test_x = float(test_x)
     test_y = onehotbatch(test_y, 0:9)
