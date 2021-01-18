@@ -44,94 +44,104 @@ end
 
 # VGG16 and VGG19 models
 function vgg16()
-    return Chain(
-            Conv((3, 3), 3 => 64, relu, pad=(1, 1), stride=(1, 1)),
-            BatchNorm(64),
-            Conv((3, 3), 64 => 64, relu, pad=(1, 1), stride=(1, 1)),
-            BatchNorm(64),
-            MaxPool((2,2)),
-            Conv((3, 3), 64 => 128, relu, pad=(1, 1), stride=(1, 1)),
-            BatchNorm(128),
-            Conv((3, 3), 128 => 128, relu, pad=(1, 1), stride=(1, 1)),
-            BatchNorm(128),
-            MaxPool((2,2)),
-            Conv((3, 3), 128 => 256, relu, pad=(1, 1), stride=(1, 1)),
-            BatchNorm(256),
-            Conv((3, 3), 256 => 256, relu, pad=(1, 1), stride=(1, 1)),
-            BatchNorm(256),
-            Conv((3, 3), 256 => 256, relu, pad=(1, 1), stride=(1, 1)),
-            BatchNorm(256),
-            MaxPool((2,2)),
-            Conv((3, 3), 256 => 512, relu, pad=(1, 1), stride=(1, 1)),
-            BatchNorm(512),
-            Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-            BatchNorm(512),
-            Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-            BatchNorm(512),
-            MaxPool((2,2)),
-            Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-            BatchNorm(512),
-            Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-            BatchNorm(512),
-            Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-            BatchNorm(512),
-            MaxPool((2,2)),
-            flatten,
-            Dense(512, 4096, relu),
-            Dropout(0.5),
-            Dense(4096, 4096, relu),
-            Dropout(0.5),
-            Dense(4096, 10)) |> gpu
+    Chain(
+        Conv((3, 3), 3 => 64, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(64),
+        Conv((3, 3), 64 => 64, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(64),
+        MaxPool((2,2)),
+        Conv((3, 3), 64 => 128, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(128),
+        Conv((3, 3), 128 => 128, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(128),
+        MaxPool((2,2)),
+        Conv((3, 3), 128 => 256, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(256),
+        Conv((3, 3), 256 => 256, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(256),
+        Conv((3, 3), 256 => 256, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(256),
+        MaxPool((2,2)),
+        Conv((3, 3), 256 => 512, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(512),
+        Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(512),
+        Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(512),
+        MaxPool((2,2)),
+        Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(512),
+        Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(512),
+        Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(512),
+        MaxPool((2,2)),
+        flatten,
+        Dense(512, 4096, relu),
+        Dropout(0.5),
+        Dense(4096, 4096, relu),
+        Dropout(0.5),
+        Dense(4096, 10)
+    )
 end
 
 function vgg19()
-    return Chain(
-            Conv((3, 3), 3 => 64, relu, pad=(1, 1), stride=(1, 1)),
-            BatchNorm(64),
-            Conv((3, 3), 64 => 64, relu, pad=(1, 1), stride=(1, 1)),
-            BatchNorm(64),
-            MaxPool((2,2)),
-            Conv((3, 3), 64 => 128, relu, pad=(1, 1), stride=(1, 1)),
-            BatchNorm(128),
-            Conv((3, 3), 128 => 128, relu, pad=(1, 1), stride=(1, 1)),
-            BatchNorm(128),
-            MaxPool((2,2)),
-            Conv((3, 3), 128 => 256, relu, pad=(1, 1), stride=(1, 1)),
-            BatchNorm(256),
-            Conv((3, 3), 256 => 256, relu, pad=(1, 1), stride=(1, 1)),
-            BatchNorm(256),
-            Conv((3, 3), 256 => 256, relu, pad=(1, 1), stride=(1, 1)),
-            BatchNorm(256),
-            Conv((3, 3), 256 => 256, relu, pad=(1, 1), stride=(1, 1)),
-            MaxPool((2,2)),
-            Conv((3, 3), 256 => 512, relu, pad=(1, 1), stride=(1, 1)),
-            BatchNorm(512),
-            Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-            BatchNorm(512),
-            Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-            BatchNorm(512),
-            Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-            MaxPool((2,2)),
-            Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-            BatchNorm(512),
-            Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-            BatchNorm(512),
-            Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-            BatchNorm(512),
-            Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-            MaxPool((2,2)),
-            flatten,
-            Dense(512, 4096, relu),
-            Dropout(0.5),
-            Dense(4096, 4096, relu),
-            Dropout(0.5),
-            Dense(4096, 10)) |> gpu
+    Chain(
+        Conv((3, 3), 3 => 64, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(64),
+        Conv((3, 3), 64 => 64, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(64),
+        MaxPool((2,2)),
+        Conv((3, 3), 64 => 128, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(128),
+        Conv((3, 3), 128 => 128, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(128),
+        MaxPool((2,2)),
+        Conv((3, 3), 128 => 256, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(256),
+        Conv((3, 3), 256 => 256, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(256),
+        Conv((3, 3), 256 => 256, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(256),
+        Conv((3, 3), 256 => 256, relu, pad=(1, 1), stride=(1, 1)),
+        MaxPool((2,2)),
+        Conv((3, 3), 256 => 512, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(512),
+        Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(512),
+        Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(512),
+        Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
+        MaxPool((2,2)),
+        Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(512),
+        Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(512),
+        Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
+        BatchNorm(512),
+        Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
+        MaxPool((2,2)),
+        flatten,
+        Dense(512, 4096, relu),
+        Dropout(0.5),
+        Dense(4096, 4096, relu),
+        Dropout(0.5),
+        Dense(4096, 10)
+    )
 end
 
 function train(; kws...)
     # Initialize the hyperparameters
     args = Args(; kws...)
 	
+    if CUDA.has_cuda()
+        device = gpu
+        @info "Training on GPU"
+    else
+        device = cpu
+        @info "Training on CPU"
+    end
+    
     # Load the train, validation data 
     train, val = get_processed_data(args)
     
@@ -140,7 +150,7 @@ function train(; kws...)
 
     @info("Constructing Model")	
     # Defining the loss and accuracy functions
-    m = vgg16()
+    m = vgg16() |> device
 
     loss(x, y) = logitcrossentropy(m(x), y)
 
@@ -153,7 +163,7 @@ function train(; kws...)
     # Starting to train models
     for epoch in 1:args.epochs
         for (x, y) in train_data
-            x, y = gpu(x), gpu(y)
+            x, y = x |> device, y |> device
 
             gs = Flux.gradient(ps) do 
                 loss(x, y)
@@ -164,7 +174,8 @@ function train(; kws...)
 
         validation_loss = 0f0
         for (x, y) in val_data
-            validation_loss += loss(gpu(x), gpu(y))
+            x, y = x |> device, y |> device
+            validation_loss += loss(x, y)
         end
         @show validation_loss
     end
@@ -180,7 +191,7 @@ function test(m; kws...)
 
     correct, total = 0, 0
     for (x, y) in test_data
-        x, y = gpu(x), gpu(y)
+        x, y = x |> device, y |> device
         correct += sum(onecold(cpu(m(x)), 0:9) .== onecold(cpu(y), 0:9))
         total += size(y, 2)
     end
