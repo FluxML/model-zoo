@@ -1,13 +1,14 @@
 using Base.Iterators: partition
 using Flux
 using Flux.Optimise: update!
-using Flux: logitbinarycrossentropy
+using Flux.Losses: logitbinarycrossentropy
 using Images
 using MLDatasets
 using Statistics
 using Parameters: @with_kw
 using Printf
 using Random
+using CUDA
 
 @with_kw struct HyperParams
     batch_size::Int = 128
@@ -41,27 +42,28 @@ function Discriminator()
             Dense(7 * 7 * 128, 1))	
 end
 
-function Generator()
+function Generator(latent_dim::Int)
     return Chain(
-            Dense(hparams.latent_dim, 7 * 7 * 256),
+            Dense(latent_dim, 7 * 7 * 256),
             BatchNorm(7 * 7 * 256, relu),
             x->reshape(x, 7, 7, 256, :),
             ConvTranspose((5, 5), 256 => 128; stride = 1, pad = 2),
             BatchNorm(128, relu),
             ConvTranspose((4, 4), 128 => 64; stride = 2, pad = 1),
             BatchNorm(64, relu),
-            ConvTranspose((4, 4), 64 => 1, tanh; stride = 2, pad = 1),
+            ConvTranspose((4, 4), 64 => 1; stride = 2, pad = 1),
+            x -> tanh.(x)
             )
 end
 
 # Loss functions
 function discriminator_loss(real_output, fake_output)
-    real_loss = mean(logitbinarycrossentropy.(real_output, 1f0))
-    fake_loss = mean(logitbinarycrossentropy.(fake_output, 0f0))
+    real_loss = logitbinarycrossentropy(real_output, 1)
+    fake_loss = logitbinarycrossentropy(fake_output, 0)
     return real_loss + fake_loss
 end
 
-generator_loss(fake_output) = mean(logitbinarycrossentropy.(fake_output, 1f0))
+generator_loss(fake_output) = logitbinarycrossentropy(fake_output, 1)
 
 function train_discriminator!(gen, dscr, x, opt_dscr, hparams)
     noise = randn!(similar(x, (hparams.latent_dim, hparams.batch_size))) 
@@ -92,20 +94,28 @@ function train(; kws...)
     # Model Parameters
     hparams = HyperParams(; kws...)
 
+    if CUDA.has_cuda()
+        device = gpu
+        @info "Training on GPU"
+    else
+        device = cpu
+        @info "Training on CPU"
+    end
+
     # Load MNIST dataset
     images, _ = MLDatasets.MNIST.traindata(Float32)
     # Normalize to [-1, 1]
     image_tensor = reshape(@.(2f0 * images - 1f0), 28, 28, 1, :)
     # Partition into batches
-    data = [image_tensor[:, :, :, r] |> gpu for r in partition(1:60000, hparams.batch_size)]
+    data = [image_tensor[:, :, :, r] |> device for r in partition(1:60000, hparams.batch_size)]
 
-    fixed_noise = [randn(hparams.latent_dim, 1) |> gpu for _=1:hparams.output_x*hparams.output_y]
+    fixed_noise = [randn(hparams.latent_dim, 1) |> device for _=1:hparams.output_x*hparams.output_y]
 
     # Discriminator
-    dscr = Discriminator() |> gpu
+    dscr = Discriminator() |> device
 
     # Generator
-    gen =  Generator() |> gpu
+    gen =  Generator(hparams.latent_dim) |> device
 
     # Optimizers
     opt_dscr = ADAM(hparams.lr_dscr)
