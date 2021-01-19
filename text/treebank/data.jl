@@ -31,5 +31,5 @@ function getdata()
     labels_e  = map.(t -> onehot(t, 0:4), labels)
 
     train = map.(tuple, phrases_e, labels_e)
-    return train
+    return train, alphabet
 end
