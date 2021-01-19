@@ -4,12 +4,12 @@
 # Diederik P Kingma, Max Welling
 # https://arxiv.org/abs/1312.6114
 
-using Base.Iterators: partition
 using BSON
-using CUDAapi: has_cuda_gpu
+using CUDA
 using DrWatson: struct2dict
 using Flux
-using Flux: logitbinarycrossentropy, chunk
+using Flux: @functor, chunk
+using Flux.Losses: logitbinarycrossentropy
 using Flux.Data: DataLoader
 using Images
 using Logging: with_logger
@@ -30,22 +30,24 @@ struct Encoder
     linear
     μ
     logσ
-    Encoder(input_dim, latent_dim, hidden_dim, device) = new(
-        Dense(input_dim, hidden_dim, tanh) |> device,   # linear
-        Dense(hidden_dim, latent_dim) |> device,        # μ
-        Dense(hidden_dim, latent_dim) |> device,        # logσ
-    )
 end
+@functor Encoder
+    
+Encoder(input_dim::Int, latent_dim::Int, hidden_dim::Int) = Encoder(
+    Dense(input_dim, hidden_dim, tanh),   # linear
+    Dense(hidden_dim, latent_dim),        # μ
+    Dense(hidden_dim, latent_dim),        # logσ
+)
 
 function (encoder::Encoder)(x)
     h = encoder.linear(x)
     encoder.μ(h), encoder.logσ(h)
 end
 
-Decoder(input_dim, latent_dim, hidden_dim, device) = Chain(
+Decoder(input_dim::Int, latent_dim::Int, hidden_dim::Int) = Chain(
     Dense(latent_dim, hidden_dim, tanh),
     Dense(hidden_dim, input_dim)
-) |> device
+)
 
 function reconstuct(encoder, decoder, x, device)
     μ, logσ = encoder(x)
@@ -59,7 +61,7 @@ function model_loss(encoder, decoder, λ, x, device)
     # KL-divergence
     kl_q_p = 0.5f0 * sum(@. (exp(2f0 * logσ) + μ^2 -1f0 - 2f0 * logσ)) / len
 
-    logp_x_z = -sum(logitbinarycrossentropy.(decoder_z, x)) / len
+    logp_x_z = -logitbinarycrossentropy(decoder_z, x, agg=sum) / len
     # regularization
     reg = λ * sum(x->sum(x.^2), Flux.params(decoder))
     
@@ -67,7 +69,7 @@ function model_loss(encoder, decoder, λ, x, device)
 end
 
 function convert_to_image(x, y_size)
-    Gray.(permutedims(vcat(reshape.(chunk(sigmoid.(x |> cpu), y_size), 28, :)...), (2, 1)))
+    Gray.(permutedims(vcat(reshape.(chunk(x |> cpu, y_size), 28, :)...), (2, 1)))
 end
 
 # arguments for the `train` function 
@@ -93,7 +95,7 @@ function train(; kws...)
     args.seed > 0 && Random.seed!(args.seed)
 
     # GPU config
-    if args.cuda && has_cuda_gpu()
+    if args.cuda && CUDA.has_cuda()
         device = gpu
         @info "Training on GPU"
     else
@@ -105,8 +107,8 @@ function train(; kws...)
     loader = get_data(args.batch_size)
     
     # initialize encoder and decoder
-    encoder = Encoder(args.input_dim, args.latent_dim, args.hidden_dim, device)
-    decoder = Decoder(args.input_dim, args.latent_dim, args.hidden_dim, device)
+    encoder = Encoder(args.input_dim, args.latent_dim, args.hidden_dim) |> device
+    decoder = Decoder(args.input_dim, args.latent_dim, args.hidden_dim) |> device
 
     # ADAM optimizer
     opt = ADAM(args.η)
@@ -155,6 +157,7 @@ function train(; kws...)
         end
         # save image
         _, _, rec_original = reconstuct(encoder, decoder, original, device)
+        rec_original = sigmoid.(rec_original)
         image = convert_to_image(rec_original, args.sample_size)
         image_path = joinpath(args.save_path, "epoch_$(epoch).png")
         save(image_path, image)
