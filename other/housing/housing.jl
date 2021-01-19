@@ -71,12 +71,12 @@ function train(; kws...)
 
     ## Training
     η = args.lr
-    θ = params([m.W, m.b])
+    θ = params(m.W, m.b)
 
     for i = 1:500
       g = gradient(() -> loss(x_train, y_train), θ)
       for x in θ
-        update!(x, -g[x]*η)
+            update!(x, g[x]*η)
       end
       if i%100==0
           @show loss(x_train, y_train)
