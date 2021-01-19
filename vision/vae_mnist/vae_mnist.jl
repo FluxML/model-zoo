@@ -4,7 +4,6 @@
 # Diederik P Kingma, Max Welling
 # https://arxiv.org/abs/1312.6114
 
-using Base.Iterators: partition
 using BSON
 using CUDA
 using DrWatson: struct2dict
