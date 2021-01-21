@@ -203,7 +203,7 @@ params(m)
 # parameters in a network, even if it has many parameters.
 x = rand(Float32, 10)
 m = Chain(Dense(10, 5, relu), Dense(5, 2), softmax)
-l(x) = sum(Flux.crossentropy(m(x), [0.5, 0.5]))
+l(x) = Flux.Losses.crossentropy(m(x), [0.5, 0.5])
 grads = gradient(params(m)) do
     l(x)
 end
@@ -238,7 +238,7 @@ opt = Descent(0.01)
 # `0.5` for every input of 10 floats. `Flux` defines the `train!` function to do it for us.
 
 data, labels = rand(10, 100), fill(0.5, 2, 100)
-loss(x, y) = sum(Flux.crossentropy(m(x), y))
+loss(x, y) = Flux.Losses.crossentropy(m(x), y)
 Flux.train!(loss, params(m), [(data,labels)], opt)
 # You don't have to use `train!`. In cases where aribtrary logic might be better suited,
 # you could open up this training loop like so:
@@ -345,9 +345,9 @@ m = Chain(
 # adaptivity in our optimisation, preventing us from over shooting from our desired destination.
 #-
 
-using Flux: crossentropy, Momentum
+using Flux: Momentum
 
-loss(x, y) = sum(crossentropy(m(x), y))
+loss(x, y) = Flux.Losses.crossentropy(m(x), y)
 opt = Momentum(0.01)
 
 # We can start writing our train loop where we will keep track of some basic accuracy
