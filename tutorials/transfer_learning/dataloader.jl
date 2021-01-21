@@ -1,7 +1,5 @@
 using Flux, Images
-using Random
 using StatsBase: sample, shuffle
-using Base.Iterators
 
 const PATH = joinpath(@__DIR__, "train")
 const FILES = joinpath.(PATH, readdir(PATH))
