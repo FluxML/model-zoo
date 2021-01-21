@@ -1,7 +1,6 @@
 using Flux
 using Flux: gradient
 using Flux.Optimise: update!
-using Flux.Losses: mse
 using DelimitedFiles, Statistics
 using Parameters: @with_kw
 
@@ -55,6 +54,9 @@ end
 # Function to predict output from given parameters
 predict(x, m) = m.W*x .+ m.b
 
+# Mean Squared Error
+meansquarederror(ŷ, y) = sum((ŷ .- y).^2)/size(y, 2)
+
 function train(; kws...)
     # Initialize the Hyperparamters
     args = Hyperparams(; kws...)
@@ -65,7 +67,7 @@ function train(; kws...)
     # The model
     m = model((randn(1,13)),[0.])
     
-    loss(x, y) = mse(predict(x, m), y)
+    loss(x, y) = meansquarederror(predict(x, m), y) 
 
     ## Training
     η = args.lr
@@ -82,7 +84,7 @@ function train(; kws...)
     end
     
     # Predict the RMSE on the test set
-    err = mse(predict(x_test, m),y_test)
+    err = meansquarederror(predict(x_test, m),y_test)
     println(err)
 end
 
