@@ -16,7 +16,6 @@ using Parameters: @with_kw
 end
 
 function get_processed_data(args)
-
     isfile("housing.data") ||
         download("https://raw.githubusercontent.com/MikeInnes/notebooks/master/housing.data",
             "housing.data")
@@ -74,12 +73,12 @@ function train(; kws...)
     θ = params(m.W, m.b)
 
     for i = 1:500
-      g = gradient(() -> loss(x_train, y_train), θ)
-      for x in θ
+        g = gradient(() -> loss(x_train, y_train), θ)
+        for x in θ
             update!(x, g[x]*η)
-      end
-      if i%100==0
-          @show loss(x_train, y_train)
+        end
+        if i%100==0
+            @show loss(x_train, y_train)
         end
     end
     
