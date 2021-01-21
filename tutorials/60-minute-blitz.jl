@@ -275,8 +275,9 @@ Flux.train!(loss, params(m), [(data,labels)], opt)
 
 using Statistics
 using Flux, Flux.Optimise
-using Metalhead, Images
-using Metalhead: trainimgs
+using Images: channelview
+using Metalhead
+using Metalhead: trainimgs, valimgs
 using Images.ImageCore
 using Flux: onehotbatch, onecold
 using Base.Iterators: partition
