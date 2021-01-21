@@ -217,11 +217,12 @@ end
 
 # The next step is to update our weights and perform optimisation. As you might be
 # familiar, *Gradient Descent* is a simple algorithm that takes the weights and steps
-# using a learning rate and the gradients. `weights = weights - learning_rate * gradient`.
+# using a learning rate and the gradients. `weights = weights - learning_rate * gradient` 
+# (note that `Flux.Optimise.update!(x, x̄)` already updates with the negative of x̄`).
 using Flux.Optimise: update!, Descent
 η = 0.1
 for p in params(m)
-  update!(p, -η * grads[p])
+  update!(p, η * grads[p])
 end
 
 # While this is a valid way of updating our weights, it can get more complicated as the
