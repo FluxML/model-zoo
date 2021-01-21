@@ -24,7 +24,6 @@
 
 using Flux, Metalhead
 using Flux: @epochs
-using Metalhead.Images
 resnet = ResNet().layers
 
 # If we intended to add a new class of objects in there, we need only `reshape` the output from the previous layers accordingly.
@@ -64,7 +63,7 @@ dataset = [gpu.(load_batch(10)) for i in 1:10]
 # After this, we only need to define the other parts of the training pipeline like we usually do.
 
 opt = ADAM()
-loss(x,y) = Flux.crossentropy(model(x), y)
+loss(x,y) = Flux.Losses.crossentropy(model(x), y)
 
 # Now to train
 # As discussed earlier, we don’t need to pass all the parameters to our training loop. Only the ones we need to
