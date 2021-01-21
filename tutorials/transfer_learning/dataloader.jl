@@ -1,9 +1,7 @@
 using Flux, Images
-using Random
 using StatsBase: sample, shuffle
-using Base.Iterators
 
-const PATH = joinpath(@__FILE__, "train")
+const PATH = joinpath(@__DIR__, "train")
 const FILES = joinpath.(PATH, readdir(PATH))
 if isempty(readdir(PATH))
   error("Empty train folder - perhaps you need to download and extract the kaggle dataset.")
@@ -13,7 +11,6 @@ const DOGS = filter(x -> occursin("dog", x), FILES)
 const CATS = filter(x -> occursin("cat", x), FILES)
 
 function load_batch(n = 10, nsize = (224,224); path = PATH)
-
   imgs_paths = shuffle(vcat(sample(DOGS, Int(n/2)), sample(CATS, Int(n/2))))
   labels = map(x -> occursin("dog.",x) ? 1 : 0, imgs_paths)
   labels = Flux.onehotbatch(labels, [0,1])
