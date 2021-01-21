@@ -363,7 +363,7 @@ accuracy(x, y) = mean(onecold(m(x), 1:10) .== onecold(y, 1:10))
 # and see what our net is capable of. We will loop over the dataset 10 times and
 # feed the inputs to the neural network and optimise.
 
-epochs = 10
+epochs = 1
 
 for epoch = 1:epochs
   for d in train
