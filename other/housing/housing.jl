@@ -53,8 +53,10 @@ end
 # Function to predict output from given parameters
 predict(x, m) = m.W*x .+ m.b
 
-# Mean Squared Error
-meansquarederror(ŷ, y) = sum((ŷ .- y).^2)/size(y, 2)
+# Define the mean squared error function to be used in the loss 
+# function. An implementation is also available in the Flux package
+# (https://fluxml.ai/Flux.jl/stable/models/losses/#Flux.Losses.mse).
+meansquarederror(ŷ, y) = sum((ŷ .- y).^2)/size(y, 2)
 
 function train(; kws...)
     # Initialize the Hyperparamters
