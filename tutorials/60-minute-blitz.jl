@@ -279,7 +279,7 @@ using Images: channelview
 using Metalhead
 using Metalhead: trainimgs, valimgs
 using Images.ImageCore
-using Flux: onehotbatch, onecold
+using Flux: onehotbatch, onecold, flatten
 using Base.Iterators: partition
 # using CUDA
 
@@ -333,7 +333,7 @@ m = Chain(
   MaxPool((2,2)),
   Conv((5,5), 16=>8, relu),
   MaxPool((2,2)),
-  x -> reshape(x, :, size(x, 4)),
+  flatten,
   Dense(200, 120),
   Dense(120, 84),
   Dense(84, 10),
