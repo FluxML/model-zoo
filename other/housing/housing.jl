@@ -1,5 +1,5 @@
-using Flux, Statistics, DelimitedFiles
-using Flux: Params, gradient
+using Flux
+using Flux: gradient
 using Flux.Optimise: update!
 using DelimitedFiles, Statistics
 using Parameters: @with_kw
@@ -16,7 +16,6 @@ using Parameters: @with_kw
 end
 
 function get_processed_data(args)
-
     isfile("housing.data") ||
         download("https://raw.githubusercontent.com/MikeInnes/notebooks/master/housing.data",
             "housing.data")
@@ -54,9 +53,11 @@ end
 # Function to predict output from given parameters
 predict(x, m) = m.W*x .+ m.b
 
-# Mean Squared Error
-meansquarederror(ŷ, y) = sum((ŷ .- y).^2)/size(y, 2)
-    
+# Define the mean squared error function to be used in the loss 
+# function. An implementation is also available in the Flux package
+# (https://fluxml.ai/Flux.jl/stable/models/losses/#Flux.Losses.mse).
+meansquarederror(ŷ, y) = sum((ŷ .- y).^2)/size(y, 2)
+
 function train(; kws...)
     # Initialize the Hyperparamters
     args = Hyperparams(; kws...)
@@ -67,19 +68,19 @@ function train(; kws...)
     # The model
     m = model((randn(1,13)),[0.])
     
-    loss(x, y) = meansquarederror(predict(x, m), y)
+    loss(x, y) = meansquarederror(predict(x, m), y) 
 
     ## Training
     η = args.lr
-    θ = params([m.W, m.b])
+    θ = params(m.W, m.b)
 
     for i = 1:500
-      g = gradient(() -> loss(x_train, y_train), θ)
-      for x in θ
-        update!(x, -g[x]*η)
-      end
-      if i%100==0
-          @show loss(x_train, y_train)
+        g = gradient(() -> loss(x_train, y_train), θ)
+        for x in θ
+            update!(x, g[x]*η)
+        end
+        if i%100==0
+            @show loss(x_train, y_train)
         end
     end
     
