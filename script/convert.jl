@@ -7,7 +7,7 @@ meta = meta[ARGS[1]]
 
 path = meta["path"]
 deps = get(meta, "deps", [])
-deps isa String && (deps = [deps])
+deps = deps isa String ? [deps] : deps
 
 for d in ["Project.toml", "Manifest.toml", ".gitignore"]
   isfile(joinpath(root, path, d)) && push!(deps, d)
@@ -24,14 +24,19 @@ Pkg.activate(joinpath(root, "notebooks", path))
 using Literate
 
 function postprocess_nb(content)
-	content = replace(content, r"\s*using CuArrays" => "## using CuArrays")
-	return content
+  content = replace(content, r"\s*using CUDA" => "## using CUDA")
+  return content
 end
 
 function preprocess_nb(content)
-	content = replace(content, r"#\s*using CuArrays" => "using CuArrays")
-	content = "using Pkg; Pkg.activate(\".\"); Pkg.instantiate();\n\n" * content
-	return content
+  content = replace(content, r"#\s*using CUDA" => "using CUDA")
+  content = "using Pkg; Pkg.activate(\".\"); Pkg.instantiate();\n\n" * content
+  return content
+end
+
+function init_nb(content)
+  content = "using Pkg; Pkg.activate(\"$root\"); Pkg.status();\n\n" * content
+  return content
 end
 
 scripts = meta["notebook"]
@@ -45,7 +50,8 @@ for script in scripts
 end
 
 scripts = map(x -> x[1:end - 3] * ".ipynb", scripts)
-keep = union(deps, scripts)
+nbs = filter(x -> endswith(x, ".ipynb"), readdir(joinpath(root, path)))
+keep = union(deps, scripts, nbs)
 files = readdir(joinpath(root, "notebooks", path))
 
 for r in files

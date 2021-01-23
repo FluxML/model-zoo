@@ -1,37 +1,44 @@
 # Ref: http://blog.otoro.net/2016/03/25/generating-abstract-patterns-with-tensorflow/
-
 using Images
 using Flux
+using Parameters: @with_kw
 
 # set parameters
-z_dim = 2
-x_dim = 512
-y_dim = 512
-N = 14
-hidden = 9
-batch_size = 1024
-n = x_dim * y_dim
+@with_kw mutable struct Args
+    z_dim::Int = 2		# Dim of Latent Vector
+    x_dim::Int = 512	# X-Dimension of Image
+    y_dim::Int = 512	# Y-Dimension of Image
+    N::Int = 14			#
+    hidden::Int = 9		# Number of hidden layers in the image
+    batch_size::Int = 1024	# Batch Size for prediction
+end
 
 # cast 0:x-1 to -0.5:0.5
 cast(x) = [range(-0.5, stop=0.5, step=1/(x - 1))...]
 
-xs, ys = cast(x_dim), cast(y_dim)
-xs = repeat(xs, inner=(y_dim))
-ys = repeat(ys, outer=(x_dim))
-rs = sqrt.(xs.^2 + ys.^2)
-
-# sample weigths from a gaussian distribution
-unit(in=N, out=N, f=tanh) = Dense(in, out, f, initW=randn)
-
-# input -> [x, y, r, z...]
-layers = Any[unit(3 + z_dim)]
-for i=1:hidden
-    push!(layers, unit())
+function getdata(args)
+    xs, ys = cast(args.x_dim), cast(args.y_dim)
+    xs = repeat(xs, inner=(args.y_dim))
+    ys = repeat(ys, outer=(args.x_dim))
+	# Radius term for each point of input
+    rs = sqrt.(xs.^2 + ys.^2)
+    return xs,ys,rs
 end
-push!(layers, unit(N, 1, σ))
 
-model = Chain(layers...)
-getColorAt(x) = Flux.data(model(x))
+#Definition for each individual layer
+# sample weigths from a gaussian distribution
+unit(args, in=args.N, out=args.N, f=tanh) = Dense(in, out, f, initW=randn)
+
+function build_model(args)
+    # input -> [x, y, r, z...]
+    layers = Any[unit(args, 3 + args.z_dim)]
+    for i=1:args.hidden
+        push!(layers, unit(args))
+    end
+    push!(layers, unit(args,args.N, 1, σ))
+    model = Chain(layers...)
+    return model
+end
 
 function batch(arr, s)
     batches = []
@@ -42,18 +49,35 @@ function batch(arr, s)
     batches
 end
 
-function getImage(z)
-    z = repeat(reshape(z, 1, z_dim), outer=(n, 1))
+function get_image(z, model, args) 
+    n = args.x_dim * args.y_dim   
+    z = repeat(reshape(z, 1, args.z_dim), outer=(n, 1))
+    xs, ys, rs = getdata(args)
     coords = hcat(xs, ys, rs, z)'
-    coords = batch(coords, batch_size)
+    
+    coords = batch(coords, args.batch_size)
+    
+    # Pixel value at a position x is defined as output of model at that point 
+    getColorAt(x) = model(x)
+
     pixels = [Gray.(hcat(getColorAt.(coords)...))...]
-    reshape(pixels, y_dim, x_dim)
+    reshape(pixels, args.y_dim, args.x_dim)
 end
 
-function saveImg(z, image_path="sample.png")
-    imgg = getImage(z)
+function save_img(z, model, args, image_path=joinpath(dirname(@__FILE__),"sample.png"))
+    imgg = get_image(z, model, args)
     save(image_path, imgg)
     imgg
 end
 
-saveImg(rand(z_dim))
+function generate_img(; kws...)
+    args = Args(; kws...)
+	
+    model = build_model(args)
+	
+    #Saving image as "sample.png"
+    save_img(rand(args.z_dim), model, args)
+end
+
+cd(@__DIR__)
+generate_img()

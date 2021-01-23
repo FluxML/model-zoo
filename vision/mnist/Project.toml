@@ -1,8 +1,14 @@
 [deps]
 BSON = "fbb218c0-5317-5bc6-957e-2ee96dd4b1f0"
-Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
-ImageMagick = "6218d12a-5da1-5696-b52f-db25d2ecc6d1"
 Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
-Juno = "e5e0dc1b-0480-54bc-9374-aad01c23163d"
+MLDatasets = "eb30cadb-4394-5ae3-aed4-317e484a6458"
+Parameters = "d96e819e-fc66-5662-9728-84c9c7592b0a"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+
+[compat]
+CUDA = "2.4.0"
+Flux = "0.11.4"
+julia = "1.5"
