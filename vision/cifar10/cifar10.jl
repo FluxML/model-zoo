@@ -189,6 +189,12 @@ end
 function test(m; kws...)
     args = Args(kws...)
 
+    if CUDA.has_cuda()
+        device = gpu
+    else
+        device = cpu
+    end
+    
     test_data = get_test_data()
     test_data = Flux.Data.DataLoader(test_data, batchsize=64)
 
