@@ -134,14 +134,6 @@ function train(; kws...)
     # Initialize the hyperparameters
     args = Args(; kws...)
 	
-    if CUDA.has_cuda()
-        device = gpu
-        @info "Training on GPU"
-    else
-        device = cpu
-        @info "Training on CPU"
-    end
-    
     # Load the train, validation data 
     train, val = get_processed_data(args)
     
@@ -150,7 +142,7 @@ function train(; kws...)
 
     @info("Constructing Model")	
     # Defining the loss and accuracy functions
-    m = vgg16() |> device
+    m = vgg16() |> gpu
 
     loss(x, y) = logitcrossentropy(m(x), y)
 
@@ -165,7 +157,7 @@ function train(; kws...)
         @info "Epoch $epoch"
 
         for (x, y) in train_data
-            x, y = x |> device, y |> device
+            x, y = x |> gpu, y |> gpu
 
             gs = Flux.gradient(ps) do 
                 loss(x, y)
@@ -176,7 +168,7 @@ function train(; kws...)
 
         validation_loss = 0f0
         for (x, y) in val_data
-            x, y = x |> device, y |> device
+            x, y = x |> gpu, y |> gpu
             validation_loss += loss(x, y)
         end
         validation_loss /= length(val_data)
@@ -189,18 +181,12 @@ end
 function test(m; kws...)
     args = Args(kws...)
 
-    if CUDA.has_cuda()
-        device = gpu
-    else
-        device = cpu
-    end
-    
     test_data = get_test_data()
     test_data = Flux.Data.DataLoader(test_data, batchsize=64)
 
     correct, total = 0, 0
     for (x, y) in test_data
-        x, y = x |> device, y |> device
+        x, y = x |> gpu, y |> gpu
         correct += sum(onecold(cpu(m(x)), 0:9) .== onecold(cpu(y), 0:9))
         total += size(y, 2)
     end
