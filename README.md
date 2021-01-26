@@ -56,4 +56,7 @@ We welcome contributions of new models. They should be in a folder with a projec
   * [Meta-Learning](contrib/meta-learning/MetaLearning.jl)
   * [Logistic Regression Iris](other/iris/iris.jl)
   * [Speech recognition](contrib/audio/speech-blstm)
-  * [DataLoader example with image data](other/dataloader)
+* Tutorials
+  * [A 60 Minute Blitz](tutorials/60-minute-blitz/60-minute-blitz.jl)
+  * [DataLoader example with image data](tutorials/dataloader)
+  * [Transfer Learning](tutorials/transfer_learning/transfer_learning.jl)
