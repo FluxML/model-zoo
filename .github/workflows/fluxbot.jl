@@ -6,6 +6,7 @@ on:
 
 jobs:
   build:
+    if: contains(github.event.comment.body, '@ModelZookeeper')
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -23,6 +24,5 @@ jobs:
         env:
           FLUXBOT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BOT_SECRET: ${{ secrets.BOT_SECRET }}
-          MODELZOO_TOKEN: ${{ secrets.MODELZOO_TOKEN }}
           MODELZOO_TRIGGER_TOKEN: ${{ secrets.MODELZOO_TRIGGER_TOKEN }}
         run: julia --project=.fluxbot -e 'using FluxBot; FluxBot.trial()'
