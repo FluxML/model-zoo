@@ -1,11 +1,46 @@
 [MNIST]
 path = "vision/mnist"
-notebook = "mlp.jl"
-deps = ["vae.jl"]
+notebook = ["mlp.jl", "autoencoder.jl", "vae.jl"]
+
+[CIFAR10]
+path = "vision/cifar10"
+notebook = "cifar10.jl"
 
 [char-rnn]
 path = "text/char-rnn"
 notebook = "char-rnn.jl"
+
+[lang-detection]
+path = "text/lang-detection"
+notebook = "model.jl"
+deps = ["scrape.jl"]
+
+[phonemes]
+path = "text/phonemes"
+notebook = "1-model.jl"
+deps = ["0-data.jl"]
+
+[treebank]
+path = "text/treebank"
+notebook = "recursive.jl"
+deps = ["data.jl"]
+
+[diffeq]
+path = "other/diffeq"
+notebook = "diffeq.jl"
+
+#[bitstring-parity]
+#path = "other/bitstring-parity"
+#notebook = ["xor1.jl", "xor2.jl", "xor3.jl"]
+#deps = "data.jl"
+
+[fizzbuzz]
+path = "other/fizzbuzz"
+notebook = "fizzbuzz.jl"
+
+[housing]
+path = "other/housing"
+notebook = "housing.jl"
 
 [tutorials]
 path="tutorials"
