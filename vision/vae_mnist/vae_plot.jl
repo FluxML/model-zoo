@@ -31,6 +31,7 @@ function plot_result()
     x[1, :] = z1
     x[2, :] = z2
     samples = decoder(x)
+    samples = sigmoid.(samples)
     image = convert_to_image(samples, len)
     save("output/manifold.png", image)
 end
