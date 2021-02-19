@@ -15,15 +15,15 @@ function train(; kws...)
     args = Args(; kws...)
     # load data
     @info("Loading Data...")
-    train_data = getdata(args)    
+    train_data, alphabet = getdata()    
 
     @info("Constructing model....")
-    embedding = param(randn(Float32, N, length(alphabet)))
+    embedding = randn(Float32, args.N, length(alphabet))
 
-    W = Dense(2*N, N, tanh)
+    W = Dense(2*args.N, args.N, tanh)
     combine(a, b) = W([a; b])
 
-    sentiment = Chain(Dense(N, 5))
+    sentiment = Chain(Dense(args.N, 5))
 
     function forward(tree)
       if isleaf(tree)
@@ -32,8 +32,8 @@ function train(; kws...)
         phrase, logitcrossentropy(sentiment(phrase), sent)
       else
         _, sent = tree.value
-        c1, l1 = forward(tree[1], embedding)
-        c2, l2 = forward(tree[2], embedding)
+        c1, l1 = forward(tree[1])
+        c2, l2 = forward(tree[2])
         phrase = combine(c1, c2)
         phrase, l1 + l2 + logitcrossentropy(sentiment(phrase), sent)
       end
@@ -43,7 +43,7 @@ function train(; kws...)
  
     opt = ADAM(args.lr)
     ps = params(embedding, W, sentiment)
-    evalcb = () -> @show loss(train[1])
+    evalcb = () -> @show loss(train_data[1])
     @info("Training Model...")
     Flux.train!(loss, ps, zip(train_data), opt,cb = throttle(evalcb, args.throttle))
 end

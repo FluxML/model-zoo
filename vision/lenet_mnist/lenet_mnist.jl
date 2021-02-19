@@ -7,14 +7,13 @@ using Flux.Data: DataLoader
 using Flux.Optimise: Optimiser, WeightDecay
 using Flux: onehotbatch, onecold, logitcrossentropy
 using Statistics, Random
-using Parameters: @with_kw
 using Logging: with_logger, global_logger
 using TensorBoardLogger: TBLogger, tb_overwrite, set_step!, set_step_increment!
 import ProgressMeter
 import MLDatasets
 import DrWatson: savename, struct2dict
 import BSON
-using CUDAapi
+using CUDA
 
 # LeNet5 "constructor". 
 # The model can be adapted to any image size
@@ -23,12 +22,11 @@ function LeNet5(; imgsize=(28,28,1), nclasses=10)
     out_conv_size = (imgsize[1]÷4 - 3, imgsize[2]÷4 - 3, 16)
     
     return Chain(
-            x -> reshape(x, imgsize..., :),
             Conv((5, 5), imgsize[end]=>6, relu),
             MaxPool((2, 2)),
             Conv((5, 5), 6=>16, relu),
             MaxPool((2, 2)),
-            x -> reshape(x, :, size(x, 4)),
+            flatten,
             Dense(prod(out_conv_size), 120, relu), 
             Dense(120, 84, relu), 
             Dense(84, nclasses)
@@ -74,7 +72,7 @@ round4(x) = round(x, digits=4)
 
 
 # arguments for the `train` function 
-@with_kw mutable struct Args
+Base.@kwdef mutable struct Args
     η = 3e-4             # learning rate
     λ = 0                # L2 regularizer param, implemented as weight decay
     batchsize = 128      # batch size
@@ -91,7 +89,7 @@ end
 function train(; kws...)
     args = Args(; kws...)
     args.seed > 0 && Random.seed!(args.seed)
-    use_cuda = args.cuda && CUDAapi.has_cuda_gpu()
+    use_cuda = args.cuda && CUDA.has_cuda()
     if use_cuda
         device = gpu
         @info "Training on GPU"

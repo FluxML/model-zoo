@@ -5,7 +5,7 @@ using Plots
 function plot_result()
     BSON.@load "output/model.bson" encoder decoder args
     args = Args(; args...)
-    device = args.cuda && has_cuda_gpu() ? gpu : cpu
+    device = args.cuda && CUDA.has_cuda() ? gpu : cpu
     encoder, decoder = encoder |> device, decoder |> device
     # load MNIST images
     loader = get_data(args.batch_size)

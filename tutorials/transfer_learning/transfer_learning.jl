@@ -24,7 +24,6 @@
 
 using Flux, Metalhead
 using Flux: @epochs
-using Metalhead.Images
 resnet = ResNet().layers
 
 # If we intended to add a new class of objects in there, we need only `reshape` the output from the previous layers accordingly.
@@ -53,7 +52,6 @@ model = Chain(
   Dense(2048, 1000),  
   Dense(1000, 256),
   Dense(256, 2),        # we get 2048 features out, and we have 2 classes
-  softmax
 )
 
 # To speed up training, let’s move everything over to the GPU
@@ -64,7 +62,7 @@ dataset = [gpu.(load_batch(10)) for i in 1:10]
 # After this, we only need to define the other parts of the training pipeline like we usually do.
 
 opt = ADAM()
-loss(x,y) = Flux.crossentropy(model(x), y)
+loss(x,y) = Flux.Losses.logitcrossentropy(model(x), y)
 
 # Now to train
 # As discussed earlier, we don’t need to pass all the parameters to our training loop. Only the ones we need to
