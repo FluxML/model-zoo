@@ -60,7 +60,7 @@ train_y, test_y = onehotbatch(train_y, 0:9), onehotbatch(test_y, 0:9)
 Now, we load the train images and their labels onto a DataLoader object:
  
 ```julia
-data_loader = DataLoader(train_x, train_y, batchsize=128, shuffle=true)
+data_loader = DataLoader((train_x, train_y), batchsize=128, shuffle=true)
 ```
 <br>
  

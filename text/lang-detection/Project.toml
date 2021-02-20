@@ -9,5 +9,5 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 Unicode = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 
 [compat]
-Flux = "0.11.4"
+Flux = "0.11.4, 0.12"
 julia = "1.5"

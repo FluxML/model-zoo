@@ -1,6 +1,7 @@
 # Based on https://arxiv.org/abs/1409.0473
 include("0-data.jl")
-using Flux: flip, logitcrossentropy, reset!, throttle
+using Flux: flip, reset!, throttle
+using Flux.Losses: logitcrossentropy
 using Parameters: @with_kw
 using StatsBase: wsample
 

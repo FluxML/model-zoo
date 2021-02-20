@@ -1,5 +1,6 @@
 using Flux
-using Flux: logitcrossentropy, throttle
+using Flux: throttle
+using Flux.Losses: logitcrossentropy
 using Flux.Data: Tree, children, isleaf
 using Parameters: @with_kw
 include("data.jl")

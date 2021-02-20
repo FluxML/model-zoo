@@ -1,6 +1,7 @@
 include("data.jl")
 using Flux, Statistics
-using Flux: onehot, onehotbatch, throttle, logitcrossentropy, reset!, onecold
+using Flux: onehot, onehotbatch, throttle, reset!, onecold
+using Flux.Losses: logitcrossentropy
 using Parameters: @with_kw
 
 @with_kw mutable struct Args

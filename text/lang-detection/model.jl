@@ -1,5 +1,6 @@
 using Flux
-using Flux: onehot, onehotbatch, logitcrossentropy, reset!, throttle
+using Flux: onehot, onehotbatch, reset!, throttle
+using Flux.Losses: logitcrossentropy
 using Statistics: mean
 using Random
 using Unicode

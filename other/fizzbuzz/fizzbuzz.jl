@@ -1,6 +1,7 @@
 # Inspired by "Fizz Buzz in Tensorflow" blog by Joel Grus
 # http://joelgrus.com/2016/05/23/fizz-buzz-in-tensorflow/
-using Flux: Chain, Dense, params, logitcrossentropy, onehotbatch, ADAM, train!, softmax
+using Flux: Chain, Dense, params, onehotbatch, ADAM, train!, softmax
+using Flux.Losses: logitcrossentropy
 using Test
 
 # Data preparation

@@ -1,5 +1,6 @@
 using Flux
-using Flux: onehot, chunk, batchseq, throttle, logitcrossentropy
+using Flux: onehot, chunk, batchseq, throttle
+using Flux.Losses: logitcrossentropy
 using StatsBase: wsample
 using Base.Iterators: partition
 using Parameters: @with_kw

@@ -22,8 +22,8 @@ function get_data(args)
     train_y, test_y = onehotbatch(train_y, 0:9), onehotbatch(test_y, 0:9)
 
     # Now, we load the train and test images and their labels onto a DataLoader object
-    data_loader_train = DataLoader(train_x, train_y, batchsize=args.minibath_size, shuffle=true)
-    data_loader_test = DataLoader(train_x, train_y, batchsize=args.minibath_size, shuffle=true)
+    data_loader_train = DataLoader((train_x, train_y), batchsize=args.minibath_size, shuffle=true)
+    data_loader_test = DataLoader((train_x, train_y), batchsize=args.minibath_size, shuffle=true)
 
     return data_loader_train, data_loader_test
 

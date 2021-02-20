@@ -1,5 +1,6 @@
 using Flux
-using Flux: logitcrossentropy, normalise, onecold, onehotbatch
+using Flux: normalise, onecold, onehotbatch
+using Flux.Losses: logitcrossentropy
 using Statistics: mean
 using Parameters: @with_kw
 
