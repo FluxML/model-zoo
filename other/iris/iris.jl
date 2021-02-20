@@ -3,6 +3,7 @@ using Flux: normalise, onecold, onehotbatch
 using Flux.Losses: logitcrossentropy
 using Statistics: mean
 using Parameters: @with_kw
+using MLDatasets: Iris
 
 @with_kw mutable struct Args
     lr::Float64 = 0.5
@@ -10,9 +11,9 @@ using Parameters: @with_kw
 end
 
 function get_processed_data(args)
-    labels = Flux.Data.Iris.labels()
-    features = Flux.Data.Iris.features()
-
+    features = Iris.features()
+    labels = Iris.labels()
+    
     # Subract mean, divide by std dev for normed mean of 0 and std dev of 1.
     normed_features = normalise(features, dims=2)
 
@@ -41,7 +42,7 @@ accuracy(x, y, model) = mean(onecold(model(x)) .== onecold(y))
 # Function to build confusion matrix
 function confusion_matrix(X, y, model)
     ŷ = onehotbatch(onecold(model(X)), 1:3)
-    y * transpose(ŷ)
+    y * ŷ'
 end
 
 function train(; kws...)

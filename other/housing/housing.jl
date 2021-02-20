@@ -3,6 +3,7 @@ using Flux: gradient
 using Flux.Optimise: update!
 using DelimitedFiles, Statistics
 using Parameters: @with_kw
+using MLDatasets: BostonHousing
 
 # This replicates the housing data example from the Knet.jl readme. Although we
 # could have reused more of Flux (see the mnist example), the library's
@@ -16,17 +17,11 @@ using Parameters: @with_kw
 end
 
 function get_processed_data(args)
-    isfile("housing.data") ||
-        download("https://raw.githubusercontent.com/MikeInnes/notebooks/master/housing.data",
-            "housing.data")
-
-    rawdata = readdlm("housing.data")'
-
+    x = BostonHousing.features()
+    y = BostonHousing.targets()
+    
     # The last feature is our target -- the price of the house.
     split_ratio = args.split_ratio # For the train test split
-
-    x = rawdata[1:13,:]
-    y = rawdata[14:14,:]
 
     # Normalise the data
     x = (x .- mean(x, dims = 2)) ./ std(x, dims = 2)
@@ -41,32 +36,32 @@ function get_processed_data(args)
     train_data = (x_train, y_train)
     test_data = (x_test, y_test)
 
-    return train_data,test_data
+    return train_data, test_data
 end
 
-# Struct to define model
-mutable struct model
+# Struct to define Model
+mutable struct Model
     W::AbstractArray
     b::AbstractVector
 end
 
 # Function to predict output from given parameters
-predict(x, m) = m.W*x .+ m.b
+predict(x, m) = m.W * x .+ m.b
 
 # Define the mean squared error function to be used in the loss 
 # function. An implementation is also available in the Flux package
 # (https://fluxml.ai/Flux.jl/stable/models/losses/#Flux.Losses.mse).
-meansquarederror(ŷ, y) = sum((ŷ .- y).^2)/size(y, 2)
+meansquarederror(ŷ, y) = sum((ŷ .- y).^2) / size(y, 2)
 
 function train(; kws...)
     # Initialize the Hyperparamters
     args = Hyperparams(; kws...)
     
     # Load the data
-    (x_train,y_train),(x_test,y_test) = get_processed_data(args)
+    (x_train,y_train), (x_test,y_test) = get_processed_data(args)
     
     # The model
-    m = model((randn(1,13)),[0.])
+    m = Model(randn(1,13), [0.])
     
     loss(x, y) = meansquarederror(predict(x, m), y) 
 
@@ -77,17 +72,13 @@ function train(; kws...)
     for i = 1:500
         g = gradient(() -> loss(x_train, y_train), θ)
         for x in θ
-            update!(x, g[x]*η)
+            update!(x, g[x] * η)
         end
-        if i%100==0
+        if i % 100 == 0
             @show loss(x_train, y_train)
+            @show loss(x_test, y_test)     
         end
     end
-    
-    # Predict the RMSE on the test set
-    err = meansquarederror(predict(x_test, m),y_test)
-    println(err)
 end
 
-cd(@__DIR__)
 train()
