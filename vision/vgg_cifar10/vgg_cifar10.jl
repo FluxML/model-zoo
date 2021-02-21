@@ -14,16 +14,15 @@ end
 
 @with_kw mutable struct Args
     batchsize::Int = 128
-    throttle::Int = 10
     lr::Float64 = 3e-4
     epochs::Int = 50
-    splitr_::Float64 = 0.1
+    valsplit::Float64 = 0.1
 end
 
 function get_processed_data(args)
     x, y = CIFAR10.traindata()
 
-    (train_x, train_y), (val_x, val_y) = splitobs((x, y), at=1-args.splitr_)
+    (train_x, train_y), (val_x, val_y) = splitobs((x, y), at=1-args.valsplit)
 
     train_x = float(train_x)
     train_y = onehotbatch(train_y, 0:9)
