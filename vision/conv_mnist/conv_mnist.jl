@@ -5,7 +5,8 @@
 using Flux
 using Flux.Data: DataLoader
 using Flux.Optimise: Optimiser, WeightDecay
-using Flux: onehotbatch, onecold, logitcrossentropy
+using Flux: onehotbatch, onecold
+using Flux.Losses: logitcrossentropy
 using Statistics, Random
 using Logging: with_logger, global_logger
 using TensorBoardLogger: TBLogger, tb_overwrite, set_step!, set_step_increment!
@@ -42,8 +43,8 @@ function get_data(args)
 
     ytrain, ytest = onehotbatch(ytrain, 0:9), onehotbatch(ytest, 0:9)
 
-    train_loader = DataLoader(xtrain, ytrain, batchsize=args.batchsize, shuffle=true)
-    test_loader = DataLoader(xtest, ytest,  batchsize=args.batchsize)
+    train_loader = DataLoader((xtrain, ytrain), batchsize=args.batchsize, shuffle=true)
+    test_loader = DataLoader((xtest, ytest),  batchsize=args.batchsize)
     
     return train_loader, test_loader
 end

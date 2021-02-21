@@ -1,7 +1,7 @@
 using Flux, Statistics
 using Flux.Data: DataLoader
-using Flux: onehotbatch, onecold, logitcrossentropy, throttle, @epochs
-using Base.Iterators: repeated
+using Flux: onehotbatch, onecold, throttle, @epochs
+using Flux.Losses: logitcrossentropy
 using Parameters: @with_kw
 using CUDA
 using MLDatasets
@@ -32,8 +32,8 @@ function getdata(args)
     ytrain, ytest = onehotbatch(ytrain, 0:9), onehotbatch(ytest, 0:9)
 
     # Batching
-    train_data = DataLoader(xtrain, ytrain, batchsize=args.batchsize, shuffle=true)
-    test_data = DataLoader(xtest, ytest, batchsize=args.batchsize)
+    train_data = DataLoader((xtrain, ytrain), batchsize=args.batchsize, shuffle=true)
+    test_data = DataLoader((xtest, ytest), batchsize=args.batchsize)
 
     return train_data, test_data
 end
