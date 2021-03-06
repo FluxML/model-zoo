@@ -192,8 +192,6 @@ using Flux
 
 m = Dense(10, 5)
 
-x = rand(Float32, 10)
-
 # We can easily get the parameters of any layer or model with params with
 # `params`.
 
@@ -389,7 +387,7 @@ end
 # ## Testing the Network
 # ----------------------
 
-# We have trained the network for 100 passes over the training dataset. But we need to
+# We have trained the network for 10 passes over the training dataset. But we need to
 # check if the network has learnt anything at all.
 
 # We will check this by predicting the class label that the neural network outputs, and
