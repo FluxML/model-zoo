@@ -339,9 +339,10 @@ m = Chain(
 
 #-
 # We will use a crossentropy loss and the Momentum optimiser here. Crossentropy will be a
-# good option when it comes to working with multiple independent classes. Momentum gradually
-# lowers the learning rate as we proceed with the training. It helps maintain a bit of
-# adaptivity in our optimisation, preventing us from over shooting from our desired destination.
+# good option when it comes to working with multiple independent classes. Momentum smooths out
+# the noisy gradients and helps towards a smooth convergence. Gradually lowering the 
+# learning rate along with momentum helps to maintain a bit of adaptivity in our optimisation,
+# preventing us from overshooting our desired destination.
 #-
 
 using Flux: Momentum
