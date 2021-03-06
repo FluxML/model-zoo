@@ -210,7 +210,7 @@ for p in params(m)
 end
 
 
-# You don't have to use layers, but they can be convient for many simple kinds
+# You don't have to use layers, but they can be convenient for many simple kinds
 # of models and fast iteration.
 
 # The next step is to update our weights and perform optimisation. As you might be
@@ -231,14 +231,14 @@ end
 
 opt = Descent(0.01)
 
-# `Training` a network reduces down to iterating on a dataset mulitple times, performing these
+# `Training` a network reduces down to iterating on a dataset multiple times, performing these
 # steps in order. Just for a quick implementation, let’s train a network that learns to predict
 # `0.5` for every input of 10 floats. `Flux` defines the `train!` function to do it for us.
 
 data, labels = rand(10, 100), fill(0.5, 2, 100)
 loss(x, y) = Flux.Losses.crossentropy(m(x), y)
 Flux.train!(loss, params(m), [(data,labels)], opt)
-# You don't have to use `train!`. In cases where aribtrary logic might be better suited,
+# You don't have to use `train!`. In cases where arbitrary logic might be better suited,
 # you could open up this training loop like so:
 
 # ```julia
@@ -323,7 +323,7 @@ valY = labels[:, valset] |> gpu
 
 # A convolutional neural network is one which defines a kernel and slides it across a matrix
 # to create an intermediate representation to extract features from. It creates higher order
-# features as it goes into deeper layers, making it suitable for images, where the strucure of
+# features as it goes into deeper layers, making it suitable for images, where the structure of
 # the subject is what will help us determine which class it belongs to.
 
 m = Chain(
@@ -338,8 +338,8 @@ m = Chain(
   softmax) |> gpu
 
 #-
-# We will use a crossentropy loss and an Momentum optimiser here. Crossentropy will be a
-# good option when it comes to working with mulitple independent classes. Momentum gradually
+# We will use a crossentropy loss and the Momentum optimiser here. Crossentropy will be a
+# good option when it comes to working with multiple independent classes. Momentum gradually
 # lowers the learning rate as we proceed with the training. It helps maintain a bit of
 # adaptivity in our optimisation, preventing us from over shooting from our desired destination.
 #-
