@@ -6,19 +6,8 @@ using Base: @kwdef
 using CUDA
 using MLDatasets
 
-if has_cuda()		# Check if CUDA is available
-    @info "CUDA is on"
-    CUDA.allowscalar(false)
-end
 
-@kwdef mutable struct Args
-    η::Float64 = 3e-4       # learning rate
-    batchsize::Int = 1024   # batch size
-    epochs::Int = 10        # number of epochs
-    use_cuda::Bool = true   # use gpu (if cuda available)
-end
-
-function getdata(args)
+function getdata(args, device)
     ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"
 
     # Loading Dataset	
@@ -32,11 +21,11 @@ function getdata(args)
     # One-hot-encode the labels
     ytrain, ytest = onehotbatch(ytrain, 0:9), onehotbatch(ytest, 0:9)
 
-    # Batching
-    train_data = DataLoader((xtrain, ytrain), batchsize=args.batchsize, shuffle=true)
-    test_data = DataLoader((xtest, ytest), batchsize=args.batchsize)
+    # Create DataLoaders (mini-batch iterators)
+    train_loader = DataLoader((xtrain, ytrain), batchsize=args.batchsize, shuffle=true)
+    test_loader = DataLoader((xtest, ytest), batchsize=args.batchsize)
 
-    return train_data, test_data
+    return train_loader, test_loader
 end
 
 function build_model(; imgsize=(28,28,1), nclasses=10)
@@ -45,52 +34,67 @@ function build_model(; imgsize=(28,28,1), nclasses=10)
             Dense(32, nclasses))
 end
 
-function loss_all(dataloader, model)
-    l = 0f0
-    for (x,y) in dataloader
-        l += logitcrossentropy(model(x), y)
-    end
-    return l / length(dataloader)
-end
-
-function accuracy(data_loader, model)
+function loss_and_accuracy(data_loader, model, device)
     acc = 0
+    ls = 0.0f0
     num = 0
     for (x, y) in data_loader
+        x, y = device(x), device(y)
+        ŷ = model(x)
+        ls += logitcrossentropy(model(x), y, agg=sum)
         acc += sum(onecold(cpu(model(x))) .== onecold(cpu(y)))
         num +=  size(x, 2)
     end
-    return acc / num
+    return ls / num, acc / num
+end
+
+
+@kwdef mutable struct Args
+    η::Float64 = 3e-4       # learning rate
+    batchsize::Int = 256    # batch size
+    epochs::Int = 10        # number of epochs
+    use_cuda::Bool = true   # use gpu (if cuda available)
 end
 
 function train(; kws...)
-    # Initializing Model parameters 
-    args = Args(; kws...)
-    device = has_cuda() && args.use_cuda ? gpu : cpu
-    # Load Data
-    train_data,test_data = getdata(args)
+    args = Args(; kws...) # collect options in a struct for convenience
 
+    if CUDA.functional() && args.use_cuda
+        @info "Training on CUDA GPU"
+        CUDA.allowscalar(false)
+        device = gpu
+    else
+        @info "Training on CPU"
+        device = cpu
+    end
+
+    # Create test and train dataloaders
+    train_loader, test_loader = getdata(args, device)
 
     # Construct model
-    m = build_model() |> device
-    train_data = train_data |> device 
-    test_data = test_data |> device
+    model = build_model() |> device
+    ps = Flux.params(model) # model's trainable parameters
     
-    # Define loss function 
-    loss(x,y) = logitcrossentropy(m(x), y)
-    
-    ## Training
-    evalcb = () -> @show(loss_all(train_data, m))
+    ## Optimizer
     opt = ADAM(args.η)
     
-    # train for args.epochs epochs
-    @epochs args.epochs Flux.train!(loss, params(m), train_data, opt, cb = evalcb)
-
-    # After training, show accuracy for train and test set
-    @show accuracy(train_data, m)
-    @show accuracy(test_data, m)
+    ## Training
+    for epoch in 1:args.epochs
+        for (x, y) in train_loader
+            x, y = device(x), device(y) # transfer data to device
+            gs = gradient(() -> logitcrossentropy(model(x), y), ps) # compute gradient
+            Flux.Optimise.update!(opt, ps, gs) # update parameters
+        end
+        
+        # Report on train and test
+        train_loss, train_acc = loss_and_accuracy(train_loader, model, device)
+        test_loss, test_acc = loss_and_accuracy(test_loader, model, device)
+        println("Epoch=$epoch")
+        println("  train_loss = $train_loss, train_accuracy = $train_acc")
+        println("  test_loss = $test_loss, test_accuracy = $test_acc")
+    end
 end
 
-cd(@__DIR__)
+### Run training 
 train()
 # train(η=0.01) # can change hyperparameters
