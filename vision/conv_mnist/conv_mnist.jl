@@ -8,17 +8,16 @@ using Flux.Optimise: Optimiser, WeightDecay
 using Flux: onehotbatch, onecold
 using Flux.Losses: logitcrossentropy
 using Statistics, Random
-using Logging: with_logger, global_logger
+using Logging: with_logger
 using TensorBoardLogger: TBLogger, tb_overwrite, set_step!, set_step_increment!
-import ProgressMeter
+using ProgressMeter: @showprogress
 import MLDatasets
-import DrWatson: savename, struct2dict
 import BSON
 using CUDA
 
 # LeNet5 "constructor". 
 # The model can be adapted to any image size
-# and number of output classes.
+# and any number of output classes.
 function LeNet5(; imgsize=(28,28,1), nclasses=10) 
     out_conv_size = (imgsize[1]÷4 - 3, imgsize[2]÷4 - 3, 16)
     
@@ -35,8 +34,8 @@ function LeNet5(; imgsize=(28,28,1), nclasses=10)
 end
 
 function get_data(args)
-    xtrain, ytrain = MLDatasets.MNIST.traindata(Float32, dir=args.datapath)
-    xtest, ytest = MLDatasets.MNIST.testdata(Float32, dir=args.datapath)
+    xtrain, ytrain = MLDatasets.MNIST.traindata(Float32)
+    xtest, ytest = MLDatasets.MNIST.testdata(Float32)
 
     xtrain = reshape(xtrain, 28, 28, 1, :)
     xtest = reshape(xtest, 28, 28, 1, :)
@@ -66,31 +65,28 @@ function eval_loss_accuracy(loader, model, device)
 end
 
 ## utility functions
-
 num_params(model) = sum(length, Flux.params(model)) 
-
 round4(x) = round(x, digits=4)
-
 
 # arguments for the `train` function 
 Base.@kwdef mutable struct Args
     η = 3e-4             # learning rate
     λ = 0                # L2 regularizer param, implemented as weight decay
     batchsize = 128      # batch size
-    epochs = 20          # number of epochs
+    epochs = 10          # number of epochs
     seed = 0             # set seed > 0 for reproducibility
-    cuda = true          # if true use cuda (if available)
+    use_cuda = true      # if true use cuda (if available)
     infotime = 1 	     # report every `infotime` epochs
     checktime = 5        # Save the model every `checktime` epochs. Set to 0 for no checkpoints.
-    tblogger = false      # log training with tensorboard
-    savepath = nothing    # results path. If nothing, construct a default path from Args. If existing, may overwrite
-    datapath = joinpath(homedir(), "Datasets", "MNIST") # data path: change to your data directory 
+    tblogger = true      # log training with tensorboard
+    savepath = "runs/"    # results path
 end
 
 function train(; kws...)
     args = Args(; kws...)
     args.seed > 0 && Random.seed!(args.seed)
-    use_cuda = args.cuda && CUDA.has_cuda()
+    use_cuda = args.use_cuda && CUDA.functional()
+    
     if use_cuda
         device = gpu
         @info "Training on GPU"
@@ -110,16 +106,11 @@ function train(; kws...)
     ps = Flux.params(model)  
 
     opt = ADAM(args.η) 
-    if args.λ > 0 
+    if args.λ > 0 # add weight decay, equivalent to L2 regularization
         opt = Optimiser(opt, WeightDecay(args.λ))
     end
     
     ## LOGGING UTILITIES
-    if args.savepath == nothing
-        experiment_folder = savename("lenet", args, scientific=4,
-                    accesses=[:batchsize, :η, :seed, :λ]) # construct path from these fields
-        args.savepath = joinpath("runs", experiment_folder)
-    end
     if args.tblogger 
         tblogger = TBLogger(args.savepath, tb_overwrite)
         set_step_increment!(tblogger, 0) # 0 auto increment since we manually set_step!
@@ -143,31 +134,27 @@ function train(; kws...)
     @info "Start Training"
     report(0)
     for epoch in 1:args.epochs
-        p = ProgressMeter.Progress(length(train_loader))
-
-        for (x, y) in train_loader
+        @showprogress for (x, y) in train_loader
             x, y = x |> device, y |> device
             gs = Flux.gradient(ps) do
-                ŷ = model(x)
-                loss(ŷ, y)
-            end
+                    ŷ = model(x)
+                    loss(ŷ, y)
+                end
+
             Flux.Optimise.update!(opt, ps, gs)
-            ProgressMeter.next!(p)   # comment out for no progress bar
         end
         
+        ## Printing and logging
         epoch % args.infotime == 0 && report(epoch)
         if args.checktime > 0 && epoch % args.checktime == 0
             !ispath(args.savepath) && mkpath(args.savepath)
             modelpath = joinpath(args.savepath, "model.bson") 
-            let model=cpu(model), args=struct2dict(args)
-                BSON.@save modelpath model epoch args
+            let model = cpu(model) #return model to cpu before serialization
+                BSON.@save modelpath model epoch
             end
             @info "Model saved in \"$(modelpath)\""
         end
     end
 end
 
-## Execution as a script
-if abspath(PROGRAM_FILE) == @__FILE__ 
-    train()
-end
+train()
