@@ -1,22 +1,16 @@
 using Flux
 using Flux: onehotbatch, onecold, flatten
 using Flux.Losses: logitcrossentropy
+using Flux.Data: DataLoader
 using Parameters: @with_kw
 using Statistics: mean
 using CUDA
 using MLDatasets: CIFAR10
 using MLDataPattern: splitobs
 
-if has_cuda()
+if CUDA.has_cuda()
     @info "CUDA is on"
     CUDA.allowscalar(false)
-end
-
-@with_kw mutable struct Args
-    batchsize::Int = 128
-    lr::Float64 = 3e-4
-    epochs::Int = 50
-    valsplit::Float64 = 0.1
 end
 
 function get_processed_data(args)
@@ -84,49 +78,11 @@ function vgg16()
     )
 end
 
-function vgg19()
-    Chain(
-        Conv((3, 3), 3 => 64, relu, pad=(1, 1), stride=(1, 1)),
-        BatchNorm(64),
-        Conv((3, 3), 64 => 64, relu, pad=(1, 1), stride=(1, 1)),
-        BatchNorm(64),
-        MaxPool((2,2)),
-        Conv((3, 3), 64 => 128, relu, pad=(1, 1), stride=(1, 1)),
-        BatchNorm(128),
-        Conv((3, 3), 128 => 128, relu, pad=(1, 1), stride=(1, 1)),
-        BatchNorm(128),
-        MaxPool((2,2)),
-        Conv((3, 3), 128 => 256, relu, pad=(1, 1), stride=(1, 1)),
-        BatchNorm(256),
-        Conv((3, 3), 256 => 256, relu, pad=(1, 1), stride=(1, 1)),
-        BatchNorm(256),
-        Conv((3, 3), 256 => 256, relu, pad=(1, 1), stride=(1, 1)),
-        BatchNorm(256),
-        Conv((3, 3), 256 => 256, relu, pad=(1, 1), stride=(1, 1)),
-        MaxPool((2,2)),
-        Conv((3, 3), 256 => 512, relu, pad=(1, 1), stride=(1, 1)),
-        BatchNorm(512),
-        Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-        BatchNorm(512),
-        Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-        BatchNorm(512),
-        Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-        MaxPool((2,2)),
-        Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-        BatchNorm(512),
-        Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-        BatchNorm(512),
-        Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-        BatchNorm(512),
-        Conv((3, 3), 512 => 512, relu, pad=(1, 1), stride=(1, 1)),
-        MaxPool((2,2)),
-        flatten,
-        Dense(512, 4096, relu),
-        Dropout(0.5),
-        Dense(4096, 4096, relu),
-        Dropout(0.5),
-        Dense(4096, 10)
-    )
+@with_kw mutable struct Args
+    batchsize::Int = 128
+    lr::Float64 = 3e-4
+    epochs::Int = 50
+    valsplit::Float64 = 0.1
 end
 
 function train(; kws...)
@@ -134,13 +90,12 @@ function train(; kws...)
     args = Args(; kws...)
 	
     # Load the train, validation data 
-    train, val = get_processed_data(args)
+    train_data, val_data = get_processed_data(args)
     
-    train_data = Flux.Data.DataLoader(train, batchsize=args.batchsize)
-    val_data = Flux.Data.DataLoader(val, batchsize=args.batchsize)
+    train_loader = DataLoader(train_data, batchsize=args.batchsize, shuffle=true)
+    val_loader = DataLoader(val_data, batchsize=args.batchsize)
 
     @info("Constructing Model")	
-    # Defining the loss and accuracy functions
     m = vgg16() |> gpu
 
     loss(x, y) = logitcrossentropy(m(x), y)
@@ -155,22 +110,18 @@ function train(; kws...)
     for epoch in 1:args.epochs
         @info "Epoch $epoch"
 
-        for (x, y) in train_data
+        for (x, y) in train_loader
             x, y = x |> gpu, y |> gpu
-
-            gs = Flux.gradient(ps) do 
-                loss(x, y)
-            end
-
+            gs = Flux.gradient(() -> loss(x,y), ps)
             Flux.update!(opt, ps, gs)
         end
 
         validation_loss = 0f0
-        for (x, y) in val_data
+        for (x, y) in val_loader
             x, y = x |> gpu, y |> gpu
             validation_loss += loss(x, y)
         end
-        validation_loss /= length(val_data)
+        validation_loss /= length(val_loader)
         @show validation_loss
     end
 
@@ -181,12 +132,12 @@ function test(m; kws...)
     args = Args(kws...)
 
     test_data = get_test_data()
-    test_data = Flux.Data.DataLoader(test_data, batchsize=64)
+    test_loader = DataLoader(test_data, batchsize=args.batchsize)
 
     correct, total = 0, 0
-    for (x, y) in test_data
+    for (x, y) in test_loader
         x, y = x |> gpu, y |> gpu
-        correct += sum(onecold(cpu(m(x)), 0:9) .== onecold(cpu(y), 0:9))
+        correct += sum(onecold(cpu(m(x))) .== onecold(cpu(y)))
         total += size(y, 2)
     end
     test_accuracy = correct / total
@@ -195,6 +146,5 @@ function test(m; kws...)
     @show test_accuracy
 end
 
-cd(@__DIR__)
 m = train()
 test(m)
