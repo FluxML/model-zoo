@@ -1,20 +1,21 @@
 using Flux, Statistics
 using Flux.Data: DataLoader
-using Flux: onehotbatch, onecold, throttle, @epochs
+using Flux: onehotbatch, onecold, @epochs
 using Flux.Losses: logitcrossentropy
-using Parameters: @with_kw
+using Base: @kwdef
 using CUDA
 using MLDatasets
+
 if has_cuda()		# Check if CUDA is available
     @info "CUDA is on"
     CUDA.allowscalar(false)
 end
 
-@with_kw mutable struct Args
+@kwdef mutable struct Args
     η::Float64 = 3e-4       # learning rate
     batchsize::Int = 1024   # batch size
     epochs::Int = 10        # number of epochs
-    device::Function = gpu  # set as gpu, if gpu available
+    use_cuda::Bool = true   # use gpu (if cuda available)
 end
 
 function getdata(args)
@@ -40,7 +41,7 @@ end
 
 function build_model(; imgsize=(28,28,1), nclasses=10)
     return Chain(
- 	    Dense(prod(imgsize), 32, relu),
+ 	        Dense(prod(imgsize), 32, relu),
             Dense(32, nclasses))
 end
 
@@ -49,41 +50,47 @@ function loss_all(dataloader, model)
     for (x,y) in dataloader
         l += logitcrossentropy(model(x), y)
     end
-    l/length(dataloader)
+    return l / length(dataloader)
 end
 
 function accuracy(data_loader, model)
     acc = 0
-    for (x,y) in data_loader
-        acc += sum(onecold(cpu(model(x))) .== onecold(cpu(y)))*1 / size(x,2)
+    num = 0
+    for (x, y) in data_loader
+        acc += sum(onecold(cpu(model(x))) .== onecold(cpu(y)))
+        num +=  size(x, 2)
     end
-    acc/length(data_loader)
+    return acc / num
 end
 
 function train(; kws...)
     # Initializing Model parameters 
     args = Args(; kws...)
-
+    device = has_cuda() && args.use_cuda ? gpu : cpu
     # Load Data
     train_data,test_data = getdata(args)
 
+
     # Construct model
-    m = build_model()
-    train_data = args.device.(train_data)
-    test_data = args.device.(test_data)
-    m = args.device(m)
+    m = build_model() |> device
+    train_data = train_data |> device 
+    test_data = test_data |> device
+    
+    # Define loss function 
     loss(x,y) = logitcrossentropy(m(x), y)
     
     ## Training
     evalcb = () -> @show(loss_all(train_data, m))
     opt = ADAM(args.η)
-		
+    
+    # train for args.epochs epochs
     @epochs args.epochs Flux.train!(loss, params(m), train_data, opt, cb = evalcb)
 
+    # After training, show accuracy for train and test set
     @show accuracy(train_data, m)
-
     @show accuracy(test_data, m)
 end
 
 cd(@__DIR__)
 train()
+# train(η=0.01) # can change hyperparameters
