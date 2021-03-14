@@ -26,7 +26,7 @@ Each model can be used in [Gitpod](https://www.gitpod.io/), just [open the repos
 
 ## Contributing
 
-We welcome contributions of new models. They should be in a folder with a project and manifest file, to pin all relevant packages, as well as a README to explain what the model is about, how to run it, and what results it achieves (if applicable). If possible models should not depend directly on GPU functionality, but ideally should be CPU/GPU agnostic.
+We welcome contributions of new models. They should be in a folder with a project and manifest file, to pin all relevant packages, as well as a README to explain what the model is about, how to run it, and what results it achieves (if applicable). If possible models should not depend directly on GPU functionality, but ideally should be CPU/GPU agnostic. Please keep the code short, clean and self-explanatory, with as little boilerplate code as possible.
 
 ## Examples Listing
 
