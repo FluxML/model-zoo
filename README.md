@@ -12,7 +12,7 @@ The zoo comes with its own [Julia project](https://julialang.github.io/Pkg.jl/la
 using Pkg; Pkg.activate("."); Pkg.instantiate()
 ```
 
-to install all needed packages. Then you can run the model code with `include("script.jl")` or by running the script line-by-line.
+to install all needed packages. Then you can run the model code with `include("<model-to-run>.jl")` or by running the model script line-by-line.
 
 Models may also be run with NVIDIA GPU support, if you have a CUDA installed. Most models will have this capability by default, pointed at by calls to `gpu` in the model code.
 
