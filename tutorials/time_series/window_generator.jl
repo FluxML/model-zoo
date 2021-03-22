@@ -1,3 +1,4 @@
+using MLDataPattern: slidingwindow
 import StatsPlots: plot
 
 """
@@ -27,9 +28,15 @@ function WindowGenerator(h, f, train_df, valid_df, label_columns::Vector{String}
     return WindowGenerator(train, valid, h, f, label_indices, target_idx)
 end
 
+"""
+WindowGenerator with a single label_column. 
+"""
 WindowGenerator(h, f, train_df, valid_df, label_columns::String; offset=h) = 
         WindowGenerator(h, f, train_df, valid_df, label_columns=[label_columns]; offset=offset)
 
+"""
+WindowGenerator with multiple label_columns.
+"""
 WindowGenerator(h, f, train_df, valid_df; label_columns, offset=h) = 
         WindowGenerator(h, f, train_df, valid_df, label_columns; offset=offset)
 
