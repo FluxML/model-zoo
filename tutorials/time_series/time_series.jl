@@ -205,12 +205,11 @@ plot(single_step_24h, baseline_model)
 linear = Dense(size(single_step_1h.train[1][1],1), 1; initW=Flux.glorot_uniform, initb=Flux.zeros)
 opt = Flux.Optimise.ADAM(0.01)
 
-function train_model!(model, wg::WindowGenerator, opt; epochs=20, bs=16, dev=Flux.gpu, conv=false)
+function train_model!(model, wg::WindowGenerator, opt; epochs=20, bs=16, dev=Flux.gpu)
     model = model |> dev
     ps = params(model)
     t = shuffleobs(wg.train)
     v = batch_ts(getobs(wg.valid))
-    # v = conv ? ((unsqueeze(v[1],3), v[2]) |> dev) : (v |> dev) # handle validation dimensions if conv network
 
     local l
     vl_prev = Inf
@@ -218,7 +217,6 @@ function train_model!(model, wg::WindowGenerator, opt; epochs=20, bs=16, dev=Flu
         for d in eachbatch(t, size=bs)
             x, y = batch_ts(d)
             y = y[wg.target_idx,:,:]
-            # conv && (x = unsqueeze(x,3))
             x, y = x |> dev, y |> dev
             gs = gradient(ps) do 
                 l = loss(model(x),y)
