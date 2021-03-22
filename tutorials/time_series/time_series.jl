@@ -1,31 +1,9 @@
-#= TODO
-* Add any Flux specific explanation
-* Handle target value better for dataset y's; Is there a way to ensure that time series always have a batched axis using MLDataPattern, esp lazily?
-* Decide what level we want this tutorial at - Flux or some higher level?
-* Clean up and make more idiomatic - particularly on how timeseries are batched
-* Make any tests or integrations
-* Put things in functions as needed
-* Eachbatch - size or maxsize? what's more popular
-* Flux on master for Dense behavior. Needs to be latest when this is published
-* In train_model! is it critical to return and assign the model (`linear = train_model!(linear, single_step_1h, opt; bs=16, epochs=20)`)? I found that without doing it, Flux.update! would work during training, but then calling the model outside wouldn't be mutated? could this deal with calling params at the beginning?
-* Early Stopping could use some work. Not sure it does exactly what I want it to
-* Need to convert data to Float32? Without it, I get this when running conv_model. Related to Params being Float32?
-    ┌ Warning: Slow fallback implementation invoked for conv!  You probably don't want this; check your datatypes.
-    │   yT = Float64
-    │   T1 = Float64
-    │   T2 = Float32
-    └ @ NNlib ~/.julia/packages/NNlib/fxLrD/src/conv.jl:206
-
-------------------------------------------------------------------------
-=#
-
 # # Time series forecasting
 # This tutorial serves as a `Julia` implementation of the Tensorflow time series forecasting tutorial here:  
 # 
 # [Tensorflow Time Series Forecasting Tutorial](https://www.tensorflow.org/tutorials/structured_data/time_series)
 
 # ## Setup
-
 using ZipFile
 using CSV
 using DataFrames
@@ -39,7 +17,6 @@ using MLDataPattern
 using Random: seed!
 using Statistics: mean, std
 using Flux: unsqueeze
-import StatsPlots: plot
 
 seed!(4231)
 ENV["LINES"] = 20
@@ -150,101 +127,28 @@ df_std = (df .- train_mean') ./ train_std'
 df_std = stack(df_std)
 
 violin(df_std.variable, df_std.value, xrotation=30.0, legend=false, xticks=:all) # use plotattr() to learn about keywords
-
 boxplot!(df_std.variable, df_std.value, fillalpha=0.75, outliers=false)
 
 
 # ## Data Windowing
-# We are going to make use of MLDataPattern's `slidingwindow` to generate the windows
-# https://mldatapatternjl.readthedocs.io/en/latest/documentation/dataview.html?highlight=slidingwindow#labeled-windows
+# We will define our own WindowGenerator, some constructors, and plotting functions. The data from the WindowGenerator will be used in training.
+include("window_generator.jl")
+
 h = 6 # historical window length
 f = 1 # future window length
 
-train_loader = slidingwindow(i -> i+h:i+h+f-1, Array(train_df)', h, stride=1)
+# WindowGenerator makes use of MLDataPattern's `slidingwindow` to generate the windows. It is good at flexibly generating
+# https://mldatapatternjl.readthedocs.io/en/latest/documentation/dataview.html?highlight=slidingwindow#labeled-windows
+slidingwindow(i -> i+h:i+h+f-1, Array(train_df)', h, stride=1)
 
-# We will define our own WindowGenerator, some constructors, and plotting functions. The data from the WindowGenerator will be used in training.
-"""
-Calculates the windows used for modeling, the target index, and features useful for plotting.
-"""
-mutable struct WindowGenerator
-    train # training windows
-    valid # validation windows
-    h # historical steps in window
-    f # target steps in window
-    label_indices # indices for plotting predictions in a window
-    target_idx::Array{Int, 1} # indices to be predicted
-end
-
-"""
-Specify `h` historical points, `f` target points. By default, the target points are assumed to follow after all the historical points (`offset = h`).
-By setting `offset = 1`, the targets for each historical point will be the next point in time.
-"""
-function WindowGenerator(h, f, train_df, valid_df, label_columns::Vector{String}; offset=h)
-    train = slidingwindow(i -> i+offset:i+offset+f-1, Array(train_df)', h, stride=1)
-    valid = slidingwindow(i -> i+offset:i+offset+f-1, Array(valid_df)', h, stride=1)
-    
-    label_indices = (offset + 1):(offset + f)
-
-    target_idx = findall(x->x in label_columns, names(train_df))
-        
-    return WindowGenerator(train, valid, h, f, label_indices, target_idx)
-end
-
-WindowGenerator(h, f, train_df, valid_df, label_columns::String; offset=h) = 
-        WindowGenerator(h, f, train_df, valid_df, label_columns=[label_columns]; offset=offset)
-
-WindowGenerator(h, f, train_df, valid_df; label_columns, offset=h) = 
-        WindowGenerator(h, f, train_df, valid_df, label_columns; offset=offset)
-
-"""
-Plots the historical data and the target(s) for prediction. 
-"""
-function plot(wg::WindowGenerator)
-    idx = wg.target_idx[1] # Currently, will only plot the first target index but could be redone to plot all label columns.
-    sw = wg.valid
-    plots = []
-    for it in 1:3
-        i = rand(1:size(sw,1))
-        p = plot(sw[i][1][idx, :], leg=false)
-        scatter!(wg.label_indices,sw[i][2][idx,:]')
-        it == 3 && xlabel!("Given $(wg.h)h as input, predict $(wg.f)h into the future.")
-        push!(plots, p)
-    end
-    plot(plots..., layout=(3,1))
-end
-
-# Some usage examples of WindowGenerator
-WindowGenerator(6, 1, train_df, valid_df, label_columns=["T (degC)"])
-WindowGenerator(6, 1, train_df, valid_df, label_columns=["T (degC)", "Wx"])
+# How to use WindowGenerator
 wg = WindowGenerator(6, 1, train_df, valid_df, label_columns="T (degC)")
-
 plot(wg)
 
-# Make a utility function for batching lazily-evaluated timeseries from slidingwindow
-"""
-Takes in t, which is an array of tuples of (`sequence`, `target`) where `sequence` is an array of timestamp x features, 
-and target is either an array or a single value. Outputs a tuple of batched 
 
-julia> z = [([1 2 3; 2 3 4], 5), ([6 7 8; 7 8 9], 0)]
-2-element Array{Tuple{Array{Int64,2},Int64},1}:
- ([1 2 3; 2 3 4], 5)
- ([6 7 8; 7 8 9], 0)
+# We will also make use of the utility function for batching lazily-evaluated timeseries from slidingwindow
+include("batch_ts.jl")
 
-julia> batch_ts(z)
-([1 2 3; 2 3 4]
-
-[6 7 8; 7 8 9], [5]
-
-[0])
-
-julia> size(batch_ts(z)[1])
-(2, 3, 2)
-
-julia> size(batch_ts(z)[2])
-(1, 1, 2)
-"""
-batch_ts(t) = reduce((x, y) -> (cat(x[1], y[1], dims=3), cat(x[2], y[2], dims=3)), t)
-batch_ts(t::Tuple) = (unsqueeze(t[1],3), unsqueeze(t[2],3)) # handle batch size of 1
 
 # To understand better what the above code does, let's look at an imitation training loop and look at everything's dimensions
 practice_df = train_df[1:10,:]
@@ -293,19 +197,8 @@ run_single_step_baseline(single_step_1h, baseline_model)
 # Let's try to predict the next hour's value for 24 hours
 single_step_24h = WindowGenerator(24, 24, train_df, valid_df, label_columns=target; offset=1);
 
-"""
-Plots the historical window, the target(s) for prediction, and the model's predictions.
-"""
-function plot(wg::WindowGenerator, model; set=:valid)
-    data = getfield(wg,set)
-    i = rand(1:size(data,1))
-    plot(1:wg.h, data[i][1][2,:], lab="Inputs", shape=:circ, m=2, leg=:outerright)
-    scatter!(wg.label_indices, data[i][2][2,:], lab="Labels", c=:green)
-    z = model(unsqueeze(data[i][1],3))[:]
-    scatter!(wg.label_indices, z, lab="Predictions", shape=:star5, m=6, c=:orange)
-end
-
 plot(single_step_24h, baseline_model)
+
 
 # ### Linear Models
 # ##### 1 hour
@@ -317,7 +210,7 @@ function train_model!(model, wg::WindowGenerator, opt; epochs=20, bs=16, dev=Flu
     ps = params(model)
     t = shuffleobs(wg.train)
     v = batch_ts(getobs(wg.valid))
-    v = conv ? ((unsqueeze(v[1],3), v[2]) |> dev) : (v |> dev) # handle validation dimensions if conv network
+    # v = conv ? ((unsqueeze(v[1],3), v[2]) |> dev) : (v |> dev) # handle validation dimensions if conv network
 
     local l
     vl_prev = Inf
@@ -325,7 +218,7 @@ function train_model!(model, wg::WindowGenerator, opt; epochs=20, bs=16, dev=Flu
         for d in eachbatch(t, size=bs)
             x, y = batch_ts(d)
             y = y[wg.target_idx,:,:]
-            conv && (x = unsqueeze(x,3))
+            # conv && (x = unsqueeze(x,3))
             x, y = x |> dev, y |> dev
             gs = gradient(ps) do 
                 l = loss(model(x),y)
@@ -379,22 +272,29 @@ multi_step_dense = Chain(
 plot(single_step_3h, multi_step_dense)
 
 # ### Convolutional Neural Network
+
+# conv_model = Chain(
+#     Conv((19,), 3=>32, relu), # need to explain why this conv pattern
+#     x -> Flux.flatten(x),
+#     Dense(32, 32, relu),
+#     Dense(32, 1),
+#     x -> unsqueeze(x, 1)
+# )
+
 conv_model = Chain(
-    Conv((19,3), 1=>32, relu), # need to explain why this conv pattern
+    x -> permutedims(x, [2,1,3]), # put data in NTime x NCovariates X NBatch https://github.com/FluxML/Flux.jl/issues/1465
+    Conv((3,), 19=>32, relu), # convolve over 3 inputs - 19 variables -> 32 filters
     x -> Flux.flatten(x),
     Dense(32, 32, relu),
-    Dense(32, 1)
+    Dense(32, 1),
+    x -> unsqueeze(x, 1)
 )
 
-single_step_3h = WindowGenerator(3, 1, train_df[1:60,:], valid_df, label_columns=target);
+single_step_3h = WindowGenerator(3, 1, train_df, valid_df, label_columns=target);
 
-@time conv_model = train_model!(conv_model, single_step_3h, opt; bs=20, epochs=2, conv=true)
+@time conv_model = train_model!(conv_model, single_step_3h, opt; bs=32, epochs=20, conv=true)
 
-
-#not learning :( but dimensions are right?
-# maybe convolutions arent?
-
-# https://github.com/FluxML/Flux.jl/issues/1465
+plot(single_step_3h, conv_model)
 
 
 # ### Recurrent Neural Network

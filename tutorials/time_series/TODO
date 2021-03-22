@@ -1,0 +1,16 @@
+* Handle target value better for dataset y's; Is there a way to ensure that time series always have a batched axis using MLDataPattern, esp lazily?
+* Decide what level to put this tutorial at - base Flux or incorporate higher level packages?
+* Make timeseries batching more idiomatic and faster.
+* Add benchmarking integrations so we tell how other PRs affect this functionality.
+* Put things in functions as needed
+* Eachbatch - size or maxsize? what's more popular. Probably incorporate with DataLoaders.jl
+* Flux on master for Dense behavior. Needs to be latest when this is published
+* In train_model! is it critical to return and assign the model (`linear = train_model!(linear, single_step_1h, opt; bs=16, epochs=20)`)? I found that without doing it, Flux.update! would work during training, but then calling the model outside wouldn't be mutated? could this deal with calling params at the beginning?
+* Early Stopping could use some work. Not sure it does exactly what I want it to. Could use earlystopping.jl
+* Need to convert data to Float32? Without it, I get this when running conv_model. Related to Params being Float32?
+    ┌ Warning: Slow fallback implementation invoked for conv!  You probably don't want this; check your datatypes.
+    │   yT = Float64
+    │   T1 = Float64
+    │   T2 = Float32
+    └ @ NNlib ~/.julia/packages/NNlib/fxLrD/src/conv.jl:206
+* Make sure conv examples are implemented correctly.
