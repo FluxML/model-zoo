@@ -290,7 +290,7 @@ conv_model = Chain(
 
 single_step_3h = WindowGenerator(3, 1, train_df, valid_df, label_columns=target);
 
-@time conv_model = train_model!(conv_model, single_step_3h, opt; bs=32, epochs=20, conv=true)
+@time conv_model = train_model!(conv_model, single_step_3h, opt; bs=32, epochs=20)
 
 plot(single_step_3h, conv_model)
 
