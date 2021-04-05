@@ -48,7 +48,7 @@ function get_data(args)
     return train_loader, test_loader
 end
 
-loss(ŷ, y) = logitcrossentropy(ŷ, y)
+loss(ŷ, y) = logitcrossentropy(ŷ, y)
 
 function eval_loss_accuracy(loader, model, device)
     l = 0f0
@@ -56,9 +56,9 @@ function eval_loss_accuracy(loader, model, device)
     ntot = 0
     for (x, y) in loader
         x, y = x |> device, y |> device
-        ŷ = model(x)
-        l += loss(ŷ, y) * size(x)[end]        
-        acc += sum(onecold(ŷ |> cpu) .== onecold(y |> cpu))
+        ŷ = model(x)
+        l += loss(ŷ, y) * size(x)[end]        
+        acc += sum(onecold(ŷ |> cpu) .== onecold(y |> cpu))
         ntot += size(x)[end]
     end
     return (loss = l/ntot |> round4, acc = acc/ntot*100 |> round4)
@@ -137,8 +137,8 @@ function train(; kws...)
         @showprogress for (x, y) in train_loader
             x, y = x |> device, y |> device
             gs = Flux.gradient(ps) do
-                    ŷ = model(x)
-                    loss(ŷ, y)
+                    ŷ = model(x)
+                    loss(ŷ, y)
                 end
 
             Flux.Optimise.update!(opt, ps, gs)
