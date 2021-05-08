@@ -55,6 +55,7 @@ function reconstuct(encoder, decoder, x, device)
     μ, logσ, decoder(z)
 end
 
+Flux.Zygote.@nograd Flux.params
 function model_loss(encoder, decoder, λ, x, device)
     μ, logσ, decoder_z = reconstuct(encoder, decoder, x, device)
     len = size(x)[end]
