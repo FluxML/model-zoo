@@ -35,7 +35,7 @@ model = Chain(Dense(STATE_SIZE, 24, tanh),
 
 loss(x, y) = Flux.mse(model(x), y)
 
-opt = Flux.Optimiser(ADAM(η), InvDecay(η_decay))
+opt = Flux.Optimiser(InvDecay(η_decay), ADAM(η))
 
 # ----------------------------- Helper Functions -------------------------------
 

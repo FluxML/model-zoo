@@ -107,7 +107,7 @@ function train(; kws...)
 
     opt = ADAM(args.η) 
     if args.λ > 0 # add weight decay, equivalent to L2 regularization
-        opt = Optimiser(opt, WeightDecay(args.λ))
+        opt = Optimiser(WeightDecay(args.λ), opt)
     end
     
     ## LOGGING UTILITIES
