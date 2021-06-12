@@ -186,4 +186,6 @@ function train(; kws...)
 end    
 
 cd(@__DIR__)
-fixed_labels = train()
+if abspath(PROGRAM_FILE) == @__FILE__
+    fixed_labels = train()
+end
