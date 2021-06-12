@@ -145,4 +145,6 @@ function train(; kws...)
 end
 
 cd(@__DIR__)
-train()
+if abspath(PROGRAM_FILE) == @__FILE__
+    train()
+end
