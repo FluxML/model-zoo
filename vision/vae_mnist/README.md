@@ -1,6 +1,9 @@
-# Variational Autoencoder(VAE)
+# Variational Autoencoder (VAE)
+
+<img src="..\vae_mnist\docs\vae.png" width="500">
 
 ## Training
+
 ```shell
 cd vision/vae_mnist
 julia --project vae_mnist.jl
@@ -23,9 +26,11 @@ Original image
 ![10 epochs](docs/epoch_20.png)
 
 ## Visualization
+
 ```shell
 julia --project vae_plot.jl
 ```
+
 Latent space clustering
 
 ![Clustering](docs/clustering.png)
