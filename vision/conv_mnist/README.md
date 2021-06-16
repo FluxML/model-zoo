@@ -1,6 +1,6 @@
 # LeNet-5
 
-![LeNet-5](..\conv_mnist\docs\LeNet-5.png)
+![LeNet-5](../conv_mnist/docs/LeNet-5.png)
 
 ## Model Info
 
@@ -18,5 +18,7 @@ julia --project conv_mnist.jl
 ```
 
 ## Reference
+
+[Gradient-Based Learning Applied to Document Recognition by Yann LeCun et al.](http://yann.lecun.com/exdb/publis/pdf/lecun-01a.pdf)
 
 [d2l.ai](https://d2l.ai/chapter_convolutional-neural-networks/lenet.html)
