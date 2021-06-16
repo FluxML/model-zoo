@@ -1,6 +1,6 @@
 # Visual Geometry Group (VGG)
 
-![vgg](..\vgg_cifar10\docs\vgg.png)
+![vgg](../vgg_cifar10/docs/vgg.png)
 
 ## Model Info
 
