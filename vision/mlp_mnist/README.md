@@ -1,6 +1,6 @@
 # Multilayer Perceptron (MLP)
 
-![mlp](..\mlp_mnist\docs\mlp.svg)
+![mlp](../mlp_mnist/docs/mlp.svg)
 
 ## Model Info
 
