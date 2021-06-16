@@ -1,6 +1,6 @@
 # Deep Convolutional GAN
 
-![dcgan_gen_disc](../dcgan_mnist/docs/dcgan_generator_discriminator.png)
+![dcgan_gen_disc](../dcgan_mnist/output/dcgan_generator_discriminator.png)
 
 ## Model Info
 
