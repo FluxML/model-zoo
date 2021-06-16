@@ -185,7 +185,6 @@ function train(; kws...)
     return Flux.onecold.(cpu(fixed_labels))
 end    
 
-cd(@__DIR__)
 if abspath(PROGRAM_FILE) == @__FILE__
     train()
 end
