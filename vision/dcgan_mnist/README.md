@@ -1,6 +1,6 @@
 # Deep Convolutional GAN
 
-![dcgan_gen_disc](..\dcgan_mnist\docs\dcgan_generator_discriminator.png)
+![dcgan_gen_disc](../dcgan_mnist/docs/dcgan_generator_discriminator.png)
 
 ## Model Info
 
@@ -17,22 +17,22 @@ julia --project dcgan_mnist.jl
 
 2000 training step
 
-![2000 training steps](..\dcgan_mnist\output\dcgan_steps_002000.png)
+![2000 training steps](../dcgan_mnist/output/dcgan_steps_002000.png)
 
 5000 training step
 
-![5000 training steps](..\dcgan_mnist\output\dcgan_steps_005000.png)
+![5000 training steps](../dcgan_mnist/output/dcgan_steps_005000.png)
 
 8000 training step
 
-![8000 training steps](..\dcgan_mnist\output\dcgan_steps_008000.png)
+![8000 training steps](../dcgan_mnist/output/dcgan_steps_008000.png)
 
 9380 training step
 
-![9380 training step](..\dcgan_mnist\output\dcgan_steps_009380.png)
+![9380 training step](../dcgan_mnist/output/dcgan_steps_009380.png)
 
 ## References
 
-[arXiv](https://arxiv.org/pdf/1511.06434v2.pdf)
+[Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks by Soumith Chintala et al.](https://arxiv.org/pdf/1511.06434v2.pdf)
 
 [pytorch.org/tutorials/beginner/dcgan_faces_tutorial](https://pytorch.org/tutorials/beginner/dcgan_faces_tutorial.html)
