@@ -187,5 +187,5 @@ end
 
 cd(@__DIR__)
 if abspath(PROGRAM_FILE) == @__FILE__
-    fixed_labels = train()
+    train()
 end
