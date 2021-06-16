@@ -6,7 +6,7 @@
 
 Variational Autoencoder ( VAE ) came into existence in 2013, when Kingma et al. published the paper [Auto-Encoding Variational Bayes](https://arxiv.org/pdf/1312.6114.pdf). This paper was an extension of the original idea of Auto-Encoder primarily to learn the distribution of the data. VAEs are devised within the variational inference framework and after training, they approximately model the data distribution, making it computationally cheap to generate new samples.
 
-VAE has one fundamentally unique property that separates them from vanilla autoencoder, and it is this property that makes them so useful for generative modeling: their latent spaces are, by design, continuous, allowing easy random sampling and interpolation.
+In VAE the idea is to encode the input as a probability distribution rather than a point estimate as in vanilla auto-encoder. Then VAE uses a decoder to reconstruct the original input by using samples from that probability distribution.
 
 ## Training
 
