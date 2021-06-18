@@ -1,6 +1,8 @@
 # Variational Autoencoder (VAE)
 
-<img src="..\vae_mnist\docs\vae.png" width="500">
+<img src="../vae_mnist/docs/vae.png" width="500">
+
+[Source](https://learnopencv.com/variational-autoencoder-in-tensorflow/#:~:text=Variational)
 
 ## Model Info
 
@@ -45,6 +47,8 @@ Latent space clustering
 
 ![Manifold](docs/manifold.png)
 
-## Reference
+## References
 
-[learnopencv](https://learnopencv.com/variational-autoencoder-in-tensorflow/#:~:text=Variational%20Autoencoder%20%28VAE%29%20is%20a%20generative%20model%20that,Gaussian%20profile%20%28prior%20on%20the%20distribution%20of%20representations%29.)
+[Kingma, Diederik P., and Max Welling. “Auto-Encoding Variational Bayes.” ArXiv Preprint ArXiv:1312.6114, 2013.](https://arxiv.org/pdf/1312.6114.pdf)
+
+[Variational Autoencoder in TensorFlow](https://learnopencv.com/variational-autoencoder-in-tensorflow/#:~:text=Variational.)
