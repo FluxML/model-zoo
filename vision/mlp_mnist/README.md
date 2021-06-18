@@ -1,6 +1,7 @@
 # Multilayer Perceptron (MLP)
 
 ![mlp](../mlp_mnist/docs/mlp.svg)
+[Source](http://d2l.ai/chapter_multilayer-perceptrons/mlp.html)
 
 ## Model Info
 
@@ -15,4 +16,4 @@ julia --project mlp_mnist.jl
 
 ## Reference
 
-[d2l.ai](http://d2l.ai/chapter_multilayer-perceptrons/mlp.html)
+* [Multilayer Perceptrons](http://d2l.ai/chapter_multilayer-perceptrons/mlp.html)
