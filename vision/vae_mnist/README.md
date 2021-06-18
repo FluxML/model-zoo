@@ -49,6 +49,6 @@ Latent space clustering
 
 ## References
 
-[Kingma, Diederik P., and Max Welling. “Auto-Encoding Variational Bayes.” ArXiv Preprint ArXiv:1312.6114, 2013.](https://arxiv.org/pdf/1312.6114.pdf)
+* [Kingma, Diederik P., and Max Welling. “Auto-Encoding Variational Bayes.” ArXiv Preprint ArXiv:1312.6114, 2013.](https://arxiv.org/pdf/1312.6114.pdf)
 
-[Variational Autoencoder in TensorFlow](https://learnopencv.com/variational-autoencoder-in-tensorflow/#:~:text=Variational.)
+* [Variational Autoencoder in TensorFlow](https://learnopencv.com/variational-autoencoder-in-tensorflow/#:~:text=Variational.)
