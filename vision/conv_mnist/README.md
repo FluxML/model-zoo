@@ -23,4 +23,10 @@ julia --project conv_mnist.jl
 
 * [Y. Lecun, L. Bottou, Y. Bengio and P. Haffner, "Gradient-based learning applied to document recognition," in Proceedings of the IEEE, vol. 86, no. 11, pp. 2278-2324, Nov. 1998, doi: 10.1109/5.726791.](http://yann.lecun.com/exdb/publis/pdf/lecun-01a.pdf)
 
-* [Convolutional Neural Networks (LeNet)](https://d2l.ai/chapter_convolutional-neural-networks/lenet.html)
+* [@book
+{zhang2020dive,
+title={Dive into Deep Learning},
+author={Aston Zhang and Zachary C. Lipton and Mu Li and Alexander J. Smola},
+note={\url{https://d2l.ai}},
+year={2020}
+})](https://d2l.ai/chapter_convolutional-neural-networks/lenet.html)
