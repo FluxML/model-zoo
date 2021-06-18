@@ -16,4 +16,10 @@ julia --project mlp_mnist.jl
 
 ## Reference
 
-* [Multilayer Perceptrons](http://d2l.ai/chapter_multilayer-perceptrons/mlp.html)
+* [@book
+{zhang2020dive,
+title={Dive into Deep Learning},
+author={Aston Zhang and Zachary C. Lipton and Mu Li and Alexander J. Smola},
+note={\url{https://d2l.ai}},
+year={2020}
+}](http://d2l.ai/chapter_multilayer-perceptrons/mlp.html)
