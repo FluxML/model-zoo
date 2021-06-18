@@ -1,6 +1,7 @@
 # Multilayer Perceptron (MLP)
 
 ![mlp](../mlp_mnist/docs/mlp.svg)
+
 [Source](http://d2l.ai/chapter_multilayer-perceptrons/mlp.html)
 
 ## Model Info
