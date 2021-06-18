@@ -1,10 +1,11 @@
-# Deep Convolutional GAN
+# Deep Convolutional GAN (DC-GAN)
 
 ![dcgan_gen_disc](../dcgan_mnist/output/dcgan_generator_discriminator.png)
+[Source](https://gluon.mxnet.io/chapter14_generative-adversarial-networks/dcgan.html)
 
 ## Model Info
 
-A DCGAN is a direct extension of the GAN, except that it explicitly uses convolutional and convolutional-transpose layers in the discriminator and generator, respectively. _The discriminator is made up of strided convolution layers, batch norm layers, and LeakyReLU activations_. The input is a 3x64x64 input image and the output is a scalar probability that the input is from the real data distribution. _The generator is comprised of convolutional-transpose layers, batch norm layers, and ReLU activations_. The input is a latent vector, _z_, that is drawn from a standard normal distribution and the output is a 3x64x64 RGB image. The strided conv-transpose layers allow the latent vector to be transformed into a volume with the same shape as an image.
+A DC-GAN is a direct extension of the GAN, except that it explicitly uses convolutional and transposed convolutions layers in the discriminator and generator, respectively. _The discriminator is made up of strided convolution layers, batch norm layers, and LeakyReLU activations. The generator is comprised of transposed convolutions layers, batch norm layers, and ReLU activations_.
 
 ## Training
 
@@ -33,6 +34,6 @@ julia --project dcgan_mnist.jl
 
 ## References
 
-[Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks by Soumith Chintala et al.](https://arxiv.org/pdf/1511.06434v2.pdf)
+* [Radford, A. et al.: Unsupervised Representation Learning with Deep Convolutional Generative    Adversarial Networks, http://arxiv.org/abs/1511.06434, (2015).](https://arxiv.org/pdf/1511.06434v2.pdf)
 
-[pytorch.org/tutorials/beginner/dcgan_faces_tutorial](https://pytorch.org/tutorials/beginner/dcgan_faces_tutorial.html)
+* [pytorch.org/tutorials/beginner/dcgan_faces_tutorial](https://pytorch.org/tutorials/beginner/dcgan_faces_tutorial.html)
