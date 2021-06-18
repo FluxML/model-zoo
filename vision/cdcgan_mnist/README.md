@@ -1,6 +1,8 @@
-# Conditional DCGAN
+# Conditional DC-GAN
 
 <img src="..\cdcgan_mnist\output\img_for_readme.png" width="440"/>
+
+[Source](https://arxiv.org/pdf/1411.1784.pdf)
 
 ## Model Info
 
@@ -38,6 +40,6 @@ julia --project cGAN_mnist.jl
 
 ## References
 
-[Conditional Generative Adversarial Nets by Mehdi Mirza et al.](https://arxiv.org/pdf/1411.1784.pdf)
+* [Mirza, M. and Osindero, S., “Conditional Generative Adversarial Nets”, <i>arXiv e-prints</i>, 2014.](https://arxiv.org/pdf/1411.1784.pdf)
 
-[Medium](https://medium.com/@utk.is.here/training-a-conditional-dc-gan-on-cifar-10-fce88395d610)
+* [Training a Conditional DC-GAN on CIFAR-10](https://medium.com/@utk.is.here/training-a-conditional-dc-gan-on-cifar-10-fce88395d610)
