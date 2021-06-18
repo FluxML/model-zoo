@@ -2,9 +2,11 @@
 
 ![vgg](../vgg_cifar10/docs/vgg.png)
 
+[Source](http://d2l.ai/chapter_convolutional-modern/vgg.html)
+
 ## Model Info
 
-The basic building block of classic CNNs is a sequence of the following: (i) a convolutional layer with padding to maintain the resolution, (ii) a nonlinearity such as a ReLU, (iii) a pooling layer such as a maximum pooling layer. _One VGG block consists of a sequence of convolutional layers, followed by a maximum pooling layer for spatial downsampling_. In the original VGG paper [Simonyan & Zisserman, 2014](https://arxiv.org/pdf/1409.1556v4.pdf), the authors employed convolutions with  3×3  kernels with padding of 1 (keeping height and width) and  2×2  maximum pooling with stride of 2 (halving the resolution after each block).
+The basic building block of classic CNNs is a sequence of the following: (i) a convolutional layer with padding to maintain the resolution, (ii) a nonlinearity such as a ReLU, (iii) a pooling layer such as a maximum pooling layer. _One VGG block consists of a sequence of convolutional layers, followed by a maximum pooling layer for spatial downsampling_. In the original VGG paper [Simonyan & Zisserman, 2015](https://arxiv.org/pdf/1409.1556v4.pdf), the authors employed convolutions with  3×3  kernels with padding of 1 (keeping height and width) and  2×2  maximum pooling with stride of 2 (halving the resolution after each block).
 
 ## Training
 
@@ -13,6 +15,15 @@ cd vision/vgg_cifar10
 julia --project vgg_cifar10.jl
 ```
 
-## Reference
+## References
 
-[d2l.ai](http://d2l.ai/chapter_convolutional-modern/vgg.html)
+* [Simonyan, K. and Zisserman, A., “Very Deep Convolutional Networks for Large-Scale Image Recognition”, <i>arXiv e-prints</i>, 2015.
+](https://arxiv.org/pdf/1409.1556v4.pdf)
+
+* [@book
+{zhang2020dive,
+title={Dive into Deep Learning},
+author={Aston Zhang and Zachary C. Lipton and Mu Li and Alexander J. Smola},
+note={\url{https://d2l.ai}},
+year={2020}
+}](http://d2l.ai/chapter_convolutional-modern/vgg.html)
