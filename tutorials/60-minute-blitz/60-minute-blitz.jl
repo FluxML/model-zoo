@@ -304,7 +304,7 @@ image.(X[rand(1:end, 10)])
 
 # Defining a `getarray` function would help in converting the matrices to `Float` type.
 
-getarray(X) = float.(permutedims(channelview(X), (2, 3, 1)))
+getarray(X) = float.(permutedims(channelview(X), (3, 2, 1)))
 imgs = [getarray(X[i].img) for i in 1:50000]
 
 # The first 49k images (in batches of 1000) will be our training set, and the rest is
