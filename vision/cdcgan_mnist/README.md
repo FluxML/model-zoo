@@ -1,6 +1,6 @@
 # Conditional DC-GAN
 
-<img src="..\cdcgan_mnist\output\img_for_readme.png" width="440"/>
+<img src="../cdcgan_mnist/output/img_for_readme.png" width="440"/>
 
 [Source](https://arxiv.org/pdf/1411.1784.pdf)
 
