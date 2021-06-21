@@ -5,7 +5,7 @@
 
 ## Model Info
 
-A DC-GAN is a direct extension of the GAN, except that it explicitly uses convolutional and transposed convolutions layers in the discriminator and generator, respectively. _The discriminator is made up of strided convolution layers, batch norm layers, and LeakyReLU activations. The generator is comprised of transposed convolutions layers, batch norm layers, and ReLU activations_.
+A DC-GAN is a direct extension of the GAN, except that it explicitly uses convolutional and transposed convolutions layers in the discriminator and generator, respectively. The discriminator is made up of strided convolution layers, batch norm layers, and LeakyReLU activations. The generator is comprised of transposed convolutions layers, batch norm layers, and ReLU activations.
 
 ## Training
 
