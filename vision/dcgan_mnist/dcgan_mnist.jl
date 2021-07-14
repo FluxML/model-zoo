@@ -5,6 +5,7 @@ using Flux.Losses: logitbinarycrossentropy
 using Images
 using MLDatasets
 using Statistics
+using Distributions:Normal
 using Parameters: @with_kw
 using Printf
 using Random
@@ -30,12 +31,18 @@ function create_output_image(gen, fixed_noise, hparams)
     return image_array
 end
 
+  
+# weight initialization
+function random_normal(shape...)
+    return map(Float32,rand(Normal(0,0.02),shape...))
+end
+
 function Discriminator()
     return Chain(
-            Conv((4, 4), 1 => 64; stride = 2, pad = 1),
+            Conv((4, 4), 1 => 64; stride = 2, pad = 1,init=random_normal),
             x->leakyrelu.(x, 0.2f0),
             Dropout(0.25),
-            Conv((4, 4), 64 => 128; stride = 2, pad = 1),
+            Conv((4, 4), 64 => 128; stride = 2, pad = 1,init=random_normal),
             x->leakyrelu.(x, 0.2f0),
             Dropout(0.25), 
             x->reshape(x, 7 * 7 * 128, :),
@@ -47,11 +54,11 @@ function Generator(latent_dim::Int)
             Dense(latent_dim, 7 * 7 * 256),
             BatchNorm(7 * 7 * 256, relu),
             x->reshape(x, 7, 7, 256, :),
-            ConvTranspose((5, 5), 256 => 128; stride = 1, pad = 2),
+            ConvTranspose((5, 5), 256 => 128; stride = 1, pad = 2,init=random_normal),
             BatchNorm(128, relu),
-            ConvTranspose((4, 4), 128 => 64; stride = 2, pad = 1),
+            ConvTranspose((4, 4), 128 => 64; stride = 2, pad = 1,init=random_normal),
             BatchNorm(64, relu),
-            ConvTranspose((4, 4), 64 => 1; stride = 2, pad = 1),
+            ConvTranspose((4, 4), 64 => 1; stride = 2, pad = 1,init=random_normal),
             x -> tanh.(x)
             )
 end
