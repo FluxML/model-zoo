@@ -31,7 +31,7 @@ function create_output_image(gen, fixed_noise, hparams)
 end
 
   
-# weight initialization as given in the "4.DETAILS OF ADVERSARIAL TRAINING" section of the paper
+# weight initialization as given in the paper https://arxiv.org/abs/1511.06434
 dcgan_init(shape...) = randn(Float32, shape...) * 0.02
 
 function Discriminator()
