@@ -1,0 +1,7 @@
+[deps]
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
+LearnBase = "7f8f8fb0-2700-5f03-b4bd-41f8cfc144b6"
+OpenAIGym = "41d6fcb8-dd24-11e8-2536-c3dc023218b5"
+PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
+Reinforce = "0376cc21-f8a9-5fcf-8891-fde1415a4fd3"
