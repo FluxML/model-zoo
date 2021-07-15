@@ -146,5 +146,8 @@ function test(m; kws...)
     @show test_accuracy
 end
 
-m = train()
-test(m)
+if abspath(PROGRAM_FILE) == @__FILE__
+    m = train()
+    test(m)
+end
+
