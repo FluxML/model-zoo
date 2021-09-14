@@ -53,7 +53,7 @@ function train(; kws...)
     m = build_model(N)
 
     function loss(xs, ys)
-      l = sum(logitcrossentropy.(m.(xs), ys))
+      l = sum(logitcrossentropy.([m(x) for x in xs], ys))
       return l
     end
     
@@ -75,7 +75,7 @@ function sample(m, alphabet, len; seed="")
         seed = string(rand(alphabet))
     end
     write(buf, seed)
-    c = wsample(alphabet, softmax(m.(map(c -> onehot(c, alphabet), collect(seed)))[end]))
+    c = wsample(alphabet, softmax([m(onehot(c, alphabet)) for c in collect(seed)][end]))
     for i = 1:len
         write(buf, c)
         c = wsample(alphabet, softmax(m(onehot(c, alphabet))))
