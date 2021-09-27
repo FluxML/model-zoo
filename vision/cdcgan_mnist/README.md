@@ -18,25 +18,25 @@ julia --project cGAN_mnist.jl
 
 ## Results
 
-1000 training step
+1000 training steps
 
-![1000 training step](../cdcgan_mnist/output/cgan_steps_001000.png)
+![1000 training steps](../cdcgan_mnist/output/cgan_steps_001000.png)
 
-3000 training step
+3000 training steps
 
-![30000 trainig step](../cdcgan_mnist/output/cgan_steps_003000.png)
+![30000 trainig steps](../cdcgan_mnist/output/cgan_steps_003000.png)
 
-5000 training step
+5000 training steps
 
-![5000 training step](../cdcgan_mnist/output/cgan_steps_005000.png)
+![5000 training steps](../cdcgan_mnist/output/cgan_steps_005000.png)
 
-10000 training step
+10000 training steps
 
-![10000 training step](../cdcgan_mnist/output/cgan_steps_010000.png)
+![10000 training steps](../cdcgan_mnist/output/cgan_steps_010000.png)
 
-11725 training step
+11725 training steps
 
-![11725 training step](../cdcgan_mnist/output/cgan_steps_011725.png)
+![11725 training steps](../cdcgan_mnist/output/cgan_steps_011725.png)
 
 ## References
 
