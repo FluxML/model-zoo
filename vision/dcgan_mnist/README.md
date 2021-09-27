@@ -16,21 +16,21 @@ julia --project dcgan_mnist.jl
 
 ## Results
 
-2000 training step
+2000 training steps
 
 ![2000 training steps](../dcgan_mnist/output/dcgan_steps_002000.png)
 
-5000 training step
+5000 training steps
 
 ![5000 training steps](../dcgan_mnist/output/dcgan_steps_005000.png)
 
-8000 training step
+8000 training steps
 
 ![8000 training steps](../dcgan_mnist/output/dcgan_steps_008000.png)
 
-9380 training step
+9380 training steps
 
-![9380 training step](../dcgan_mnist/output/dcgan_steps_009380.png)
+![9380 training steps](../dcgan_mnist/output/dcgan_steps_009380.png)
 
 ## References
 

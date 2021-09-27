@@ -20,10 +20,4 @@ julia --project vgg_cifar10.jl
 * [Simonyan, K. and Zisserman, A., “Very Deep Convolutional Networks for Large-Scale Image Recognition”, <i>arXiv e-prints</i>, 2015.
 ](https://arxiv.org/pdf/1409.1556v4.pdf)
 
-* [@book
-{zhang2020dive,
-title={Dive into Deep Learning},
-author={Aston Zhang and Zachary C. Lipton and Mu Li and Alexander J. Smola},
-note={\url{https://d2l.ai}},
-year={2020}
-}](http://d2l.ai/chapter_convolutional-modern/vgg.html)
+* [Aston Zhang, Zachary C. Lipton, Mu Li and Alexander J. Smola, "Dive into Deep Learning", 2020](http://d2l.ai/chapter_convolutional-modern/vgg.html)
