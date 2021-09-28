@@ -157,4 +157,7 @@ function train(; kws...)
     end
 end
 
-train()
+if abspath(PROGRAM_FILE) == @__FILE__
+    train()
+end
+

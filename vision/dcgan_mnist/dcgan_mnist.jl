@@ -148,5 +148,7 @@ function train(; kws...)
     save(@sprintf("output/dcgan_steps_%06d.png", train_steps), output_image)
 end
 
-cd(@__DIR__)
-train()
+if abspath(PROGRAM_FILE) == @__FILE__
+    train()
+end
+
