@@ -29,9 +29,9 @@ function getdata(args, device)
 end
 
 function build_model(; imgsize=(28,28,1), nclasses=10)
-    return Chain(
- 	        Dense(prod(imgsize), 32, relu),
-            Dense(32, nclasses))
+    return Chain( Flux.flatten,
+                  Dense(prod(imgsize), 32, relu),
+                  Dense(32, nclasses))
 end
 
 function loss_and_accuracy(data_loader, model, device)
@@ -41,9 +41,9 @@ function loss_and_accuracy(data_loader, model, device)
     for (x, y) in data_loader
         x, y = device(x), device(y)
         ŷ = model(x)
-        ls += logitcrossentropy(model(x), y, agg=sum)
-        acc += sum(onecold(cpu(model(x))) .== onecold(cpu(y)))
-        num +=  size(x, 2)
+        ls += logitcrossentropy(ŷ, y, agg=sum)
+        acc += sum(onecold(ŷ) .== onecold(y))
+        num +=  size(x)[end]
     end
     return ls / num, acc / num
 end
