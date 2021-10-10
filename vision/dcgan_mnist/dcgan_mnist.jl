@@ -32,7 +32,7 @@ end
 
   
 # weight initialization as given in the paper https://arxiv.org/abs/1511.06434
-dcgan_init(shape...) = randn(Float32, shape...) * 0.02
+dcgan_init(shape...) = randn(Float32, shape...) * 0.02f0
 
 function Discriminator()
     return Chain(
@@ -113,7 +113,7 @@ function train(; kws...)
     # Partition into batches
     data = [image_tensor[:, :, :, r] |> device for r in partition(1:60000, hparams.batch_size)]
 
-    fixed_noise = [randn(hparams.latent_dim, 1) |> device for _=1:hparams.output_x*hparams.output_y]
+    fixed_noise = [randn(Float32, hparams.latent_dim, 1) |> device for _=1:hparams.output_x*hparams.output_y]
 
     # Discriminator
     dscr = Discriminator() |> device
