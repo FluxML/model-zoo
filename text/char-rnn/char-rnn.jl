@@ -8,8 +8,9 @@ using Parameters: @with_kw
 @with_kw mutable struct Args
     lr::Float64 = 1e-2	# Learning rate
     seqlen::Int = 50	# Length of batchseqences
-    nbatch::Int = 50	# number of batches text is divided into
+    nbatch::Int = 50	# Number of batches text is divided into
     throttle::Int = 30	# Throttle timeout
+    epochs::Int = 2     # Number of Epochs
 end
 
 function getdata(args)
@@ -53,8 +54,8 @@ function train(; kws...)
     m = build_model(N)
 
     function loss(xs, ys)
-      l = sum(logitcrossentropy.([m(x) for x in xs], ys))
-      return l
+        Flux.reset!(m)
+        return sum(logitcrossentropy.([m(x) for x in xs], ys))
     end
     
     ## Training
@@ -62,7 +63,11 @@ function train(; kws...)
     tx, ty = (Xs[5], Ys[5])
     evalcb = () -> @show loss(tx, ty)
 
-    Flux.train!(loss, params(m), zip(Xs, Ys), opt, cb = throttle(evalcb, args.throttle))
+    @info "Start Training, total $(args.epochs) epochs"
+    for epoch = 1:args.epochs
+        @info "Epoch $(epoch) / $(args.epochs)"
+        Flux.train!(loss, params(m), zip(Xs, Ys), opt, cb = throttle(evalcb, args.throttle))
+    end
     return m, alphabet
 end
 
