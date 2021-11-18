@@ -48,7 +48,7 @@ test_x = reshape(test_x, 28, 28, 1, :)
 ```
 <br>
  
-Also, the MNIST labels must be encoded as a vector with the same dimension as the number of categories (unique handwritten digits) in the data set. To encode the labels, we use the [Flux's onehotbath](https://fluxml.ai/Flux.jl/stable/data/onehot/#Batches-1) function:
+Also, the MNIST labels must be encoded as a vector with the same dimension as the number of categories (unique handwritten digits) in the data set. To encode the labels, we use the [Flux's onehotbatch](https://fluxml.ai/Flux.jl/stable/data/onehot/#Batches-1) function:
  
 ```julia
 train_y, test_y = onehotbatch(train_y, 0:9), onehotbatch(test_y, 0:9)
