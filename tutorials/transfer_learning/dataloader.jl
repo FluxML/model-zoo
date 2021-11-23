@@ -26,7 +26,7 @@ function load_batch(n = 10, nsize = (224,224); path = PATH)
   labels = map(x -> occursin("dog.",x) ? 1 : 0, imgs_paths)
   # Here, dog is set to 1 and cat to 0
   
-  # Convert the text based names to 0 or 1
+  # Convert the text based names to 0 or 1 (one hot encoding)
   labels = Flux.onehotbatch(labels, [0,1])
   
   # Load all of the images
@@ -35,13 +35,18 @@ function load_batch(n = 10, nsize = (224,224); path = PATH)
   # Re-size the images based on imagesize from above (most models use 224 x 224)
   imgs = map(img -> Images.imresize(img, nsize...), imgs)
   
-  # Change the dimensions of each image, switch to gray scale
+  # Change the dimensions of each image, switch to gray scale. Channel view switches to...
+  # a 3 channel 3rd dimension and then (3,2,1) makes those into seperate arrays.
+  # So we end up with [:, :, 1] being the Red values, [:, :, 2] being the Green values, etc
   imgs = map(img -> permutedims(channelview(img), (3,2,1)), imgs)
-  # Result is two 3D arrays representing each image.
+  # Result is two 3D arrays representing each image
   
-  # Concatenate the two images into a single 4D array
+  # Concatenate the two images into a single 4D array and add another extra dim at the end
+  # which shows how many images there are per set, in this case, it's 2
   imgs = cat(imgs..., dims = 4)
+  # This is requires since the model's input is a 4D array
   
   # Convert the images to float form and return them along with the labels
+  # The default is float64 but float32 is commonly used which is why we use it
   Float32.(imgs), labels
 end
