@@ -72,7 +72,7 @@ function train(; kws...)
 end
 
 # Sampling
-function sample(m, alphabet, len; seed="")
+function sample_data(m, alphabet, len; seed="")
     m = cpu(m)
     Flux.reset!(m)
     buf = IOBuffer()
@@ -90,4 +90,4 @@ end
 
 cd(@__DIR__)
 m, alphabet = train()
-sample(m, alphabet, 1000) |> println
+sample_data(m, alphabet, 1000) |> println
