@@ -7,7 +7,7 @@ using Parameters: @with_kw
 # Hyperparameter arguments 
 @with_kw mutable struct Args
     lr::Float64 = 1e-2	# Learning rate
-    seqlen::Int = 50	# Length of batchseqences
+    seqlen::Int = 50	# Length of batch sequences
     nbatch::Int = 50	# Number of batches text is divided into
     throttle::Int = 30	# Throttle timeout
     epochs::Int = 2     # Number of Epochs
