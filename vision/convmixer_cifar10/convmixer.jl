@@ -51,20 +51,25 @@ function get_data(batchsize; dataset = MLDatasets.CIFAR10, idxs = nothing)
     return train_loader, test_loader
 end
 
-function ℓ(dataloader, model, device)
-    
-    n = 0
-    loss = 0.0f0
-    acc = 0.0f0
+function create_loss_function(dataloader, device)
 
-    for (x,y) in dataloader
-        x,y = x |> device, y |> device
-        z = model(x)        
-        loss += Flux.logitcrossentropy(z, y, agg=sum)
-        acc += sum(onecold(z).==onecold(y))
-        n += size(x)[end]
+    function loss(model)
+        n = 0
+        l = 0.0f0
+        acc = 0.0f0
+
+        for (x,y) in dataloader
+            x,y = x |> device, y |> device
+            z = model(x)        
+            l += Flux.logitcrossentropy(z, y, agg=sum)
+            acc += sum(onecold(z).==onecold(y))
+            n += size(x)[end]
+        end
+        l / n, acc / n
     end
-    loss / n, acc / n
+
+    return loss
+   
 end
 
 
@@ -93,6 +98,9 @@ function train(n_epochs=100)
         @info "Training on CPU"
     end
 
+    train_loss_fn = create_loss_function(train_loader, device)
+    test_loss_fn = create_loss_function(test_loader, device)
+
     model = ConvMixer(in_channel, kernel_size, patch_size, dim, depth, 10) |> device
 
     ps = params(model)
@@ -110,8 +118,8 @@ function train(n_epochs=100)
         end
 
         #logging
-        train_loss, train_acc = ℓ(train_loader, model, device) |> cpu
-        test_loss, test_acc = ℓ(test_loader, model, device) |> cpu
+        train_loss, train_acc = train_loss_fn(model) |> cpu
+        test_loss, test_acc = test_loss_fn(model) |> cpu
         train_save[epoch,:] = [train_loss, train_acc]
         test_save[epoch,:] = [test_loss, test_acc]
 
