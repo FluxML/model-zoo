@@ -273,26 +273,29 @@ Flux.train!(loss, params(m), [(data,labels)], opt)
 
 using Statistics
 using Flux, Flux.Optimise
-using Images: channelview
-using Metalhead
-using Metalhead: trainimgs, valimgs
+using MLDatasets: CIFAR10
 using Images.ImageCore
-using Flux: onehotbatch, onecold, flatten
+using Flux: onehotbatch, onecold
 using Base.Iterators: partition
-# using CUDA
+using CUDA
 
 # The image will give us an idea of what we are dealing with.
 # ![title](https://pytorch.org/tutorials/_images/cifar10.png)
 
-Metalhead.download(CIFAR10)
-X = trainimgs(CIFAR10)
-labels = onehotbatch([X[i].ground_truth.class for i in 1:50000],1:10)
+train_x, train_y = CIFAR10.traindata(Float32)
+labels = onehotbatch(train_y, 0:9)
+
+#The train_x contains 50000 images converted to 32 X 32 X 3 arrays with the third
+# dimension being the 3 channels (R,G,B). Let's take a look at a random image from
+# the train_x. For this, we need to permute the dimensions to 3 X 32 X 32 and use
+# `colorview` to convert it back to an image.
 
 # Let's take a look at a random image from the dataset
 
-image(x) = x.img # handy for use later
-ground_truth(x) = x.ground_truth
-image.(X[rand(1:end, 10)])
+using Plots
+image(x) = colorview(RGB, permutedims(x, (3, 2, 1)))
+plot(image(train_x[:,:,:,rand(1:end)]))
+
 
 # The images are simply 32 X 32 matrices of numbers in 3 channels (R,G,B). We can now
 # arrange them in batches of say, 1000 and keep a validation set to track our progress.
@@ -302,19 +305,14 @@ image.(X[rand(1:end, 10)])
 # and train only on them. It is shown to help with escaping
 # [saddle points](https://en.wikipedia.org/wiki/Saddle_point).
 
-# Defining a `getarray` function would help in converting the matrices to `Float` type.
-
-getarray(X) = float.(permutedims(channelview(X), (3, 2, 1)))
-imgs = [getarray(X[i].img) for i in 1:50000]
 
 # The first 49k images (in batches of 1000) will be our training set, and the rest is
 # for validation. `partition` handily breaks down the set we give it in consecutive parts
-# (1000 in this case). `cat` is a shorthand for concatenating multi-dimensional arrays along
-# any dimension.
+# (1000 in this case). 
 
-train = ([(cat(imgs[i]..., dims = 4), labels[:,i]) for i in partition(1:49000, 1000)]) |> gpu
+train = ([(train_x[:,:,:,i], labels[:,i]) for i in partition(1:49000, 1000)]) |> gpu
 valset = 49001:50000
-valX = cat(imgs[valset]..., dims = 4) |> gpu
+valX = train_x[:,:,:,valset] |> gpu
 valY = labels[:, valset] |> gpu
 
 # ## Defining the Classifier
@@ -331,7 +329,7 @@ m = Chain(
   MaxPool((2,2)),
   Conv((5,5), 16=>8, relu),
   MaxPool((2,2)),
-  flatten,
+  x -> reshape(x, :, size(x, 4)),
   Dense(200, 120),
   Dense(120, 84),
   Dense(84, 10),
@@ -345,15 +343,15 @@ m = Chain(
 # preventing us from overshooting our desired destination.
 #-
 
-using Flux: Momentum
+using Flux: crossentropy, Momentum
 
-loss(x, y) = Flux.Losses.crossentropy(m(x), y)
+loss(x, y) = sum(crossentropy(m(x), y))
 opt = Momentum(0.01)
 
 # We can start writing our train loop where we will keep track of some basic accuracy
 # numbers about our model. We can define an `accuracy` function for it like so.
 
-accuracy(x, y) = mean(onecold(m(x), 1:10) .== onecold(y, 1:10))
+accuracy(x, y) = mean(onecold(m(x), 0:9) .== onecold(y, 0:9))
 
 # ## Training
 # -----------
@@ -398,15 +396,14 @@ end
 # Okay, first step. Let us perform the exact same preprocessing on this set, as we did
 # on our training set.
 
-valset = valimgs(CIFAR10)
-valimg = [getarray(valset[i].img) for i in 1:10000]
-labels = onehotbatch([valset[i].ground_truth.class for i in 1:10000],1:10)
-test = gpu.([(cat(valimg[i]..., dims = 4), labels[:,i]) for i in partition(1:10000, 1000)])
+test_x, test_y = CIFAR10.testdata(Float32)
+test_labels = onehotbatch(test_y, 0:9)
 
-# Next, display some of the images from the test set.
+test = gpu.([(test_x[:,:,:,i], test_labels[:,i]) for i in partition(1:10000, 1000)])
 
-ids = rand(1:10000, 10)
-image.(valset[ids])
+# Next, display an image from the test set.
+
+plot(image(test_x[:,:,:,rand(1:end)]))
 
 # The outputs are energies for the 10 classes. Higher the energy for a class, the more the
 # network thinks that the image is of the particular class. Every column corresponds to the
@@ -414,9 +411,9 @@ image.(valset[ids])
 
 # Let's see how the model fared.
 
-rand_test = getarray.(image.(valset[ids]))
-rand_test = cat(rand_test..., dims = 4) |> gpu
-rand_truth = ground_truth.(valset[ids])
+ids = rand(1:10000, 5)
+rand_test = test_x[:,:,:,ids] |> gpu
+rand_truth = test_y[ids]
 m(rand_test)
 
 # This looks similar to how we would expect the results to be. At this point, it's a good
