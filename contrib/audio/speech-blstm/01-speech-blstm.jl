@@ -6,7 +6,7 @@
 # Networks, 18(5-6), 602-610.]).
 
 using Flux
-using Flux: crossentropy, softmax, flip, sigmoid, LSTM, @epochs
+using Flux: crossentropy, softmax, sigmoid, LSTM, @epochs
 using BSON
 using Random
 
@@ -19,6 +19,11 @@ const EPOCHS = 20
 forward = LSTM(26, 93)
 backward = LSTM(26, 93)
 output = Dense(186, 61)
+
+# Flux.flip blows up with "Mutating arrays not supported" error on Zygote
+rev(x) = view(x, length(x):-1:1)
+flip(f,x) = rev(f.(rev(x)))
+
 
 """
   BLSTM(x)
@@ -33,7 +38,7 @@ is from processing it backward
 # Returns
 * The concatenation of the forward and backward LSTM predictions
 """
-BLSTM(x) = vcat.(forward.(x), flip(backward, x))
+BLSTM(x) = vcat.(forward.(x), flip(backward, x)) 
 
 """
   model(x)
@@ -140,7 +145,8 @@ function main()
   # Begin training
   println("Beginning training")
 
-  opt = Momentum(params((forward, backward, output)), 10.0^-5; ρ=0.9)
+  ps = params((forward, backward, output))
+  opt = Momentum(10.0^-5, 0.9)
 
   i = 0
 
@@ -151,7 +157,7 @@ function main()
     shuffle!(data)
     valData = valData[shuffle(1:length(valData))]
     
-    Flux.train!(loss, data, opt)
+    Flux.train!(loss, ps, data, opt)
     
     BSON.@save "model_epoch$(i).bson" forward backward output
 
