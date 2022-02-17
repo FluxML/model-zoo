@@ -10,8 +10,8 @@ The neural network, which has 60 million parameters and 650,000 neurons, consist
 
 ### Train
 ```julia
-cd alexnet-cifar10-julia
-julia alexnet_cifar.jl
+cd vision/alexnet_cifar10
+julia alexnet_cifar10.jl
 ```
 
 ### References
