@@ -82,7 +82,7 @@ end
 Base.@kwdef mutable struct Args
     η = 1e-4            # learning rate
     batchsize = 128     # batch size
-    epochs = 1          # number of epochs
+    epochs = 10         # number of epochs
 end
 
 
