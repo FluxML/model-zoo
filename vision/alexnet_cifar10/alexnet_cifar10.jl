@@ -5,7 +5,6 @@ using Flux.Optimise: Optimiser
 using Flux: onehotbatch, onecold, @epochs
 using Flux.Losses: logitcrossentropy
 using Base: @kwdef
-using CUDA
 using MLDatasets
 using Images
 using ProgressBars
