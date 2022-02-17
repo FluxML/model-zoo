@@ -37,7 +37,9 @@ We welcome contributions of new models. They should be in a folder with a projec
     * [Variational Auto-Encoder](vision/vae_mnist)
     * [Deep Convolutional Generative Adversarial Networks](vision/dcgan_mnist)
     * [Conditional Deep Convolutional Generative Adversarial Networks](vision/cdcgan_mnist)
-  * [VGG 16/19 on CIFAR10](vision/vgg_cifar10)
+  * CIFAR10
+    * [VGG 16/19](vision/vgg_cifar10)
+    * [AlexNet](vision/alexnet_cifar10)
 * Text
   * [CharRNN](text/char-rnn)
   * [Character-level language detection](text/lang-detection)
