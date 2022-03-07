@@ -33,7 +33,6 @@ function get_data(args)
     test_loader = DataLoader((x_test, y_test), batchsize=args.batchsize, partial=false)
 
     return train_loader, test_loader
-
 end
 
 
