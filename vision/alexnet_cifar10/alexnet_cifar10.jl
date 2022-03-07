@@ -42,7 +42,6 @@ end
 
 
 function evaluation_loss_accuracy(loader, model)
-
     loss, accuracy, counter = 0f0, 0f0, 0
 
     for (x,y) in loader
