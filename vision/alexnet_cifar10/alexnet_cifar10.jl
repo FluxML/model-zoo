@@ -92,8 +92,6 @@ function train(; kws...)
     train_loader, test_loader = get_data(args)
 
     model = set_model() # my implmentation
-    # model = alexnet() # Metalhead's implmentation
-    # model = LeNet5() # test pipeline
 
 
     ps = Flux.params(model)  
