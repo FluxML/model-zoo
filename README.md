@@ -6,7 +6,7 @@ The models are broadly categorised into the folders [vision](/vision) (e.g. larg
 
 ## Usage
 
-The zoo comes with its own [Julia project](https://julialang.github.io/Pkg.jl/latest/#Using-someone-else's-project-1), which lists the packages you need to run the models. You can run the models by opening Julia in the project folder and running
+The zoo comes with its own [Julia project](https://pkgdocs.julialang.org/v1/environments/#Using-someone-else's-project), which lists the packages you need to run the models. You can run the models by opening Julia in the project folder and running
 
 ```julia
 using Pkg; Pkg.activate("."); Pkg.instantiate()
