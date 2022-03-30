@@ -21,7 +21,7 @@ using Parameters: @with_kw
     minibath_size::Int = 128  ## Size of mini-batch
 end
 
-# ## Get the data
+# ## Data
  
 # We create the function `get_data` to get, preprare and load the data onto a DataLoader object.
 
