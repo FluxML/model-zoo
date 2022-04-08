@@ -12,6 +12,7 @@ function AR1(n)
     y
 end    
 
+function main()
 # generate the data
 n = 1000 # sample size
 data = Float32.(AR1(n))
@@ -27,11 +28,6 @@ epochs = 100    # maximum number of training loops through data
 # there may be better configurations
 m = Chain(LSTM(batchsize, 10), Dense(10,2, tanh), Dense(2,batchsize))
 
-function loss(x,y)
-    Flux.reset!(m)
-    Flux.mse(m(x),y)
-end
-
 # the first element of the batched data is one lag
 # of the second element, in chunks of batchsize. The first
 # elements are the inputs, the second are the outputs. So,
@@ -39,16 +35,16 @@ end
 # on batchsize lags. The mod() part is to ensure that all
 # batches have full size.
 n = size(data,1)
-training_batches = [(training[ind .- 1], training[ind])  for ind in partition(2:n_training-mod(n_training,batchsize)-1, batchsize)]
+training_batches = [(training[ind .- 1], training[ind]) 
+    for ind in partition(2:n_training-mod(n_training,batchsize)-1, batchsize)]
 
-# function for checking out-of-sample fit
-function callback()
-    error=mean(abs2.(testing[2:end]-predict(testing[1:end-1],batchsize)))
-    println("testing mse: ", error)
-    error
-end    
+# the loss function for training
+function loss(x,y)
+    Flux.reset!(m)
+    Flux.mse(m(x)[end],y[end])
+end
 
-# function to get predition of y conditional on lags of y.
+# function to get prediction of y conditional on lags of y.
 function predict(data, batchsize)
     n = size(data,1)
     yhat = zeros(n)
@@ -60,24 +56,29 @@ function predict(data, batchsize)
     yhat
 end
 
+# function for checking out-of-sample fit
+function callback()
+    error=mean(abs2.(testing[2:end]-predict(testing[1:end-1],batchsize)))
+    println("testing mse: ", error)
+    error
+end    
+
 # train while out-of-sample improves, saving best model.
-# stop when the out-of-sample grows too much
+# stop when the out-of-sample has increased too many times
 bestsofar = 1e6
 bestmodel = m
-timesgreater = 0
+numincreases = 0
+maxnumincreases = 5
 for i = 1:epochs
-    global bestsofar
-    global bestmodel
-    global timesgreater
     Flux.train!(loss,Flux.params(m), training_batches, ADAM())
     c = callback()
     if c < bestsofar
         bestsofar = c
         bestmodel = m
     else
-        timesgreater +=1
+        numincreases +=1
     end    
-    timesgreater > 5 ? break : nothing
+    numincreases > maxnumincreases ? break : nothing
 end
 m = bestmodel # use the best model found
 
@@ -91,5 +92,11 @@ pred_ml = x*ρhat
 # NN forecast
 pred_nn = predict(data, batchsize)[2:end] # align with ML forecast
 
+return pred_nn, pred_ml
+end
+
+pred_nn, pred_ml = main()
 # verify that NN works as well as ML
-plot(1:n-1, [pred_nn pred_ml pred_nn - pred_ml], labels=["neural net forecast" "ML forecast" "difference in forecasts"])
+n = size(pred_nn,1)
+plot(1:n, [pred_nn pred_ml pred_nn - pred_ml], labels=["neural net forecast" "ML forecast" "difference in forecasts"])
+
