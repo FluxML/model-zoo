@@ -9,7 +9,6 @@ using MLDatasets
 using Flux
 using Flux: @functor, chunk
 using Flux.Data: DataLoader
-using Zygote: ignore
 using Parameters: @with_kw
 using BSON
 using CUDA
@@ -20,18 +19,12 @@ using ProgressMeter: Progress, next!
 using TensorBoardLogger: TBLogger, tb_overwrite
 using Random
 
-# load MNIST images and return loader
-function get_data(batch_size)
-    xtrain, ytrain = MLDatasets.MNIST.traindata(Float32)
-    xtrain = reshape(xtrain, 28, 28, 1, :)
-    DataLoader((xtrain, ytrain), batchsize=batch_size, shuffle=true)
-end
-
 """
 Projection of Gaussian Noise onto a time vector.
 
 # Notes
-W is not trainable and is sampled once upon construction.
+This layer will help embed our random times onto the frequency domain. \n
+W is not trainable and is sampled once upon construction - see assertions below.
 
 # References
 paper-  https://arxiv.org/abs/2006.10739 \n
@@ -47,21 +40,38 @@ end
 
 gaussfourierproj_test = GaussianFourierProjection(32, 20.0f0)
 # GaussianFourierProjection(embed_dim, ⋅)(batch) => (embed_dim, batch)
-@assert gaussfourierproj_test(randn(Float32, 32)) |> size == (32, 32)
+@assert gaussfourierproj_test(randn(Float32, 32)) |> size == (32, 32);
 # W is fixed wrt. repeated calls
 @assert gaussfourierproj_test(
-    ones(Float32, 32)) == 
-    gaussfourierproj_test(ones(Float32, 32)
-)
+    ones(Float32, 32)) ==
+        gaussfourierproj_test(ones(Float32, 32)
+);
 # W is not trainable
-@assert params(gaussfourierproj_test) == Flux.Params([])
+@assert params(gaussfourierproj_test) == Flux.Params([]);
 
 """
-Create a UNet architecture as a backbone to a diffusion model.
+Helper function that computes the *standard deviation* of 𝒫₀ₜ(𝘹(𝘵)|𝘹(0)).
 
 # Notes
-Images stored in WHCN (width, height, channels, batch) order.
-In our case, MNIST comes in as (28, 28, 1, batch).
+Derived from the Stochastic Differential Equation (SDE):    \n
+                𝘥𝘹 = σᵗ𝘥𝘸,      𝘵 ∈ [0, 1]                   \n
+
+We use properties of SDEs to analytically solve for the stddev
+at time t conditioned on the data distribution. \n
+
+We will be using this all over the codebase for computing our model's loss,
+scaling our network output, and even sampling new images!
+"""
+function marginal_prob_std(t, sigma=25.0f0)
+    sqrt.((sigma .^ (2t) .- 1.0f0) ./ 2.0f0 ./ log(sigma))
+end
+
+"""
+Create a UNet architecture as a backbone to a diffusion model. \n
+
+# Notes
+Images stored in WHCN (width, height, channels, batch) order. \n
+In our case, MNIST comes in as (28, 28, 1, batch). \n
 
 # References
 paper-  https://arxiv.org/abs/1505.04597 \n
@@ -71,35 +81,50 @@ GNorm-  https://fluxml.ai/Flux.jl/stable/models/layers/#Flux.GroupNorm \n
 Flux-   https://fluxml.ai/Flux.jl/stable/models/advanced/#Custom-Model-Example
 """
 struct UNet
+    # ------------------- ------------------- ------------------- ------------------- 
     # Embedding
+    # ------------------- ------------------- ------------------- -------------------
     gaussfourierproj
     linear::Dense
+    # ------------------- ------------------- ------------------- -------------------
     # Encoder
+    # ------------------- ------------------- ------------------- -------------------
     conv1::Conv
     dense1::Dense
     gnorm1::GroupNorm
+    # ------------------- ------------------- -------------------
     conv2::Conv
     dense2::Dense
     gnorm2::GroupNorm
+    # ------------------- -------------------
     conv3::Conv
     dense3::Dense
     gnorm3::GroupNorm
+    # -------------------
     conv4::Conv
     dense4::Dense
     gnorm4::GroupNorm
+    # -------
     # Decoder
+    # -------
     tconv4::ConvTranspose
     dense5::Dense
     tgnorm4::GroupNorm
+    # ------------------- 
     tconv3::ConvTranspose
     dense6::Dense
     tgnorm3::GroupNorm
+    # ------------------- -------------------
     tconv2::ConvTranspose
     dense7::Dense
     tgnorm2::GroupNorm
+    # ------------------- ------------------- -------------------
     tconv1::ConvTranspose
+    # ------------------- ------------------- ------------------- -------------------
     # Scaling Factor
+    # ------------------- ------------------- ------------------- -------------------
     marginal_prob_std
+    # ------------------- ------------------- ------------------- -------------------
 end
 
 """
@@ -166,35 +191,38 @@ end
 Helper function that adds `dims` dimensions to the front of a `AbstractVecOrMat`.
 """
 expand_dims(x::AbstractVecOrMat, dims::Int=2) = reshape(x, (ntuple(i -> 1, dims)..., size(x)...))
-@assert expand_dims(ones(Float32, 32), 3) |> size == (1, 1, 1, 32)
+@assert expand_dims(ones(Float32, 32), 3) |> size == (1, 1, 1, 32);
 
 """
 Helper function that reverses the order of dimensions.
 """
 reverse_dims(x) = permutedims(x, reverse(ntuple(i -> i, length(size(x)))))
-reverse_test1 = randn(Float32, 32, 32)
-reverse_test2 = randn(Float32, 28, 28, 1, 32, 32)
-reverse_test3 = randn(Float32, 32)
-@assert reverse_dims(reverse_test1) == reverse_test1'
+# Test our two use cases in function(unet::UNet)(x, t):
+reverse_test1 = randn(Float32, 32, 32);
+reverse_test2 = randn(Float32, 28, 28, 1, 32, 32);
+reverse_test3 = randn(Float32, 32);
+@assert reverse_dims(reverse_test1) == reverse_test1';
 # Array and Matrix
 @assert (
     reverse_test2 .+ expand_dims(reverse_test1, 3) ==
     reverse_dims(reverse_test2) .+ reverse_test1' |> reverse_dims
-)
+);
 # Array and Vector
 @assert (
     reverse_test2 .+ expand_dims(reverse_test3, 4) ==
     reverse_dims(reverse_test2) .+ reverse_test3 |> reverse_dims
-)
+);
 
 """
-Forward pass of a UNet architecture.
+Makes the UNet struct callable. \n
+Forward pass of a UNet architecture. 
 
 Notes:
     ```julia
     @assert size(a) == (28, 28, 1, 32, 32)
     @assert size(b) == (32, 32)
-    reverse_dims(a) .+ reverse_dims(b)' |> reverse_dims
+    o = reverse_dims(a) .+ reverse_dims(b)' |> reverse_dims
+    size(o)  # (28, 28, 1, 32, 32)
     ```
     Is used to broadcast an operation from b to a 
     without the cost of a copy (using expand_dims for example)
@@ -240,21 +268,13 @@ function (unet::UNet)(x, t)
     reverse_dims(h) ./ unet.marginal_prob_std(t) |> reverse_dims
 end
 
-function marginal_prob_std(t, sigma=25.0f0)
-    sqrt.((sigma .^ (2t) .- 1.0f0) ./ 2.0f0 ./ log(sigma))
-end
-
 unet_test = UNet(marginal_prob_std)
-x_test = randn(Float32, (28, 28, 1, 32))
-t_test = rand(Float32, 32)
+x_test = randn(Float32, (28, 28, 1, 32));
+t_test = rand(Float32, 32);
 score_test = unet_test(x_test, t_test);
 @assert score_test |> size == (28, 28, 1, 32);
-@assert typeof(score_test) == Array{Float32,4}
+@assert typeof(score_test) == Array{Float32,4};
 # @time [unet_test(x_test, t_test) for i in 1:10];
-
-function diffusion_coeff(t, sigma=25.0f0)
-    sigma .^ t
-end
 
 """
 Model loss following the denoising score matching objectives:
@@ -267,6 +287,7 @@ min wrt. θ (
         λ(𝘵) * 𝔼 wrt. 𝘹(0) ∼ 𝒫₀(𝘹) [
             𝔼 wrt. 𝘹(t) ∼ 𝒫₀ₜ(𝘹(𝘵)|𝘹(0)) [
                 (||𝘚₀(𝘹(𝘵), 𝘵) - ∇ log [𝒫₀ₜ(𝘹(𝘵) | 𝘹(0))] ||₂)²
+            ]
         ]
     ]
 )
@@ -276,6 +297,7 @@ Where 𝒫₀ₜ(𝘹(𝘵) | 𝘹(0)) and λ(𝘵), are available analytically 
 
 # References:
 http://www.iro.umontreal.ca/~vincentp/Publications/smdae_techreport.pdf \n
+https://yang-song.github.io/blog/2021/score/#estimating-the-reverse-sde-with-score-based-models-and-score-matching \n
 https://yang-song.github.io/blog/2019/ssm/
 """
 function model_loss(model, x, device, ϵ=1.0f-5)
@@ -299,20 +321,25 @@ function model_loss(model, x, device, ϵ=1.0f-5)
     ) / batch_size
 end
 
-function convert_to_image(x, y_size)
-    Gray.(permutedims(vcat(reshape.(chunk(x |> cpu, y_size), 28, :)...), (2, 1)))
+"""
+Helper function that loads MNIST images and returns loader.
+"""
+function get_data(batch_size)
+    xtrain, ytrain = MLDatasets.MNIST.traindata(Float32)
+    xtrain = reshape(xtrain, 28, 28, 1, :)
+    DataLoader((xtrain, ytrain), batchsize=batch_size, shuffle=true)
 end
 
 # arguments for the `train` function 
 @with_kw mutable struct Args
-    η = 1e-4                # learning rate
-    batch_size = 512        # batch size
-    epochs = 20             # number of epochs
-    seed = 0                # random seed
-    cuda = false            # use CPU
-    verbose_freq = 1        # logging for every verbose_freq iterations
-    tblogger = false        # log training with tensorboard
-    save_path = "output"    # results path
+    η = 1e-4                                        # learning rate
+    batch_size = 32                                 # batch size
+    epochs = 10                                     # number of epochs
+    seed = 1                                        # random seed
+    cuda = false                                    # use CPU
+    verbose_freq = 1                                # logging for every verbose_freq iterations
+    tblogger = false                                # log training with tensorboard
+    save_path = "vision/diffusion_mnist/output"     # results path
 end
 
 function train(; kws...)
@@ -380,17 +407,8 @@ function train(; kws...)
         BSON.@save model_path unet args
         @info "Model saved: $(model_path)"
     end
-
-    # TODO: Add SDE solver to invert from noise
-    # _, _, rec_original = reconstuct(encoder, decoder, original, device)
-    # rec_original = sigmoid.(rec_original)
-    # image = convert_to_image(rec_original, args.sample_size)
-    # image_path = joinpath(args.save_path, "epoch_$(epoch).png")
-    # save(image_path, image)
-    # @info "Image saved: $(image_path)"
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     train()
 end
-
