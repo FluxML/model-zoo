@@ -15,7 +15,7 @@ julia --project diffusion_mnist.jl
 ## Visualization
 TODO
 ```shell
-julia --project vae_plot.jl
+julia --project diffusion_plot.jl
 ```
 
 ## References

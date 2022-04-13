@@ -334,11 +334,12 @@ end
 @with_kw mutable struct Args
     η = 1e-4                                        # learning rate
     batch_size = 32                                 # batch size
-    epochs = 10                                     # number of epochs
+    epochs = 20                                     # number of epochs
     seed = 1                                        # random seed
     cuda = false                                    # use CPU
     verbose_freq = 1                                # logging for every verbose_freq iterations
     tblogger = false                                # log training with tensorboard
+    # TODO: Change this to relative import
     save_path = "vision/diffusion_mnist/output"     # results path
 end
 
