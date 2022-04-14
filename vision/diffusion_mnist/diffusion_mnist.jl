@@ -7,7 +7,7 @@
 
 using MLDatasets
 using Flux
-using Flux: @functor, chunk
+using Flux: @functor, chunk, params
 using Flux.Data: DataLoader
 using Parameters: @with_kw
 using BSON
@@ -31,23 +31,14 @@ paper-  https://arxiv.org/abs/2006.10739 \n
 layers- https://fluxml.ai/Flux.jl/stable/models/basics/#Building-Layers
 """
 function GaussianFourierProjection(embed_dim, scale)
+    # Instantiate W once
     W = randn(Float32, embed_dim ÷ 2) .* scale
+    # Return a function that always references the same W
     function GaussFourierProject(t)
         t_proj = t' .* W * Float32(2π)
         [sin.(t_proj); cos.(t_proj)]
     end
 end
-
-gaussfourierproj_test = GaussianFourierProjection(32, 20.0f0)
-# GaussianFourierProjection(embed_dim, ⋅)(batch) => (embed_dim, batch)
-@assert gaussfourierproj_test(randn(Float32, 32)) |> size == (32, 32);
-# W is fixed wrt. repeated calls
-@assert gaussfourierproj_test(
-    ones(Float32, 32)) ==
-        gaussfourierproj_test(ones(Float32, 32)
-);
-# W is not trainable
-@assert params(gaussfourierproj_test) == Flux.Params([]);
 
 """
 Helper function that computes the *standard deviation* of 𝒫₀ₜ(𝘹(𝘵)|𝘹(0)).
@@ -165,6 +156,7 @@ function UNet(marginal_prob_std, channels=[32, 64, 128, 256], embed_dim=256, sca
         # 𝘰' = 𝘴(𝘪' - 1) + 𝘢 + 𝘬 - 2𝘱
         # Set 𝘰' = 12, 𝘴 = 2, 𝘪' = 5, 𝘬 = 3, 𝘱 = 0, then
         # 12 = 2(5 - 1) + a + 3 - 2(0) = 11 + a => a = 1
+        # However, no Flux API that I could find exposes the argument a for the user...
         #
         # A (incorrect) hack to get the shapes to work is just to pad by (-1, 0, -1, 0):
         # julia> randn(5, 5, 256, 3) |> ConvTranspose((3, 3), 256 => 64, stride=2, pad=(0, -1, 0, -1)) |> size
@@ -189,33 +181,20 @@ end
 
 """
 Helper function that adds `dims` dimensions to the front of a `AbstractVecOrMat`.
+Similar in spirit to TensorFlow's `expand_dims` function.
+
+# References:
+https://www.tensorflow.org/api_docs/python/tf/expand_dims
 """
 expand_dims(x::AbstractVecOrMat, dims::Int=2) = reshape(x, (ntuple(i -> 1, dims)..., size(x)...))
-@assert expand_dims(ones(Float32, 32), 3) |> size == (1, 1, 1, 32);
 
 """
 Helper function that reverses the order of dimensions.
 """
 reverse_dims(x) = permutedims(x, reverse(ntuple(i -> i, length(size(x)))))
-# Test our two use cases in function(unet::UNet)(x, t):
-reverse_test1 = randn(Float32, 32, 32);
-reverse_test2 = randn(Float32, 28, 28, 1, 32, 32);
-reverse_test3 = randn(Float32, 32);
-@assert reverse_dims(reverse_test1) == reverse_test1';
-# Array and Matrix
-@assert (
-    reverse_test2 .+ expand_dims(reverse_test1, 3) ==
-    reverse_dims(reverse_test2) .+ reverse_test1' |> reverse_dims
-);
-# Array and Vector
-@assert (
-    reverse_test2 .+ expand_dims(reverse_test3, 4) ==
-    reverse_dims(reverse_test2) .+ reverse_test3 |> reverse_dims
-);
 
 """
-Makes the UNet struct callable. \n
-Forward pass of a UNet architecture. 
+Makes the UNet struct callable and shows an example of a "Functional" API for modeling in Flux. \n
 
 Notes:
     ```julia
@@ -267,14 +246,6 @@ function (unet::UNet)(x, t)
     # Scaling Factor
     reverse_dims(h) ./ unet.marginal_prob_std(t) |> reverse_dims
 end
-
-unet_test = UNet(marginal_prob_std)
-x_test = randn(Float32, (28, 28, 1, 32));
-t_test = rand(Float32, 32);
-score_test = unet_test(x_test, t_test);
-@assert score_test |> size == (28, 28, 1, 32);
-@assert typeof(score_test) == Array{Float32,4};
-# @time [unet_test(x_test, t_test) for i in 1:10];
 
 """
 Model loss following the denoising score matching objectives:
@@ -334,13 +305,12 @@ end
 @with_kw mutable struct Args
     η = 1e-4                                        # learning rate
     batch_size = 32                                 # batch size
-    epochs = 20                                     # number of epochs
+    epochs = 30                                     # number of epochs
     seed = 1                                        # random seed
     cuda = false                                    # use CPU
-    verbose_freq = 1                                # logging for every verbose_freq iterations
-    tblogger = false                                # log training with tensorboard
-    # TODO: Change this to relative import
-    save_path = "vision/diffusion_mnist/output"     # results path
+    verbose_freq = 10                               # logging for every verbose_freq iterations
+    tblogger = true                                 # log training with tensorboard
+    save_path = "output"                            # results path
 end
 
 function train(; kws...)

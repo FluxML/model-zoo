@@ -1,12 +1,18 @@
-# TODO: Change this to relative import
-include("vision/diffusion_mnist/diffusion_mnist.jl")
+include("diffusion_mnist.jl")
 
 using Plots
 
+"""
+Helper function yielding the diffusion coefficient from a SDE.
+"""
 function diffusion_coeff(t, sigma=25.0f0)
     sigma .^ t
 end
 
+
+"""
+Helper function that produces images from a batch of images.
+"""
 function convert_to_image(x, y_size)
     Gray.(
         permutedims(
@@ -43,8 +49,9 @@ https://yang-song.github.io/blog/2021/score/#how-to-solve-the-reverse-sde
 function Euler_Maruyama_sampler(model, init_x, time_steps, Δt)
     x = mean_x = init_x
     progress = Progress(length(time_steps))
+    @info "Start Euler-Maruyama Sampling"
     for time_step in time_steps
-        batch_time_step = ones(Float32, size(init_x)[end]) * time_step |> device
+        batch_time_step = ones(Float32, size(init_x)[end]) .* time_step |> device
         g = diffusion_coeff(batch_time_step)
         mean_x = x .+ expand_dims((g .^ 2), 3) .* model(x, batch_time_step) .* Δt
         x = mean_x + sqrt(Δt) * expand_dims(g, 3) .* randn(Float32, size(x))
@@ -62,16 +69,17 @@ https://yang-song.github.io/blog/2021/score/#how-to-solve-the-reverse-sde
 function predictor_corrector_sampler(model, init_x, time_steps, Δt, snr=0.16f0)
     x = mean_x = init_x
     progress = Progress(length(time_steps))
+    @info "Start PC Sampling"
     for time_step in time_steps
-        batch_time_step = ones(Float32, size(init_x)[end]) * time_step |> device
+        batch_time_step = ones(Float32, size(init_x)[end]) .* time_step |> device
         # Corrector step (Langevin MCMC)
         grad = model(x, batch_time_step)
         num_pixels = prod(size(grad)[1:end-1])
-        grad_batch_vector = reshape(grad, (size(grad)[end] , num_pixels))
+        grad_batch_vector = reshape(grad, (size(grad)[end], num_pixels))
         grad_norm = sqrt.(sum(abs2, grad_batch_vector, dims=2))
         grad_norm = sum(grad_norm) / length(grad_norm)
         noise_norm = sqrt(num_pixels)
-        langevin_step_size = 2 * (snr * noise_norm / grad_norm) ^ 2
+        langevin_step_size = 2 * (snr * noise_norm / grad_norm)^2
         x = x .+ langevin_step_size .* grad .+ sqrt(2 * langevin_step_size) .* randn(Float32, size(x))
         # Predictor step (Euler-Maruyama)
         g = diffusion_coeff(batch_time_step)
@@ -83,18 +91,16 @@ function predictor_corrector_sampler(model, init_x, time_steps, Δt, snr=0.16f0)
 end
 
 function plot_result()
-    BSON.@load "vision/diffusion_mnist/output/model.bson" unet args
+    BSON.@load "output/model.bson" unet args
     args = Args(; args...)
     device = args.cuda && CUDA.has_cuda() ? gpu : cpu
     unet = unet |> device
     time_steps, Δt, init_x = setup_sampler(unet, device)
-    @info "Start Euler-Maruyama Sampling"
     euler_maruyama = Euler_Maruyama_sampler(unet, init_x, time_steps, Δt)
     sampled_noise = convert_to_image(init_x, size(init_x)[end])
     save(joinpath(args.save_path, "sampled_noise.png"), sampled_noise)
     em_images = convert_to_image(euler_maruyama, size(euler_maruyama)[end])
     save(joinpath(args.save_path, "em_images.png"), em_images)
-    @info "Start PC Sampling"
     pc = predictor_corrector_sampler(unet, init_x, time_steps, Δt)
     pc_images = convert_to_image(pc, size(pc)[end])
     save(joinpath(args.save_path, "pc_images.png"), pc_images)
