@@ -46,14 +46,23 @@ Sample from a diffusion model using the Euler-Maruyama method.
 # References
 https://yang-song.github.io/blog/2021/score/#how-to-solve-the-reverse-sde
 """
-function Euler_Maruyama_sampler(model, init_x, time_steps, Δt)
+function Euler_Maruyama_sampler(model, init_x, time_steps, Δt, device)
     x = mean_x = init_x
     progress = Progress(length(time_steps))
     @info "Start Euler-Maruyama Sampling"
     for time_step in time_steps
         batch_time_step = ones(Float32, size(init_x)[end]) .* time_step |> device
         g = diffusion_coeff(batch_time_step)
+        ########################################################################
+        #  !!!   PLEASE RUN IN REPL  !!!
+        # Issue loading function closures with BSON:
+        # https://github.com/JuliaIO/BSON.jl/issues/69
+        #
         mean_x = x .+ expand_dims((g .^ 2), 3) .* model(x, batch_time_step) .* Δt
+        #
+        # Prevents the usage of the W variable using as an executable script.
+        # !!!   PLEASE RUN IN REPL  !!!
+        ########################################################################
         x = mean_x + sqrt(Δt) * expand_dims(g, 3) .* randn(Float32, size(x))
         next!(progress; showvalues=[(:time_step, time_step)])
     end
@@ -66,7 +75,7 @@ Sample from a diffusion model using the Predictor-Corrector method.
 # References
 https://yang-song.github.io/blog/2021/score/#how-to-solve-the-reverse-sde
 """
-function predictor_corrector_sampler(model, init_x, time_steps, Δt, snr=0.16f0)
+function predictor_corrector_sampler(model, init_x, time_steps, Δt, device, snr=0.16f0)
     x = mean_x = init_x
     progress = Progress(length(time_steps))
     @info "Start PC Sampling"
@@ -96,12 +105,12 @@ function plot_result()
     device = args.cuda && CUDA.has_cuda() ? gpu : cpu
     unet = unet |> device
     time_steps, Δt, init_x = setup_sampler(unet, device)
-    euler_maruyama = Euler_Maruyama_sampler(unet, init_x, time_steps, Δt)
+    euler_maruyama = Euler_Maruyama_sampler(unet, init_x, time_steps, Δt, device)
     sampled_noise = convert_to_image(init_x, size(init_x)[end])
     save(joinpath(args.save_path, "sampled_noise.png"), sampled_noise)
     em_images = convert_to_image(euler_maruyama, size(euler_maruyama)[end])
     save(joinpath(args.save_path, "em_images.png"), em_images)
-    pc = predictor_corrector_sampler(unet, init_x, time_steps, Δt)
+    pc = predictor_corrector_sampler(unet, init_x, time_steps, Δt, device)
     pc_images = convert_to_image(pc, size(pc)[end])
     save(joinpath(args.save_path, "pc_images.png"), pc_images)
 end

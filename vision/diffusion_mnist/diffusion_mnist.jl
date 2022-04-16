@@ -143,7 +143,7 @@ function UNet(marginal_prob_std, channels=[32, 64, 128, 256], embed_dim=256, sca
         ConvTranspose((3, 3), channels[4] => channels[3], stride=2, bias=false),
         Dense(embed_dim, channels[3]),
         GroupNorm(channels[3], 32),
-        ######################################################################################################
+        ########################################################################
         # FIXME: Julia does not offer a `output_padding` kwarg such as in:
         # https://pytorch.org/docs/stable/generated/torch.nn.ConvTranspose2d.html#convtranspose2d
         #
@@ -164,7 +164,7 @@ function UNet(marginal_prob_std, channels=[32, 64, 128, 256], embed_dim=256, sca
         #
         # Which is the correct shape, but seems suspicious (negative padding??).
         # Why is passing a negative padding even allowed in the first place? 😕
-        ######################################################################################################
+        ########################################################################
         ConvTranspose((3, 3), channels[3] + channels[3] => channels[2], pad=(0, -1, 0, -1), stride=2, bias=false),
         Dense(embed_dim, channels[2]),
         GroupNorm(channels[2], 32),
