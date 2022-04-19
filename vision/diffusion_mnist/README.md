@@ -23,12 +23,10 @@ julia --project diffusion_mnist.jl
 ```shell
 julia --project diffusion_plot.jl
 ```
-Sampled Noise &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Euler-Maruyama Sampler &nbsp;&nbsp; Predictor Corrector Sampler
 
-![noise](../diffusion_mnist/docs/sampled_noise.jpeg) &nbsp;&nbsp;&nbsp;&nbsp; ![em](../diffusion_mnist/docs/em_images.jpeg) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![pc](../diffusion_mnist/docs/pc_images.jpeg)
-
-
-
+| Sampled Noise | Euler-Maruyama Sampler | Predictor Corrector Sampler |
+| ----------- | ----------- | ----------- |
+| ![noise](../diffusion_mnist/docs/sampled_noise.jpeg)|![em](../diffusion_mnist/docs/em_images.jpeg)| ![pc](../diffusion_mnist/docs/pc_images.jpeg)|
 
 
 
