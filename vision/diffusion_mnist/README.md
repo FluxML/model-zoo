@@ -21,6 +21,7 @@ julia --project diffusion_mnist.jl
 
 ## Visualization
 ```shell
+cd vision/diffusion_mnist
 julia --project diffusion_plot.jl
 ```
 

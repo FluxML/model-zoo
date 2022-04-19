@@ -108,7 +108,6 @@ function plot_result(unet, args)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    cd("vision/diffusion_mnist")
     ############################################################################
     # Issue loading function closures with BSON:
     # https://github.com/JuliaIO/BSON.jl/issues/69
