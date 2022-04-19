@@ -1,6 +1,6 @@
 include("diffusion_mnist.jl")
 
-using Plots
+using Images
 
 """
 Helper function yielding the diffusion coefficient from a SDE.
@@ -8,7 +8,6 @@ Helper function yielding the diffusion coefficient from a SDE.
 function diffusion_coeff(t, sigma=25.0f0)
     sigma .^ t
 end
-
 
 """
 Helper function that produces images from a batch of images.
@@ -53,16 +52,7 @@ function Euler_Maruyama_sampler(model, init_x, time_steps, Δt, device)
     for time_step in time_steps
         batch_time_step = ones(Float32, size(init_x)[end]) .* time_step |> device
         g = diffusion_coeff(batch_time_step)
-        ########################################################################
-        #  !!!   PLEASE RUN IN REPL  !!!
-        # Issue loading function closures with BSON:
-        # https://github.com/JuliaIO/BSON.jl/issues/69
-        #
         mean_x = x .+ expand_dims((g .^ 2), 3) .* model(x, batch_time_step) .* Δt
-        #
-        # Prevents the usage of the W variable using as an executable script.
-        # !!!   PLEASE RUN IN REPL  !!!
-        ########################################################################
         x = mean_x + sqrt(Δt) * expand_dims(g, 3) .* randn(Float32, size(x))
         next!(progress; showvalues=[(:time_step, time_step)])
     end
@@ -87,9 +77,12 @@ function predictor_corrector_sampler(model, init_x, time_steps, Δt, device, snr
         grad_batch_vector = reshape(grad, (size(grad)[end], num_pixels))
         grad_norm = sqrt.(sum(abs2, grad_batch_vector, dims=2))
         grad_norm = sum(grad_norm) / length(grad_norm)
-        noise_norm = sqrt(num_pixels)
+        noise_norm = Float32(sqrt(num_pixels))
         langevin_step_size = 2 * (snr * noise_norm / grad_norm)^2
-        x = x .+ langevin_step_size .* grad .+ sqrt(2 * langevin_step_size) .* randn(Float32, size(x))
+        x += (
+            langevin_step_size .* grad .+ 
+            sqrt(2 * langevin_step_size) .* randn(Float32, size(x))
+        )
         # Predictor step (Euler-Maruyama)
         g = diffusion_coeff(batch_time_step)
         mean_x = x .+ expand_dims((g .^ 2), 3) .* model(x, batch_time_step) .* Δt
@@ -99,22 +92,31 @@ function predictor_corrector_sampler(model, init_x, time_steps, Δt, device, snr
     return mean_x
 end
 
-function plot_result()
-    BSON.@load "output/model.bson" unet args
+function plot_result(unet, args)
     args = Args(; args...)
     device = args.cuda && CUDA.has_cuda() ? gpu : cpu
     unet = unet |> device
     time_steps, Δt, init_x = setup_sampler(unet, device)
     euler_maruyama = Euler_Maruyama_sampler(unet, init_x, time_steps, Δt, device)
     sampled_noise = convert_to_image(init_x, size(init_x)[end])
-    save(joinpath(args.save_path, "sampled_noise.png"), sampled_noise)
+    save(joinpath(args.save_path, "sampled_noise.jpeg"), sampled_noise)
     em_images = convert_to_image(euler_maruyama, size(euler_maruyama)[end])
-    save(joinpath(args.save_path, "em_images.png"), em_images)
+    save(joinpath(args.save_path, "em_images.jpeg"), em_images)
     pc = predictor_corrector_sampler(unet, init_x, time_steps, Δt, device)
     pc_images = convert_to_image(pc, size(pc)[end])
-    save(joinpath(args.save_path, "pc_images.png"), pc_images)
+    save(joinpath(args.save_path, "pc_images.jpeg"), pc_images)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    plot_result()
+    cd("vision/diffusion_mnist")
+    ############################################################################
+    # Issue loading function closures with BSON:
+    # https://github.com/JuliaIO/BSON.jl/issues/69
+    #
+    BSON.@load "output/model.bson" unet args
+    #
+    # BSON.@load does not work if defined inside plot_result(⋅) because
+    # it contains a function closure, GaussFourierProject(⋅), containing W.
+    ###########################################################################
+    plot_result(unet, args)
 end

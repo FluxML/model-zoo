@@ -2,6 +2,7 @@
 BSON = "fbb218c0-5317-5bc6-957e-2ee96dd4b1f0"
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
+FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"

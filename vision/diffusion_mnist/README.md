@@ -7,24 +7,30 @@
 
 In contrast to likelihood based models, *Score-Based Generative Modeling* depends only on the *score function*, $\nabla_x \log{p(x)}$ which is minimized through *score matching*. **Concretely, this tutorial will be using a UNet architecture and score matching loss function to learn this score function**. After this gradient is estimated, we can then draw samples from the MNIST dataset using **Langevin Dynamics** of the reverse SDE.
 
-## More Model Info
+### More Model Info
 A much more in-depth walkthrough of the theory is available [here](https://yang-song.github.io/blog/2021/score/) from the original author, [Yang Song](https://yang-song.github.io/). I highly recommend this blog to become more familiar with the concepts before diving into the code!
 
-## Pytorch Equivalent Code
+### Pytorch Equivalent Code
 For those coming from Python, [here](https://colab.research.google.com/drive/120kYYBOVa1i0TD85RjlEkFjaWDxSFUx3?usp=sharing) is the equivalent Pytorch code that was used to create this Julia tutorial.
 
 ## Training
-TODO
 ```shell
 cd vision/diffusion_mnist
 julia --project diffusion_mnist.jl
 ```
 
 ## Visualization
-TODO
 ```shell
 julia --project diffusion_plot.jl
 ```
+Sampled Noise &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Euler-Maruyama Sampler &nbsp;&nbsp; Predictor Corrector Sampler
+
+![noise](../diffusion_mnist/docs/sampled_noise.jpeg) &nbsp;&nbsp;&nbsp;&nbsp; ![em](../diffusion_mnist/docs/em_images.jpeg) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![pc](../diffusion_mnist/docs/pc_images.jpeg)
+
+
+
+
+
 
 ## References
 
