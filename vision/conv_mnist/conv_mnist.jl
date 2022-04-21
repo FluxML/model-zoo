@@ -1,6 +1,6 @@
-# # Classification of MNIST dataset using ConvNet
+# # Classification of MNIST dataset using CNN
 
-# In this tutorial, we build a convolutional neural network (ConvNet or CNN) known as [LeNet5](https://en.wikipedia.org/wiki/LeNet) 
+# In this tutorial, we build a convolutional neural network (CNN) known as [LeNet5](https://en.wikipedia.org/wiki/LeNet) 
 # to classify [MNIST](http://yann.lecun.com/exdb/mnist/) handwritten digits.
 
 # LeNet5 is one of the earliest CNNs. It was originally used for recognizing handwritten characters. At a high level LeNet (LeNet-5) consists of two parts: 
