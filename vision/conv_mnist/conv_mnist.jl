@@ -227,7 +227,7 @@ end
 # * Creates the function `report` for computing the loss and accuracy during the training loop. It outputs these values to the TensorBoardLogger.
 # * Runs the training loop using [Flux’s training routine](https://fluxml.ai/Flux.jl/stable/training/training/#Training). For each epoch (step), it executes the following:
 #   * Computes the model’s predictions.
-#   * Computes the loos.
+#   * Computes the loss.
 #   * Updates the model’s parameters.
 #   * Saves the model `model.bson` every `checktime` epochs (defined as argument above.)
 
