@@ -12,7 +12,6 @@ using Flux.Data: DataLoader
 using Parameters: @with_kw
 using BSON
 using CUDA
-using DrWatson: struct2dict
 using Images
 using Logging: with_logger
 using ProgressMeter: Progress, next!
@@ -72,77 +71,33 @@ GNorm-  https://fluxml.ai/Flux.jl/stable/models/layers/#Flux.GroupNorm \n
 Flux-   https://fluxml.ai/Flux.jl/stable/models/advanced/#Custom-Model-Example
 """
 struct UNet
-    # ------------------- ------------------- ------------------- --------------
-    # Embedding
-    # ------------------- ------------------- ------------------- --------------
-    gaussfourierproj
-    linear::Dense
-    # ------------------- ------------------- ------------------- --------------
-    # Encoder
-    # ------------------- ------------------- ------------------- --------------
-    conv1::Conv
-    dense1::Dense
-    gnorm1::GroupNorm
-    # ------------------- ------------------- -------------------
-    conv2::Conv
-    dense2::Dense
-    gnorm2::GroupNorm
-    # ------------------- -------------------
-    conv3::Conv
-    dense3::Dense
-    gnorm3::GroupNorm
-    # -------------------
-    conv4::Conv
-    dense4::Dense
-    gnorm4::GroupNorm
-    # -------
-    # Decoder
-    # -------
-    tconv4::ConvTranspose
-    dense5::Dense
-    tgnorm4::GroupNorm
-    # ------------------- 
-    tconv3::ConvTranspose
-    dense6::Dense
-    tgnorm3::GroupNorm
-    # ------------------- -------------------
-    tconv2::ConvTranspose
-    dense7::Dense
-    tgnorm2::GroupNorm
-    # ------------------- ------------------- -------------------
-    tconv1::ConvTranspose
-    # ------------------- ------------------- ------------------- --------------
-    # Scaling Factor
-    # ------------------- ------------------- ------------------- --------------
-    marginal_prob_std
-    # ------------------- ------------------- ------------------- --------------
+    layers::NamedTuple
 end
 
 """
 User Facing API for UNet architecture.
 """
 function UNet(marginal_prob_std, channels=[32, 64, 128, 256], embed_dim=256, scale=30.0f0)
-    UNet(
-        # Embedding
-        GaussianFourierProjection(embed_dim, scale),
-        Dense(embed_dim, embed_dim),
+    return UNet((
+        gaussfourierproj=GaussianFourierProjection(embed_dim, scale),
+        linear=Dense(embed_dim, embed_dim),
         # Encoding
-        Conv((3, 3), 1 => channels[1], stride=1, bias=false),
-        Dense(embed_dim, channels[1]),
-        GroupNorm(channels[1], 4),
-        Conv((3, 3), channels[1] => channels[2], stride=2, bias=false),
-        Dense(embed_dim, channels[2]),
-        GroupNorm(channels[2], 32),
-        Conv((3, 3), channels[2] => channels[3], stride=2, bias=false),
-        Dense(embed_dim, channels[3]),
-        GroupNorm(channels[3], 32),
-        Conv((3, 3), channels[3] => channels[4], stride=2, bias=false),
-        Dense(embed_dim, channels[4]),
-        GroupNorm(channels[4], 32),
+        conv1=Conv((3, 3), 1 => channels[1], stride=1, bias=false),
+        dense1=Dense(embed_dim, channels[1]),
+        gnorm1=GroupNorm(channels[1], 4),
+        conv2=Conv((3, 3), channels[1] => channels[2], stride=2, bias=false),
+        dense2=Dense(embed_dim, channels[2]),
+        gnorm2=GroupNorm(channels[2], 32),
+        conv3=Conv((3, 3), channels[2] => channels[3], stride=2, bias=false),
+        dense3=Dense(embed_dim, channels[3]),
+        gnorm3=GroupNorm(channels[3], 32),
+        conv4=Conv((3, 3), channels[3] => channels[4], stride=2, bias=false),
+        dense4=Dense(embed_dim, channels[4]),
+        gnorm4=GroupNorm(channels[4], 32),
         # Decoding
-        ConvTranspose((3, 3), channels[4] => channels[3], stride=2, bias=false),
-        Dense(embed_dim, channels[3]),
-        GroupNorm(channels[3], 32),
+        tconv4=ConvTranspose((3, 3), channels[4] => channels[3], stride=2, bias=false),
+        dense5=Dense(embed_dim, channels[3]),
+        tgnorm4=GroupNorm(channels[3], 32),
         ########################################################################
         # FIXME: Julia does not offer a `output_padding` kwarg such as in:
         # https://pytorch.org/docs/stable/generated/torch.nn.ConvTranspose2d.html#convtranspose2d
@@ -165,16 +120,16 @@ function UNet(marginal_prob_std, channels=[32, 64, 128, 256], embed_dim=256, sca
         # Which is the correct shape, but seems suspicious (negative padding??).
         # Why is passing a negative padding even allowed in the first place? 😕
         ########################################################################
-        ConvTranspose((3, 3), channels[3] + channels[3] => channels[2], pad=(0, -1, 0, -1), stride=2, bias=false),
-        Dense(embed_dim, channels[2]),
-        GroupNorm(channels[2], 32),
-        ConvTranspose((3, 3), channels[2] + channels[2] => channels[1], pad=(0, -1, 0, -1), stride=2, bias=false),
-        Dense(embed_dim, channels[1]),
-        GroupNorm(channels[1], 32),
-        ConvTranspose((3, 3), channels[1] + channels[1] => 1, stride=1, bias=false),
+        tconv3=ConvTranspose((3, 3), channels[3] + channels[3] => channels[2], pad=(0, -1, 0, -1), stride=2, bias=false),
+        dense6=Dense(embed_dim, channels[2]),
+        tgnorm3=GroupNorm(channels[2], 32),
+        tconv2=ConvTranspose((3, 3), channels[2] + channels[2] => channels[1], pad=(0, -1, 0, -1), stride=2, bias=false),
+        dense7=Dense(embed_dim, channels[1]),
+        tgnorm2=GroupNorm(channels[1], 32),
+        tconv1=ConvTranspose((3, 3), channels[1] + channels[1] => 1, stride=1, bias=false),
         # Scaling Factor
-        marginal_prob_std
-    )
+        marginal_prob_std=marginal_prob_std
+    ))
 end
 
 @functor UNet
@@ -189,62 +144,45 @@ https://www.tensorflow.org/api_docs/python/tf/expand_dims
 expand_dims(x::AbstractVecOrMat, dims::Int=2) = reshape(x, (ntuple(i -> 1, dims)..., size(x)...))
 
 """
-Helper function that reverses the order of dimensions.
-"""
-reverse_dims(x) = permutedims(x, reverse(ntuple(i -> i, length(size(x)))))
-
-"""
 Makes the UNet struct callable and shows an example of a "Functional" API for modeling in Flux. \n
-
-Notes:
-    ```julia
-    @assert size(a) == (28, 28, 1, 32, 32)
-    @assert size(b) == (32, 32)
-    o = reverse_dims(a) .+ reverse_dims(b)' |> reverse_dims
-    size(o)  # (28, 28, 1, 32, 32)
-    ```
-    Is used to broadcast an operation from b to a 
-    without the cost of a copy (using expand_dims for example)
-    which is not allowed (mutating vector) by Zygote in 
-    a custom model.
 """
 function (unet::UNet)(x, t)
     # Embedding
-    embed = unet.gaussfourierproj(t)
-    embed = swish.(unet.linear(embed))
+    embed = unet.layers.gaussfourierproj(t)
+    embed = swish.(unet.layers.linear(embed))
     # Encoder
-    h1 = unet.conv1(x)
-    h1 = reverse_dims(h1) .+ unet.dense1(embed)' |> reverse_dims
-    h1 = unet.gnorm1(h1)
+    h1 = unet.layers.conv1(x)
+    h1 = h1 .+ expand_dims(unet.layers.dense1(embed), 2)
+    h1 = unet.layers.gnorm1(h1)
     h1 = swish.(h1)
-    h2 = unet.conv2(h1)
-    h2 = reverse_dims(h2) .+ unet.dense2(embed)' |> reverse_dims
-    h2 = unet.gnorm2(h2)
+    h2 = unet.layers.conv2(h1)
+    h2 = h2 .+ expand_dims(unet.layers.dense2(embed), 2)
+    h2 = unet.layers.gnorm2(h2)
     h2 = swish.(h2)
-    h3 = unet.conv3(h2)
-    h3 = reverse_dims(h3) .+ unet.dense3(embed)' |> reverse_dims
-    h3 = unet.gnorm3(h3)
+    h3 = unet.layers.conv3(h2)
+    h3 = h3 .+ expand_dims(unet.layers.dense3(embed), 2)
+    h3 = unet.layers.gnorm3(h3)
     h3 = swish.(h3)
-    h4 = unet.conv4(h3)
-    h4 = reverse_dims(h4) .+ unet.dense4(embed)' |> reverse_dims
-    h4 = unet.gnorm4(h4)
+    h4 = unet.layers.conv4(h3)
+    h4 = h4 .+ expand_dims(unet.layers.dense4(embed), 2)
+    h4 = unet.layers.gnorm4(h4)
     h4 = swish.(h4)
     # Decoder
-    h = unet.tconv4(h4)
-    h = reverse_dims(h) .+ unet.dense5(embed)' |> reverse_dims
-    h = unet.tgnorm4(h)
+    h = unet.layers.tconv4(h4)
+    h = h .+ expand_dims(unet.layers.dense5(embed), 2)
+    h = unet.layers.tgnorm4(h)
     h = swish.(h)
-    h = unet.tconv3(cat(h, h3; dims=3))
-    h = reverse_dims(h) .+ unet.dense6(embed)' |> reverse_dims
-    h = unet.tgnorm3(h)
+    h = unet.layers.tconv3(cat(h, h3; dims=3))
+    h = h .+ expand_dims(unet.layers.dense6(embed), 2)
+    h = unet.layers.tgnorm3(h)
     h = swish.(h)
-    h = unet.tconv2(cat(h, h2, dims=3))
-    h = reverse_dims(h) .+ unet.dense7(embed)' |> reverse_dims
-    h = unet.tgnorm2(h)
+    h = unet.layers.tconv2(cat(h, h2, dims=3))
+    h = h .+ expand_dims(unet.layers.dense7(embed), 2)
+    h = unet.layers.tgnorm2(h)
     h = swish.(h)
-    h = unet.tconv1(cat(h, h1, dims=3))
+    h = unet.layers.tconv1(cat(h, h1, dims=3))
     # Scaling Factor
-    reverse_dims(h) ./ unet.marginal_prob_std(t) |> reverse_dims
+    h ./ expand_dims(unet.layers.marginal_prob_std(t), 3)
 end
 
 """
@@ -276,8 +214,8 @@ function model_loss(model, x, device, ϵ=1.0f-5)
     # (batch) of random times to approximate 𝔼[⋅] wrt. 𝘪 ∼ 𝒰(0, 𝘛)
     random_t = rand(Float32, batch_size) .* (1.0f0 - ϵ) .+ ϵ |> device
     # (batch) of perturbations to approximate 𝔼[⋅] wrt. 𝘹(0) ∼ 𝒫₀(𝘹)
-    z = randn(Float32, size(x)) |> device
-    std = expand_dims(model.marginal_prob_std(random_t), 3)
+    z = randn!(similar(x))
+    std = expand_dims(model.layers.marginal_prob_std(random_t), 3)
     # (batch) of perturbed 𝘹(𝘵)'s to approximate 𝔼 wrt. 𝘹(t) ∼ 𝒫₀ₜ(𝘹(𝘵)|𝘹(0))
     perturbed_x = x + z .* std
     # 𝘚₀(𝘹(𝘵), 𝘵)
@@ -300,6 +238,14 @@ function get_data(batch_size)
     xtrain = reshape(xtrain, 28, 28, 1, :)
     DataLoader((xtrain, ytrain), batchsize=batch_size, shuffle=true)
 end
+
+"""
+Helper function from DrWatson.jl to convert a struct to a dict
+"""
+function struct2dict(::Type{DT}, s) where {DT<:AbstractDict}
+    DT(x => getfield(s, x) for x in fieldnames(typeof(s)))
+end
+struct2dict(s) = struct2dict(Dict, s)
 
 # arguments for the `train` function 
 @with_kw mutable struct Args

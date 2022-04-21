@@ -16,29 +16,19 @@ function test()
 
     @assert expand_dims(ones(Float32, 32), 3) |> size == (1, 1, 1, 32)
 
-    # Test our two use cases in function(unet::UNet)(x, t):
-    reverse_test1 = randn(Float32, 32, 32)
-    reverse_test2 = randn(Float32, 28, 28, 1, 32, 32)
-    reverse_test3 = randn(Float32, 32)
-    @assert reverse_dims(reverse_test1) == reverse_test1'
-    # Array and Matrix
-    @assert (
-        reverse_test2 .+ expand_dims(reverse_test1, 3) ==
-        reverse_dims(reverse_test2) .+ reverse_test1' |> reverse_dims
-    )
-    # Array and Vector
-    @assert (
-        reverse_test2 .+ expand_dims(reverse_test3, 4) ==
-        reverse_dims(reverse_test2) .+ reverse_test3 |> reverse_dims
-    )
-
     unet_test = UNet(marginal_prob_std)
     x_test = randn(Float32, (28, 28, 1, 32))
     t_test = rand(Float32, 32)
     score_test = unet_test(x_test, t_test)
     @assert score_test |> size == (28, 28, 1, 32)
     @assert typeof(score_test) == Array{Float32,4}
-    # @time [unet_test(x_test, t_test) for i in 1:10];
+    @time [unet_test(x_test, t_test) for _ in 1:10];
+
+    # Test gradient computation
+    grad_test = gradient(
+        () -> model_loss(unet_test, x_test, cpu), params(unet_test)
+    )
+    @assert grad_test.params == params(unet_test)
 
     @info "Tests complete for diffusion_mnist.jl"
 end
