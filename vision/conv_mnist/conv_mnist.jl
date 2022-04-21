@@ -13,7 +13,7 @@
 # These layers map spatially arranged inputs to a number of two-dimensional feature maps, typically increasing the number of channels. 
 # The first convolutional layer has 6 output channels, while the second has 16. 
 # Each 2×2 pooling operation (stride 2) reduces dimensionality by a factor of 4 via spatial downsampling. 
-# The convolutional block emits an output with shape given by (batch size, number of channel, height, width).
+# The convolutional block emits an output with shape given by (width, height, number of channels,  batch size).
 
 # ![LeNet-5](../conv_mnist/docs/LeNet-5.png)
 
