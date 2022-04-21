@@ -5,9 +5,7 @@ using Images
 """
 Helper function yielding the diffusion coefficient from a SDE.
 """
-function diffusion_coeff(t, sigma=25.0f0)
-    sigma .^ t
-end
+diffusion_coeff(t, sigma=convert(eltype(t), 25.0f0)) = sigma .^ t
 
 """
 Helper function that produces images from a batch of images.
@@ -75,8 +73,7 @@ function predictor_corrector_sampler(model, init_x, time_steps, Δt, device, snr
         grad = model(x, batch_time_step)
         num_pixels = prod(size(grad)[1:end-1])
         grad_batch_vector = reshape(grad, (size(grad)[end], num_pixels))
-        grad_norm = sqrt.(sum(abs2, grad_batch_vector, dims=2))
-        grad_norm = sum(grad_norm) / length(grad_norm)
+        grad_norm = mean(sqrt, sum(abs2, grad_batch_vector, dims=2))
         noise_norm = Float32(sqrt(num_pixels))
         langevin_step_size = 2 * (snr * noise_norm / grad_norm)^2
         x += (

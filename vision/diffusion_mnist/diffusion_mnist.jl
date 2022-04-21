@@ -26,7 +26,7 @@ This layer will help embed our random times onto the frequency domain. \n
 W is not trainable and is sampled once upon construction - see assertions below.
 
 # References
-paper-  https://arxiv.org/abs/2006.10739 \n
+paper-  https://arxiv.org/abs/2006.10739
 layers- https://fluxml.ai/Flux.jl/stable/models/basics/#Building-Layers
 """
 function GaussianFourierProjection(embed_dim, scale)
@@ -65,10 +65,6 @@ In our case, MNIST comes in as (28, 28, 1, batch). \n
 
 # References
 paper-  https://arxiv.org/abs/1505.04597 \n
-Conv-   https://fluxml.ai/Flux.jl/stable/models/layers/#Flux.Conv \n
-TConv-  https://fluxml.ai/Flux.jl/stable/models/layers/#Flux.ConvTranspose \n
-GNorm-  https://fluxml.ai/Flux.jl/stable/models/layers/#Flux.GroupNorm \n
-Flux-   https://fluxml.ai/Flux.jl/stable/models/advanced/#Custom-Model-Example
 """
 struct UNet
     layers::NamedTuple
