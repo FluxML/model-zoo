@@ -30,7 +30,7 @@ function setup_sampler(model, device, num_images=5, num_steps=500, ϵ=1.0f-3)
     t = ones(Float32, num_images) |> device
     init_x = (
         randn(Float32, (28, 28, 1, num_images)) .*
-        expand_dims(model.marginal_prob_std(t), 3)
+        expand_dims(marginal_prob_std(t), 3)
     ) |> device
     time_steps = LinRange(1.0f0, ϵ, num_steps)
     Δt = time_steps[1] - time_steps[2]
@@ -43,12 +43,12 @@ Sample from a diffusion model using the Euler-Maruyama method.
 # References
 https://yang-song.github.io/blog/2021/score/#how-to-solve-the-reverse-sde
 """
-function Euler_Maruyama_sampler(model, init_x, time_steps, Δt, device)
+function Euler_Maruyama_sampler(model, init_x, time_steps, Δt)
     x = mean_x = init_x
     progress = Progress(length(time_steps))
     @info "Start Euler-Maruyama Sampling"
     for time_step in time_steps
-        batch_time_step = ones(Float32, size(init_x)[end]) .* time_step |> device
+        batch_time_step = fill!(similar(init_x, size(init_x)[end]), 1) .* time_step
         g = diffusion_coeff(batch_time_step)
         mean_x = x .+ expand_dims((g .^ 2), 3) .* model(x, batch_time_step) .* Δt
         x = mean_x + sqrt(Δt) * expand_dims(g, 3) .* randn(Float32, size(x))
@@ -63,12 +63,12 @@ Sample from a diffusion model using the Predictor-Corrector method.
 # References
 https://yang-song.github.io/blog/2021/score/#how-to-solve-the-reverse-sde
 """
-function predictor_corrector_sampler(model, init_x, time_steps, Δt, device, snr=0.16f0)
+function predictor_corrector_sampler(model, init_x, time_steps, Δt, snr=0.16f0)
     x = mean_x = init_x
     progress = Progress(length(time_steps))
     @info "Start PC Sampling"
     for time_step in time_steps
-        batch_time_step = ones(Float32, size(init_x)[end]) .* time_step |> device
+        batch_time_step = fill!(similar(init_x, size(init_x)[end]), 1) .* time_step
         # Corrector step (Langevin MCMC)
         grad = model(x, batch_time_step)
         num_pixels = prod(size(grad)[1:end-1])
@@ -94,12 +94,12 @@ function plot_result(unet, args)
     device = args.cuda && CUDA.has_cuda() ? gpu : cpu
     unet = unet |> device
     time_steps, Δt, init_x = setup_sampler(unet, device)
-    euler_maruyama = Euler_Maruyama_sampler(unet, init_x, time_steps, Δt, device)
+    euler_maruyama = Euler_Maruyama_sampler(unet, init_x, time_steps, Δt)
     sampled_noise = convert_to_image(init_x, size(init_x)[end])
     save(joinpath(args.save_path, "sampled_noise.jpeg"), sampled_noise)
     em_images = convert_to_image(euler_maruyama, size(euler_maruyama)[end])
     save(joinpath(args.save_path, "em_images.jpeg"), em_images)
-    pc = predictor_corrector_sampler(unet, init_x, time_steps, Δt, device)
+    pc = predictor_corrector_sampler(unet, init_x, time_steps, Δt)
     pc_images = convert_to_image(pc, size(pc)[end])
     save(joinpath(args.save_path, "pc_images.jpeg"), pc_images)
 end
