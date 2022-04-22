@@ -16,7 +16,7 @@ function test()
 
     @assert expand_dims(ones(Float32, 32), 3) |> size == (1, 1, 1, 32)
 
-    unet_test = UNet(marginal_prob_std)
+    unet_test = UNet()
     x_test = randn(Float32, (28, 28, 1, 32))
     t_test = rand(Float32, 32)
     score_test = unet_test(x_test, t_test)
@@ -29,6 +29,8 @@ function test()
         () -> model_loss(unet_test, x_test, cpu), params(unet_test)
     )
     @assert grad_test.params == params(unet_test)
+
+    train(save_path="test", epochs=1, batch_size=4096, tblogger=false)
 
     @info "Tests complete for diffusion_mnist.jl"
 end
