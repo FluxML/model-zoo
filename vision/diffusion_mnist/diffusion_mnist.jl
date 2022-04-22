@@ -17,6 +17,7 @@ using Logging: with_logger
 using ProgressMeter: Progress, next!
 using TensorBoardLogger: TBLogger, tb_overwrite
 using Random
+using Statistics
 
 """
 Projection of Gaussian Noise onto a time vector.
@@ -51,9 +52,7 @@ at time t conditioned on the data distribution. \n
 We will be using this all over the codebase for computing our model's loss,
 scaling our network output, and even sampling new images!
 """
-function marginal_prob_std(t, sigma=25.0f0)
-    sqrt.((sigma .^ (2t) .- 1.0f0) ./ 2.0f0 ./ log(sigma))
-end
+marginal_prob_std(t, sigma=25.0f0) = sqrt.((sigma .^ (2t) .- 1.0f0) ./ 2.0f0 ./ log(sigma))
 
 """
 Create a UNet architecture as a backbone to a diffusion model. \n
@@ -121,7 +120,7 @@ function UNet(channels=[32, 64, 128, 256], embed_dim=256, scale=30.0f0)
         tconv2=ConvTranspose((3, 3), channels[2] + channels[2] => channels[1], pad=(0, -1, 0, -1), stride=2, bias=false),
         dense7=Dense(embed_dim, channels[1]),
         tgnorm2=GroupNorm(channels[1], 32, swish),
-        tconv1=ConvTranspose((3, 3), channels[1] + channels[1] => 1, stride=1, bias=false)
+        tconv1=ConvTranspose((3, 3), channels[1] + channels[1] => 1, stride=1, bias=false),
     ))
 end
 
@@ -207,13 +206,13 @@ function model_loss(model, x, device, ϵ=1.0f-5)
     # 𝘚₀(𝘹(𝘵), 𝘵)
     score = model(perturbed_x, random_t)
     # mean over batches
-    sum(
+    mean(
         # L₂ norm over WHC dimensions
         sum(
             (score .* std + z) .^ 2,
             dims=(1, 2, 3)
         )
-    ) / batch_size
+    )
 end
 
 """
