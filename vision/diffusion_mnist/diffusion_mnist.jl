@@ -285,6 +285,7 @@ function train(; kws...)
         progress = Progress(length(loader))
 
         for (x, _) in loader
+            x = device(x)
             loss, grad = Flux.withgradient(ps) do
                 model_loss(unet, x |> device, device)
             end
