@@ -26,7 +26,7 @@ end
 """
 Helper function that generates inputs to a sampler.
 """
-function setup_sampler(model, device, num_images=5, num_steps=500, ϵ=1.0f-3)
+function setup_sampler(device, num_images=5, num_steps=500, ϵ=1.0f-3)
     t = ones(Float32, num_images) |> device
     init_x = (
         randn(Float32, (28, 28, 1, num_images)) .*
@@ -93,7 +93,7 @@ function plot_result(unet, args)
     args = Args(; args...)
     device = args.cuda && CUDA.has_cuda() ? gpu : cpu
     unet = unet |> device
-    time_steps, Δt, init_x = setup_sampler(unet, device)
+    time_steps, Δt, init_x = setup_sampler(device)
     euler_maruyama = Euler_Maruyama_sampler(unet, init_x, time_steps, Δt)
     sampled_noise = convert_to_image(init_x, size(init_x)[end])
     save(joinpath(args.save_path, "sampled_noise.jpeg"), sampled_noise)
