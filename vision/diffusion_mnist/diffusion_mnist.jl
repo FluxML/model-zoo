@@ -194,7 +194,7 @@ http://www.iro.umontreal.ca/~vincentp/Publications/smdae_techreport.pdf \n
 https://yang-song.github.io/blog/2021/score/#estimating-the-reverse-sde-with-score-based-models-and-score-matching \n
 https://yang-song.github.io/blog/2019/ssm/
 """
-function model_loss(model, x, device, ϵ=1.0f-5)
+function model_loss(model, x, ϵ=1.0f-5)
     batch_size = size(x)[end]
     # (batch) of random times to approximate 𝔼[⋅] wrt. 𝘪 ∼ 𝒰(0, 𝘛)
     random_t = rand!(similar(x, batch_size)) .* (1.0f0 - ϵ) .+ ϵ
