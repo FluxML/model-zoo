@@ -45,14 +45,12 @@ https://yang-song.github.io/blog/2021/score/#how-to-solve-the-reverse-sde
 """
 function Euler_Maruyama_sampler(model, init_x, time_steps, Δt)
     x = mean_x = init_x
-    progress = Progress(length(time_steps))
     @info "Start Euler-Maruyama Sampling"
-    for time_step in time_steps
+    @showprogress for time_step in 1:length(time_steps)
         batch_time_step = fill!(similar(init_x, size(init_x)[end]), 1) .* time_step
         g = diffusion_coeff(batch_time_step)
-        mean_x = x .+ expand_dims((g .^ 2), 3) .* model(x, batch_time_step) .* Δt
-        x = mean_x + sqrt(Δt) * expand_dims(g, 3) .* randn(Float32, size(x))
-        next!(progress; showvalues=[(:time_step, time_step)])
+        mean_x = x .+ expand_dims(g, 3) .^ 2 .* model(x, batch_time_step) .* Δt
+        x = mean_x .+ sqrt(Δt) .* expand_dims(g, 3) .* randn(Float32, size(x))
     end
     return mean_x
 end
