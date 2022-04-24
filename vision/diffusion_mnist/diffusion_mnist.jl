@@ -197,7 +197,7 @@ https://yang-song.github.io/blog/2019/ssm/
 function model_loss(model, x, device, ϵ=1.0f-5)
     batch_size = size(x)[end]
     # (batch) of random times to approximate 𝔼[⋅] wrt. 𝘪 ∼ 𝒰(0, 𝘛)
-    random_t = rand(Float32, batch_size) .* (1.0f0 - ϵ) .+ ϵ |> device
+    random_t = rand!(similar(x, batch_size)) .* (1.0f0 - ϵ) .+ ϵ
     # (batch) of perturbations to approximate 𝔼[⋅] wrt. 𝘹(0) ∼ 𝒫₀(𝘹)
     z = randn!(similar(x))
     std = expand_dims(marginal_prob_std(random_t), 3)
