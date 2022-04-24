@@ -92,28 +92,6 @@ function UNet(channels=[32, 64, 128, 256], embed_dim=256, scale=30.0f0)
         tconv4=ConvTranspose((3, 3), channels[4] => channels[3], stride=2, bias=false),
         dense5=Dense(embed_dim, channels[3]),
         tgnorm4=GroupNorm(channels[3], 32, swish),
-        ########################################################################
-        # FIXME: Julia does not offer a `output_padding` kwarg such as in:
-        # https://pytorch.org/docs/stable/generated/torch.nn.ConvTranspose2d.html#convtranspose2d
-        #
-        # A fix is referenced here: https://github.com/FluxML/Flux.jl/issues/1319
-        # and here: https://github.com/FluxML/Flux.jl/issues/829
-        # But padding with `pad=SamePad()` or `pad=(0, 1, 0, 1)` yields (10, 10, 64, 3) 
-        # which is still incorrect.
-        # 
-        # Based off relationship 14 of https://arxiv.org/pdf/1603.07285.pdf:
-        # 𝘰' = 𝘴(𝘪' - 1) + 𝘢 + 𝘬 - 2𝘱
-        # Set 𝘰' = 12, 𝘴 = 2, 𝘪' = 5, 𝘬 = 3, 𝘱 = 0, then
-        # 12 = 2(5 - 1) + a + 3 - 2(0) = 11 + a => a = 1
-        # However, no Flux API that I could find exposes the argument a for the user...
-        #
-        # A (incorrect) hack to get the shapes to work is just to pad by (-1, 0, -1, 0):
-        # julia> randn(5, 5, 256, 3) |> ConvTranspose((3, 3), 256 => 64, stride=2, pad=(0, -1, 0, -1)) |> size
-        # (12, 12, 64, 3)
-        #
-        # Which is the correct shape, but seems suspicious (negative padding??).
-        # Why is passing a negative padding even allowed in the first place? 😕
-        ########################################################################
         tconv3=ConvTranspose((3, 3), channels[3] + channels[3] => channels[2], pad=(0, -1, 0, -1), stride=2, bias=false),
         dense6=Dense(embed_dim, channels[2]),
         tgnorm3=GroupNorm(channels[2], 32, swish),
