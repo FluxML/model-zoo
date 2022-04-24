@@ -22,7 +22,6 @@ function test()
     score_test = unet_test(x_test, t_test)
     @assert score_test |> size == (28, 28, 1, 32)
     @assert typeof(score_test) == Array{Float32,4}
-    @time [unet_test(x_test, t_test) for _ in 1:10];
 
     # Test gradient computation
     grad_test = gradient(
