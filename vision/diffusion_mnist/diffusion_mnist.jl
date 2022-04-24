@@ -284,7 +284,7 @@ function train(; kws...)
         for (x, _) in loader
             x = device(x)
             loss, grad = Flux.withgradient(ps) do
-                model_loss(unet, x, device)
+                model_loss(unet, x)
             end
             Flux.Optimise.update!(opt, ps, grad)
             # progress meter

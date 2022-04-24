@@ -25,7 +25,7 @@ function test()
 
     # Test gradient computation
     grad_test = gradient(
-        () -> model_loss(unet_test, x_test, cpu), params(unet_test)
+        () -> model_loss(unet_test, x_test), params(unet_test)
     )
     @assert grad_test.params == params(unet_test)
 

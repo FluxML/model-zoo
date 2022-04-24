@@ -1,6 +1,7 @@
 include("diffusion_mnist.jl")
 
 using Images
+using ProgressMeter
 
 """
 Helper function yielding the diffusion coefficient from a SDE.
@@ -45,8 +46,7 @@ https://yang-song.github.io/blog/2021/score/#how-to-solve-the-reverse-sde
 """
 function Euler_Maruyama_sampler(model, init_x, time_steps, Δt)
     x = mean_x = init_x
-    @info "Start Euler-Maruyama Sampling"
-    @showprogress for time_step in 1:length(time_steps)
+    @showprogress "Euler-Maruyama Sampling" for time_step in 1:length(time_steps)
         batch_time_step = fill!(similar(init_x, size(init_x)[end]), 1) .* time_step
         g = diffusion_coeff(batch_time_step)
         mean_x = x .+ expand_dims(g, 3) .^ 2 .* model(x, batch_time_step) .* Δt
@@ -63,9 +63,7 @@ https://yang-song.github.io/blog/2021/score/#how-to-solve-the-reverse-sde
 """
 function predictor_corrector_sampler(model, init_x, time_steps, Δt, snr=0.16f0)
     x = mean_x = init_x
-    progress = Progress(length(time_steps))
-    @info "Start PC Sampling"
-    for time_step in time_steps
+    @showprogress "Predictor Corrector Sampling" for time_step in 1:length(time_steps)
         batch_time_step = fill!(similar(init_x, size(init_x)[end]), 1) .* time_step
         # Corrector step (Langevin MCMC)
         grad = model(x, batch_time_step)
@@ -82,7 +80,6 @@ function predictor_corrector_sampler(model, init_x, time_steps, Δt, snr=0.16f0)
         g = diffusion_coeff(batch_time_step)
         mean_x = x .+ expand_dims((g .^ 2), 3) .* model(x, batch_time_step) .* Δt
         x = mean_x + sqrt.(expand_dims((g .^ 2), 3) .* Δt) .* randn(Float32, size(x))
-        next!(progress; showvalues=[(:time_step, time_step)])
     end
     return mean_x
 end
