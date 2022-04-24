@@ -12,16 +12,7 @@ diffusion_coeff(t, sigma=convert(eltype(t), 25.0f0)) = sigma .^ t
 Helper function that produces images from a batch of images.
 """
 function convert_to_image(x, y_size)
-    Gray.(
-        permutedims(
-            vcat(
-                reshape.(
-                    chunk(x |> cpu, y_size), 28, :
-                )...
-            ),
-            (2, 1)
-        )
-    )
+    Gray.(permutedims(vcat(reshape.(chunk(x |> cpu, y_size), 28, :)...), (2, 1)))
 end
 
 """
