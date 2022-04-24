@@ -208,10 +208,7 @@ function model_loss(model, x, device, ϵ=1.0f-5)
     # mean over batches
     mean(
         # L₂ norm over WHC dimensions
-        sum(
-            (score .* std + z) .^ 2,
-            dims=(1, 2, 3)
-        )
+        sum((score .* std + z) .^ 2; dims=1:(ndims(x) - 1))
     )
 end
 
