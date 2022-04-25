@@ -37,7 +37,7 @@ https://yang-song.github.io/blog/2021/score/#how-to-solve-the-reverse-sde
 """
 function Euler_Maruyama_sampler(model, init_x, time_steps, Δt)
     x = mean_x = init_x
-    @showprogress "Euler-Maruyama Sampling" for time_step in 1:length(time_steps)
+    @showprogress "Euler-Maruyama Sampling" for time_step in time_steps
         batch_time_step = fill!(similar(init_x, size(init_x)[end]), 1) .* time_step
         g = diffusion_coeff(batch_time_step)
         mean_x = x .+ expand_dims(g, 3) .^ 2 .* model(x, batch_time_step) .* Δt
@@ -54,7 +54,7 @@ https://yang-song.github.io/blog/2021/score/#how-to-solve-the-reverse-sde
 """
 function predictor_corrector_sampler(model, init_x, time_steps, Δt, snr=0.16f0)
     x = mean_x = init_x
-    @showprogress "Predictor Corrector Sampling" for time_step in 1:length(time_steps)
+    @showprogress "Predictor Corrector Sampling" for time_step in time_steps
         batch_time_step = fill!(similar(init_x, size(init_x)[end]), 1) .* time_step
         # Corrector step (Langevin MCMC)
         grad = model(x, batch_time_step)
