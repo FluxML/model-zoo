@@ -39,7 +39,7 @@ end
 
 # We create the function `getdata` to load the MNIST train and test data from [MLDatasets](https://github.com/JuliaML/MLDatasets.jl) and reshape them so that they are in the shape that Flux expects. 
 
-function getdata(args, device)
+function getdata(args)
     ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"
 
     ## Load dataset	
@@ -129,7 +129,7 @@ function train(; kws...)
     end
 
     ## Create test and train dataloaders
-    train_loader, test_loader = getdata(args, device)
+    train_loader, test_loader = getdata(args)
 
     ## Construct model
     model = build_model() |> device
