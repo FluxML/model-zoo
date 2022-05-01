@@ -72,7 +72,6 @@ function train_model(args)
         end
         Flux.update!(opt, θ, ∇) # Update model parameters
         if args.verbose && i % 10 == 0 # Log results every 10 epochs
-            Flux.testmode!(m)
             # Compute loss on train and test set for logging (important: the model must be reset!)
             Flux.reset!(m)
             train_loss = loss(Xtrain, ytrain)
