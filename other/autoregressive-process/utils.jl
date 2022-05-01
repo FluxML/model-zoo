@@ -11,7 +11,7 @@ function generate_process(ϕ::AbstractVector{Float32}, s::Int)
     p = length(ϕ)
     X[1] = ϵ[1]
     # Reverse the order of the coefficients for multiplication later on
-    reverse!(ϕ) 
+    ϕ = reverse(ϕ) 
     # Compute values iteratively
     for t ∈ 2:s
         if t ≤ p
