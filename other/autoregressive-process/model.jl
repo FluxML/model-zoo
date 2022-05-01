@@ -78,7 +78,6 @@ function train_model(args)
             Flux.reset!(m)
             test_loss = loss(Xtest, ytest)
             @info "Epoch $i / $(args.epochs), train loss: $(round(train_loss, digits=3)) | test loss: $(round(test_loss, digits=3))"
-            Flux.trainmode!(m) # Put the mode back into train mode
         end
     end
     return m
