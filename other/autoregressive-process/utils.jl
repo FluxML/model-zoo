@@ -12,13 +12,13 @@ function generate_process(ϕ::AbstractVector{Float32}, s::Int)
     X[1] = ϵ[1]
     # Reverse the order of the coefficients for multiplication later on
     ϕ = reverse(ϕ) 
+    # Fill first p observations
+    for t ∈ 1:p-1
+        X[t+1] = X[1:t]'ϕ[1:t] + ϵ[t+1]
+    end
     # Compute values iteratively
-    for t ∈ 2:s
-        if t ≤ p
-            X[t] = sum(X[1:t-1] .* ϕ[1:t-1]) + ϵ[t]
-        else
-            X[t] = sum(X[t-p:t-1] .* ϕ) + ϵ[t]
-        end
+    for t ∈ p+1:s
+        X[t] = X[t-p:t-1]'ϕ + ϵ[t]
     end
     X
 end
