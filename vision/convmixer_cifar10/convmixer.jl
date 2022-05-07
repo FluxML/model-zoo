@@ -28,12 +28,12 @@ function get_data(batchsize; dataset = MLDatasets.CIFAR10, idxs = nothing)
     ENV["DATADEPS_ALWAYS_ACCEPT"] = "true" 
 
     # Loading Dataset
-    if idxs==nothing
-        xtrain, ytrain = dataset.traindata(Float32)
-        xtest, ytest = dataset.testdata(Float32)
+    if idxs===nothing
+        xtrain, ytrain = dataset(:train)[:]
+        xtest, ytest = dataset(:test)[:]
 	else
-        xtrain, ytrain = dataset.traindata(Float32, 1:idxs)
-        xtest, ytest = dataset.testdata(Float32, 1:Int(idxs/10))
+        xtrain, ytrain = dataset(:train)[1:idxs]
+        xtest, ytest = dataset(:test)[1:Int(idxs/10)]
     end
 
     # Reshape Data to comply to Julia's (width, height, channels, batch_size) convention in case there are only 1 channel (eg MNIST)

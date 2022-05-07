@@ -6,7 +6,7 @@ using Parameters: @with_kw
 using Statistics: mean
 using CUDA
 using MLDatasets: CIFAR10
-using MLDataPattern: splitobs
+using MLUtils: splitobs
 
 if CUDA.has_cuda()
     @info "CUDA is on"
@@ -14,7 +14,7 @@ if CUDA.has_cuda()
 end
 
 function get_processed_data(args)
-    x, y = CIFAR10.traindata()
+    x, y = CIFAR10(:train)[:]
 
     (train_x, train_y), (val_x, val_y) = splitobs((x, y), at=1-args.valsplit)
 
@@ -27,7 +27,7 @@ function get_processed_data(args)
 end
 
 function get_test_data()
-    test_x, test_y = CIFAR10.testdata()
+    test_x, test_y = CIFAR10(:test)[:]
    
     test_x = float(test_x)
     test_y = onehotbatch(test_y, 0:9)
@@ -37,7 +37,7 @@ end
 
 # VGG16 and VGG19 models
 function vgg16()
-    Chain(
+    Chain([
         Conv((3, 3), 3 => 64, relu, pad=(1, 1), stride=(1, 1)),
         BatchNorm(64),
         Conv((3, 3), 64 => 64, relu, pad=(1, 1), stride=(1, 1)),
@@ -75,7 +75,7 @@ function vgg16()
         Dense(4096, 4096, relu),
         Dropout(0.5),
         Dense(4096, 10)
-    )
+    ])
 end
 
 @with_kw mutable struct Args

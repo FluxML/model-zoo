@@ -28,9 +28,17 @@ using Flux: onehotbatch
  
 We load the MNIST train and test data from MLDatasets:
  
-```julia
-train_x, train_y = MNIST.traindata(Float32)
-test_x, test_y = MNIST.testdata(Float32)
+```julia-repl
+julia> train_data = MNIST(:train)
+dataset MNIST:
+  metadata    =>    Dict{String, Any} with 3 entries
+  split       =>    :train
+  features    =>    28×28×60000 Array{Float32, 3}
+  targets     =>    60000-element Vector{Int64}
+
+julia> train_x, train_y = train_data[:];
+
+julia> test_x, test_y = MNIST(:test)[:];
 ```
 <br>
  

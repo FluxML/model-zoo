@@ -194,7 +194,7 @@ end
 Helper function that loads MNIST images and returns loader.
 """
 function get_data(batch_size)
-    xtrain, ytrain = MLDatasets.MNIST.traindata(Float32)
+    xtrain, ytrain = MLDatasets.MNIST(:train)[:]
     xtrain = reshape(xtrain, 28, 28, 1, :)
     DataLoader((xtrain, ytrain), batchsize=batch_size, shuffle=true)
 end

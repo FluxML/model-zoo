@@ -43,8 +43,8 @@ function getdata(args)
     ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"
 
     ## Load dataset	
-    xtrain, ytrain = MLDatasets.MNIST.traindata(Float32)
-    xtest, ytest = MLDatasets.MNIST.testdata(Float32)
+    xtrain, ytrain = MLDatasets.MNIST(:train)[:]
+    xtest, ytest = MLDatasets.MNIST(:test)[:]
 	
     ## Reshape input data to flatten each image into a linear array
     xtrain = Flux.flatten(xtrain)
