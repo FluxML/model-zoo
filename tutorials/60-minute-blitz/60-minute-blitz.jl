@@ -282,7 +282,7 @@ using CUDA
 # The image will give us an idea of what we are dealing with.
 # ![title](https://pytorch.org/tutorials/_images/cifar10.png)
 
-train_x, train_y = CIFAR10.traindata(Float32)
+train_x, train_y = CIFAR10(:train)[:]
 labels = onehotbatch(train_y, 0:9)
 
 #The train_x contains 50000 images converted to 32 X 32 X 3 arrays with the third
@@ -396,7 +396,7 @@ end
 # Okay, first step. Let us perform the exact same preprocessing on this set, as we did
 # on our training set.
 
-test_x, test_y = CIFAR10.testdata(Float32)
+test_x, test_y = CIFAR10(:test)[:]
 test_labels = onehotbatch(test_y, 0:9)
 
 test = gpu.([(test_x[:,:,:,i], test_labels[:,i]) for i in partition(1:10000, 1000)])

@@ -2,3 +2,7 @@
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 MLDatasets = "eb30cadb-4394-5ae3-aed4-317e484a6458"
 Parameters = "d96e819e-fc66-5662-9728-84c9c7592b0a"
+
+[compat]
+Flux = "0.13"
+MLDatasets = "0.6"

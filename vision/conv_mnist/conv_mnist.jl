@@ -34,8 +34,8 @@ function LeNet5(; imgsize=(28,28,1), nclasses=10)
 end
 
 function get_data(args)
-    xtrain, ytrain = MLDatasets.MNIST.traindata(Float32)
-    xtest, ytest = MLDatasets.MNIST.testdata(Float32)
+    xtrain, ytrain = MLDatasets.MNIST(:train)[:]
+    xtest, ytest = MLDatasets.MNIST(:test)[:]
 
     xtrain = reshape(xtrain, 28, 28, 1, :)
     xtest = reshape(xtest, 28, 28, 1, :)

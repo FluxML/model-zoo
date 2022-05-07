@@ -107,7 +107,7 @@ function train(; kws...)
     end
 
     # Load MNIST dataset
-    images, _ = MLDatasets.MNIST.traindata(Float32)
+    images = MLDatasets.MNIST(:train).features
     # Normalize to [-1, 1]
     image_tensor = reshape(@.(2f0 * images - 1f0), 28, 28, 1, :)
     # Partition into batches
