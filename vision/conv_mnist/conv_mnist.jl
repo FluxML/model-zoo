@@ -37,7 +37,7 @@
 using Flux
 using Flux.Data: DataLoader
 using Flux.Optimise: Optimiser, WeightDecay
-using Flux: onehotbatch, onecold
+using Flux: onehotbatch, onecold, flatten
 using Flux.Losses: logitcrossentropy
 using Statistics, Random
 using Logging: with_logger
@@ -108,7 +108,13 @@ function LeNet5(; imgsize=(28,28,1), nclasses=10)
           )
 end
 
+
 # **Note:** The model can be adapted to any image size and any number of output classes.
+
+function get_data(args)
+    xtrain, ytrain = MLDatasets.MNIST(:train)[:]
+    xtest, ytest = MLDatasets.MNIST(:test)[:]
+
 
 # ## Loss function
 

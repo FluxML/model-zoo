@@ -21,15 +21,15 @@ using Parameters: @with_kw
     minibath_size::Int = 128  ## Size of mini-batch
 end
 
-# ## Get the data
+# ## Data
  
 # We create the function `get_data` to get, preprare and load the data onto a DataLoader object.
 
 function get_data(args)
 
     ## Load the MNIST train and test data from MLDatasets
-    train_x, train_y = MNIST.traindata(Float32)
-    test_x, test_y = MNIST.testdata(Float32)
+    train_x, train_y = MNIST(:train)[:]
+    test_x, test_y = MNIST(:test)[:]
 
     ## Reshape data to 28x28x1 multi-dimensional array
     train_x = reshape(train_x, 28, 28, 1, :)

@@ -39,12 +39,12 @@ end
 
 # We create the function `getdata` to load the MNIST train and test data from [MLDatasets](https://github.com/JuliaML/MLDatasets.jl) and reshape them so that they are in the shape that Flux expects. 
 
-function getdata(args, device)
+function getdata(args)
     ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"
 
     ## Load dataset	
-    xtrain, ytrain = MLDatasets.MNIST.traindata(Float32)
-    xtest, ytest = MLDatasets.MNIST.testdata(Float32)
+    xtrain, ytrain = MLDatasets.MNIST(:train)[:]
+    xtest, ytest = MLDatasets.MNIST(:test)[:]
 	
     ## Reshape input data to flatten each image into a linear array
     xtrain = Flux.flatten(xtrain)
@@ -69,7 +69,7 @@ end
 
 # ## Model
 
-# As we mentioned above, a MLP consist of *three* layers that are fully connected. For this example, we define out model with the following layers and dimensions: 
+# As we mentioned above, a MLP consist of *three* layers that are fully connected. For this example, we define our model with the following layers and dimensions: 
 
 # * **Input:** It has `784` perceptrons (the MNIST image size is `28x28`). We flatten the train and test data so that we can pass them as arguments to this layer.
 # * **Hidden:** It has `32` perceptrons that use the [relu](https://fluxml.ai/Flux.jl/stable/models/nnlib/#NNlib.relu) activation function.
@@ -86,7 +86,7 @@ end
 
 # Note that we use the functions [Dense](https://fluxml.ai/Flux.jl/stable/models/layers/#Flux.Dense) so that our model is *densely* (or fully) connected and [Chain](https://fluxml.ai/Flux.jl/stable/models/layers/#Flux.Chain) to chain the computation of the three layers.
 
-# ## Loss functions
+# ## Loss function
 
 # Now, we define the loss function `loss_and_accuracy`. It expects the following arguments:
 # * ADataLoader object.
@@ -112,9 +112,9 @@ end
 # the predicted and actual values (loss) and the accuracy. 
 
 
-# ## Train the model
+# ## Train function
 
-# The `train` function that calls the functions defined above to trains the model.
+# Now, we define the `train` function that calls the functions defined above and trains the model.
 
 function train(; kws...)
     args = Args(; kws...) ## Collect options in a struct for convenience
@@ -129,7 +129,7 @@ function train(; kws...)
     end
 
     ## Create test and train dataloaders
-    train_loader, test_loader = getdata(args, device)
+    train_loader, test_loader = getdata(args)
 
     ## Construct model
     model = build_model() |> device
