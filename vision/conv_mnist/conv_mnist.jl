@@ -19,6 +19,8 @@
 
 # Source: https://d2l.ai/chapter_convolutional-neural-networks/lenet.html
 
+# >**Note:** The original architecture of Lenet5 used the sigmoind activation function. However, this is a a modernized version since it uses the RELU activation function instead.
+
 # If you need more information about how CNNs work and related technical concepts, check out the following resources:
 
 # * [Gradient-Based Learning Applied to Document Recognition](http://yann.lecun.com/exdb/publis/pdf/lecun-01a.pdf) . This is LeNet5 original paper by Yann LeCunn and others.
