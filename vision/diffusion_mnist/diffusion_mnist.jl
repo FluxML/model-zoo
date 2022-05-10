@@ -211,7 +211,7 @@ struct2dict(s) = struct2dict(Dict, s)
 @with_kw mutable struct Args
     η = 1e-4                                        # learning rate
     batch_size = 32                                 # batch size
-    epochs = 30                                     # number of epochs
+    epochs = 50                                     # number of epochs
     seed = 1                                        # random seed
     cuda = false                                    # use CPU
     verbose_freq = 10                               # logging for every verbose_freq iterations
