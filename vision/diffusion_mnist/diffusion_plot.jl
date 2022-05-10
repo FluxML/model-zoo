@@ -155,8 +155,9 @@ function plot_result(unet, args)
     save(joinpath(args.save_path, "diff_eq_em_images.jpeg"), diff_eq_em_images)
     diff_eq_em_animation = convert_to_animation(diff_eq_em)
     gif(diff_eq_em_animation, joinpath(args.save_path, "diff_eq_em.gif"), fps=50)
-    em_plot = plot(diff_eq_em, title="EM Sample Paths", legend=false)
-    plot(diff_eq_em, title="EM Sample Paths", legend=false)
+    em_plot = plot(diff_eq_em, title="Euler-Maruyama", legend=false, ylabel="x", la=0.25)
+    plot!(time_steps, diffusion_coeff(time_steps), xflip=true, ls=:dash, lc=:red)
+    plot!(time_steps, -diffusion_coeff(time_steps), xflip=true, ls=:dash, lc=:red)
     savefig(em_plot, joinpath(args.save_path, "diff_eq_em_plot.png"))
 
     @info "Probability Flow ODE Sampling w/ DifferentialEquations.jl"
@@ -166,7 +167,9 @@ function plot_result(unet, args)
     save(joinpath(args.save_path, "diff_eq_ode_images.jpeg"), diff_eq_ode_images)
     diff_eq_ode_animation = convert_to_animation(diff_eq_ode)
     gif(diff_eq_ode_animation, joinpath(args.save_path, "diff_eq_ode.gif"), fps=50)
-    ode_plot = plot(diff_eq_ode, title="Probability Flow ODE", legend=false)
+    ode_plot = plot(diff_eq_ode, title="Probability Flow ODE", legend=false, ylabel="x", la=0.25)
+    plot!(time_steps, diffusion_coeff(time_steps), xflip=true, ls=:dash, lc=:red)
+    plot!(time_steps, -diffusion_coeff(time_steps), xflip=true, ls=:dash, lc=:red)
     savefig(ode_plot, joinpath(args.save_path, "diff_eq_ode_plot.png"))
 end
 

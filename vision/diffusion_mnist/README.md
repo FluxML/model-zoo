@@ -33,18 +33,19 @@ Visualizations are sampled with either the equations used in the [original PyTor
 | ----------- | ----------- |
 | <center> ![pc](../diffusion_mnist/docs/diff_eq_em_images.jpeg) </center>| <center> ![pc](../diffusion_mnist/docs/diff_eq_ode_images.jpeg) </center>|
 
-And since the `DifferentialEquations.jl`'s `solve()` returns the entire sample path, it is easy to visualize the sampling process as an `animation`:  
+And since the `DifferentialEquations.jl`'s `solve()` returns the entire sample path, it is easy to visualize the reverse-time SDE sampling process as an `animation`:  
 
 
 | <center> Euler-Maruyama </center>| <center> Probability Flow ODE </center>|
 | ----------- | ----------- |
 | <center> ![Alt Text](../diffusion_mnist/docs/diff_eq_em.gif) </center>|<center> ![Alt Text](../diffusion_mnist/docs/diff_eq_ode.gif) </center>|
 
-And finally, we can visualize the sample paths as a function of `t ∈ [1, ϵ]`. As noted by the authors, the Probability Flow ODE captures the same
+And finally, we can visualize `𝙭` as a function of `t ∈ [1, ϵ]`. As noted by the authors, the Probability Flow ODE captures the same
 marginal probability density 𝒫ₜ(𝙭) as it's stochastic counterpart.
 | | |
 | ----------- | ----------- |
 | <center> ![pc](../diffusion_mnist/docs/diff_eq_em_plot.png) </center>| <center> ![pc](../diffusion_mnist/docs/diff_eq_ode_plot.png) </center>|
+Shown as reference are the lines `x(t) = ± σᵗ`
 
 ## References
 
