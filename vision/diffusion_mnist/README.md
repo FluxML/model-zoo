@@ -40,12 +40,13 @@ And since the `DifferentialEquations.jl`'s `solve()` returns the entire sample p
 | ----------- | ----------- |
 | <center> ![Alt Text](../diffusion_mnist/docs/diff_eq_em.gif) </center>|<center> ![Alt Text](../diffusion_mnist/docs/diff_eq_ode.gif) </center>|
 
-And finally, we can visualize `𝙭` as a function of `t ∈ [1, ϵ]`. As noted by the authors, the Probability Flow ODE captures the same
+And finally, we can visualize the components of the image, `𝙭`, as a function of `t ∈ [1, ϵ]`. As noted by the authors, the Probability Flow ODE captures the same
 marginal probability density 𝒫ₜ(𝙭) as it's stochastic counterpart.
 | | |
 | ----------- | ----------- |
 | <center> ![pc](../diffusion_mnist/docs/diff_eq_em_plot.png) </center>| <center> ![pc](../diffusion_mnist/docs/diff_eq_ode_plot.png) </center>|
-Shown as reference are the lines `x(t) = ± σᵗ`
+
+The lines, `x(t) = ± σᵗ`, are shown for referenece.
 
 ## References
 
