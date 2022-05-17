@@ -95,13 +95,6 @@ function train(; kws...)
         end
     end
 
-    #= For a more simple training loop:
-    # training callback for loss on hold-out set
-    evalcb() = @show(mean([loss(x_v, y_v) for (x_v, y_v) in hold_out]))
-    throttled_cb = Flux.throttle(evalcb, 5)
-    opt = ADAM(args.γ)
-    @Flux.epochs args.epochs Flux.train!(loss, ps, data_loader, opt, cb=throttled_cb)
-    =#
 
     # show final lr, and hold out set perplexity
     valid_perplex = exp(mean([loss(x_v, y_v) for (x_v, y_v) in hold_out]))
