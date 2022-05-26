@@ -26,7 +26,28 @@ Each model can be used in [Gitpod](https://www.gitpod.io/), just [open the repos
 
 ## Contributing
 
-We welcome contributions of new models. They should be in a folder with a project and manifest file, to pin all relevant packages, as well as a README to explain what the model is about, how to run it, and what results it achieves (if applicable). If possible models should not depend directly on GPU functionality, but ideally should be CPU/GPU agnostic. Please keep the code short, clean and self-explanatory, with as little boilerplate code as possible.
+We welcome contributions of new models and documentation. 
+
+### Share a new model
+
+If you want to share a new model, then we suggest you follow these guidelines:
+
+* Models should be in a folder with a project and manifest file to pin all relevant packages.
+* Models should include README to explain what the model is about, how to run it, and what results it achieves (if applicable).
+* If possible models should not depend directly on GPU functionality, but ideally should be CPU/GPU agnostic.
+* Please keep the code short, clean, and self-explanatory, with as little boilerplate code as possible.
+
+### Create or improve documentation
+
+You can contribute in one of the following ways 
+
+* Add or improve documentation to existing models: Write the following information:
+  * Give a brief introduction to the model’s architecture and the goal it archives.
+  * Describe the Flux API that the model demonstrates (high-level API, AD, custom operations, custom layers, etc.).
+  * Add literature background for the model. More specifically, add articles, blog posts, videos, and any other resource that is helpful to better understand the model.
+  * Mention the technique that is being demonstrated. Briefly describe the learning technique being demonstrated (Computer vision, regression, NLP, time series, etc.).
+* Write in-depth tutorials for a model: You can further extend the documentation of a model and create a tutorial to explain in more detail the architecture, the training routine, use your own data, and so forth. After you write a tutorial, create a PR with it for the [Tutorials](https://fluxml.ai/tutorials.html) section on the [FluxML](https://fluxml.ai/) website.
+
 
 ## Examples Listing
 
