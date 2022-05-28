@@ -12,6 +12,8 @@ At a high level LeNet (LeNet-5) consists of two parts:
 
 The basic units in each convolutional block are a convolutional layer, a sigmoid activation function, and a subsequent average pooling operation. Each convolutional layer uses a  5×5  kernel and a sigmoid activation function. These layers map spatially arranged inputs to a number of two-dimensional feature maps, typically increasing the number of channels. The first convolutional layer has 6 output channels, while the second has 16. Each  2×2  pooling operation (stride 2) reduces dimensionality by a factor of  4  via spatial downsampling. The convolutional block emits an output with shape given by (batch size, number of channel, height, width).
 
+>**Note:** The original architecture of Lenet5 used the sigmoind activation function. However, this is a a modernized version since it uses the RELU activation function instead.
+
 ## Training
 
 ```shell
