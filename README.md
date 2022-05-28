@@ -33,7 +33,7 @@ We welcome contributions of new models and documentation.
 If you want to share a new model, we suggest you follow these guidelines:
 
 * Models should be in a folder with a project and manifest file to pin all relevant packages.
-* Models should include README to explain what the model is about, how to run it, and what results it achieves (if applicable).
+* Models should include a README(.md) to explain what the model is about, how to run it, and what results it achieves (if applicable).
 * If possible models should not depend directly on GPU functionality, but ideally should be CPU/GPU agnostic.
 * Please keep the code short, clean, and self-explanatory, with as little boilerplate code as possible.
 
