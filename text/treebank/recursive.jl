@@ -55,8 +55,7 @@ function train(; kws...)
     @info("Constructing model....")
     embedding = randn(Float32, args.N, length(alphabet))
 
-    @info("Size of the embegging")
-    @info(size(embedding))
+    @info "Size of the embedding" size(embedding)
 
     W = Dense(2*args.N, args.N, tanh)
     combine(a, b) = W([a; b])
