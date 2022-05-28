@@ -30,7 +30,7 @@ We welcome contributions of new models and documentation.
 
 ### Share a new model
 
-If you want to share a new model, then we suggest you follow these guidelines:
+If you want to share a new model, we suggest you follow these guidelines:
 
 * Models should be in a folder with a project and manifest file to pin all relevant packages.
 * Models should include README to explain what the model is about, how to run it, and what results it achieves (if applicable).
