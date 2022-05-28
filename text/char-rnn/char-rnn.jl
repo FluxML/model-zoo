@@ -71,8 +71,8 @@ end
 
 # The function `getdata` performs the following tasks:
 
-# * Downloads the [All works of Shakespeare concatenated](https://cs.stanford.edu/people/karpathy/char-rnn/shakespeare_input.txt) 
-# data if not previously downloaded. This function loads the data as a vector of characters with the function `collect`.
+# * Downloads a dataset of [all of Shakespeare's works (concatenated)](https://cs.stanford.edu/people/karpathy/char-rnn/shakespeare_input.txt) 
+# if not previously downloaded. This function loads the data as a vector of characters with the function `collect`.
 # * Gets the alphabet. It consists of the unique characters of the data and the stop character ‘_’.
 # * One-hot encodes the alphabet and the stop character.
 # * Gets the size of the alphabet N.
