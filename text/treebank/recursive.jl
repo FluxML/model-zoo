@@ -1,24 +1,61 @@
+# # Recursive net on IMDB sentiment treebank
+
+# In this example, we create a recursive neural network to perform sentiment analysis using 
+# IMDB data. 
+# This type of model can be used 
+# for learning tree-like structures (directed acyclic graphs). 
+# It computes compositional vector representations for prhases of variable length 
+# which are used as features for performing classification. 
+
+# ![treebank](../treebank/docs/treebank.png)
+
+# [Source](https://nlp.stanford.edu/~socherr/EMNLP2013_RNTN.pdf)
+
+# This example uses the [Standford Sentiment Treebank dataset 
+# (SST)](https://nlp.stanford.edu/sentiment/index.html) which is often used 
+# as one of the benchmark datasets to test new language models. 
+# It has five different classes (very negative to very positive) and the 
+# goal is to perform sentiment analysis.
+
+# To run this example, we need the following packages:
+
 using Flux
 using Flux: logitcrossentropy, throttle
 using Flux.Data: Tree, children, isleaf
 using Parameters: @with_kw
+
+# The script `data.jl` contains the function `getdata` that obtains
+# and process the SST dataset.
+
 include("data.jl")
 
+# We set default values for the hyperparameters:
+
 @with_kw mutable struct Args
-    lr::Float64 = 1e-3    # Learning rate
+    lr::Float64 = 1e-3    ## Learning rate
     N::Int = 300
-    throttle::Int = 10    # Throttle timeout
+    throttle::Int = 10    ## Throttle timeout
 end
 
+# ## Build the model
+
+# The function `train` loads the data, builds and trains the model. 
+# For more information on how the recursive neural network works, see 
+# section 4 of [Recursive Deep Models for Semantic Compositionality
+# Over a Sentiment Treebank](https://nlp.stanford.edu/~socherr/EMNLP2013_RNTN.pdf).
+
 function train(; kws...)
-    # Initialize HyperParameters
+    ## Initialize HyperParameters
     args = Args(; kws...)
-    # load data
+
+    ## Load data
     @info("Loading Data...")
     train_data, alphabet = getdata()    
 
     @info("Constructing model....")
     embedding = randn(Float32, args.N, length(alphabet))
+
+    @info "Size of the embedding" size(embedding)
 
     W = Dense(2*args.N, args.N, tanh)
     combine(a, b) = W([a; b])
@@ -47,6 +84,8 @@ function train(; kws...)
     @info("Training Model...")
     Flux.train!(loss, ps, zip(train_data), opt,cb = throttle(evalcb, args.throttle))
 end
+
+# ## Train the model
 
 cd(@__DIR__)
 train()
