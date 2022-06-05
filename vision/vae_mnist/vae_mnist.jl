@@ -21,7 +21,7 @@ using Random
 
 # load MNIST images and return loader
 function get_data(batch_size)
-    xtrain, ytrain = MLDatasets.MNIST.traindata(Float32)
+    xtrain, ytrain = MLDatasets.MNIST(:train)[:]
     xtrain = reshape(xtrain, 28^2, :)
     DataLoader((xtrain, ytrain), batchsize=batch_size, shuffle=true)
 end

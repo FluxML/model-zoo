@@ -40,7 +40,7 @@ resnet = ResNet().layers
 # We will use the [Dogs vs. Cats](https://www.kaggle.com/c/dogs-vs-cats/data) dataset from Kaggle for our use here.
 # Make sure to extract the images in a `train` folder.
 
-# The `datatloader.jl` script contains some functions that will help us load batches of images, shuffled between
+# The `dataloader.jl` script contains some functions that will help us load batches of images, shuffled between
 # dogs and cats along with their correct labels.
 
 include("dataloader.jl")
