@@ -69,8 +69,8 @@ end
 # We create the function `get_data` to load the MNIST train and test data from [MLDatasets](https://github.com/JuliaML/MLDatasets.jl) and reshape them so that they are in the shape that Flux expects. 
 
 function get_data(args)
-    xtrain, ytrain = MLDatasets.MNIST.traindata(Float32)
-    xtest, ytest = MLDatasets.MNIST.testdata(Float32)
+    xtrain, ytrain = MLDatasets.MNIST(:train)[:]
+    xtest, ytest = MLDatasets.MNIST(:test)[:]
 
     xtrain = reshape(xtrain, 28, 28, 1, :)
     xtest = reshape(xtest, 28, 28, 1, :)
@@ -109,14 +109,6 @@ function LeNet5(; imgsize=(28,28,1), nclasses=10)
             Dense(84, nclasses)
           )
 end
-
-
-# **Note:** The model can be adapted to any image size and any number of output classes.
-
-function get_data(args)
-    xtrain, ytrain = MLDatasets.MNIST(:train)[:]
-    xtest, ytest = MLDatasets.MNIST(:test)[:]
-
 
 # ## Loss function
 
