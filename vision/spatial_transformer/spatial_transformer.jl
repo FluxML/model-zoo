@@ -9,7 +9,7 @@ digits for classification by a convolutional network
 =#
 
 using LinearAlgebra, Statistics
-using Flux, CUDA, Zygote
+using Flux, Zygote, CUDA
 using Flux: batch, onehotbatch, flatten, unsqueeze
 using MLDatasets
 using IterTools: partition
@@ -24,31 +24,24 @@ args = Dict(
     :n_epochs => 40, # no. epochs to train
 )
 
-
 ## ==== GPU
 dev = has_cuda() ? gpu : cpu
 
-## ==== Data functions
-"split your data into batches of size bsz"
-get_batches(x; bsz=args[:bsz]) = batch.(partition(x, bsz))
+## ==== Data 
+train_digits, train_labels = MNIST(split=:train)[:]
+test_digits, test_labels = MNIST(split=:test)[:]
+train_labels = Float32.(Flux.onehotbatch(train_labels, 0:9))
+test_labels = Float32.(Flux.onehotbatch(test_labels, 0:9))
 
-function get_mnist_data()
-    train_digits, train_labels = MNIST(split=:train)[:]
-    test_digits, test_labels = MNIST(split=:test)[:]
-    xs_train, xs_test = map(get_batches, (eachslice(train_digits, dims=3), eachslice(test_digits, dims=3)))
-
-    ys_train = map(x -> Float32.(onehotbatch(x, 0:9)), get_batches(train_labels))
-    ys_test = map(x -> Float32.(onehotbatch(x, 0:9)), get_batches(test_labels))
-
-    return xs_train, xs_test, ys_train, ys_test
-end
+train_loader = Flux.Data.DataLoader((train_digits |> dev, train_labels |> dev), batchsize=args[:bsz], shuffle=true, partial=false)
+test_loader = Flux.Data.DataLoader((test_digits |> dev, test_labels |> dev), batchsize=args[:bsz], shuffle=true, partial=false)
 
 ## ==== interpolation functions
 
 "generate sampling grid 3 x (width x height) x (batch size)"
 function get_sampling_grid(width, height; args=args)
-    x = collect(LinRange(-1, 1, width))
-    y = collect(LinRange(-1, 1, height))
+    x = LinRange(-1, 1, width)
+    y = LinRange(-1, 1, height)
     x_t_flat = reshape(repeat(x, height), 1, height * width)
     y_t_flat = reshape(repeat(transpose(y), width), 1, height * width)
     all_ones = ones(eltype(x_t_flat), 1, size(x_t_flat)[2])
@@ -56,21 +49,19 @@ function get_sampling_grid(width, height; args=args)
     sampling_grid = reshape(
         transpose(repeat(transpose(sampling_grid), args[:bsz])),
         3,
-        size(x_t_flat)[2],
+        size(x_t_flat, 2),
         args[:bsz],
     )
-    return collect(Float32.(sampling_grid))
+    return Float32.(sampling_grid)
 end
 
 "transform sampling_grid using parameters thetas"
 function affine_grid_generator(sampling_grid, thetas; args=args, sz=args[:img_size])
     bsz = size(thetas)[end]
     # we're gonna be multiplying the offsets thetas[5,6] by the scale thetas[1,4]
-    theta = Zygote.Buffer(thetas)
-    theta[1:4, :] = thetas[1:4, :]
-    theta[[5, 6], :] = thetas[[1, 4], :] .* thetas[[5, 6], :]
-    th_ = reshape(copy(theta), 2, 3, bsz)
-    transformed_grid = batched_mul(th_, sampling_grid)
+    theta = vcat(thetas[1:4, :], thetas[[1, 4], :] .* thetas[5:6, :])
+    theta = reshape(theta, 2, 3, bsz)
+    transformed_grid = batched_mul(theta, sampling_grid)
     # reshape to 2 x height x width x (batch size)
     return reshape(transformed_grid, 2, sz..., bsz)
 end
@@ -97,14 +88,13 @@ function model_loss(x, y)
 end
 
 "train_data should be a tuple of (images, labels)"
-function train_model(opt, ps, train_data; epoch=1)
-    progress_tracker = Progress(length(train_data), 1, "Training epoch $epoch :)")
-    losses = zeros(length(train_data))
-    @inbounds for (i, (x, y)) in enumerate(train_data)
-        loss, back = pullback(ps) do
+function train_model(opt, ps, train_loader; epoch=1)
+    progress_tracker = Progress(length(train_loader), 1, "Training epoch $epoch :)")
+    losses = zeros(length(train_loader))
+    @inbounds for (i, (x, y)) in enumerate(train_loader)
+        loss, grad = withgradient(ps) do
             model_loss(x, y)
         end
-        grad = back(1.0f0)
         Flux.update!(opt, ps, grad)
         losses[i] = loss
         ProgressMeter.next!(progress_tracker; showvalues=[(:loss, loss)])
@@ -115,16 +105,16 @@ end
 accuracy(ŷ, y) = mean(Flux.onecold(ŷ) .== Flux.onecold(y))
 
 "test_data should be a tuple of (images, labels)"
-function test_model(test_data)
+function test_model(test_loader)
     L, acc = 0.0f0, 0
-    @inbounds for (x, y) in test_data
+    @inbounds for (x, y) in test_loader
         L += model_loss(x, y)
 
         xnew = transform_image(x)
         ŷ = classifier(xnew)
         acc += accuracy(ŷ, y)
     end
-    return L / length(test_data), round(acc * 100 / length(test_data), digits=3)
+    return L / length(test_loader), round(acc * 100 / length(test_loader), digits=3)
 end
 
 ## === plotting functions
@@ -156,24 +146,30 @@ end
 
 ## ==== Models
 
-"Generates alignment parameters from image"
-localization_net = Chain(
-    x -> reshape(x, size(x)[1:2]..., 1, size(x)[end]), # reshape for Conv layer
-    Conv((5, 5), 1 => 20, stride=(1, 1), pad=(0, 0)),
-    MaxPool((2, 2)), Conv((5, 5), 20 => 20, stride=(1, 1), pad=(0, 0)),
-    flatten,
-    Dense(1280, 50, relu),
-    Dense(50, 6)) |> dev
+# Generates alignment parameters from image
+localization_net =
+    Chain(
+        x -> reshape(x, size(x)[1:2]..., 1, size(x)[end]), # reshape for Conv layer
+        Conv((5, 5), 1 => 20, stride=(1, 1), pad=(0, 0)),
+        MaxPool((2, 2)),
+        Conv((5, 5), 20 => 20, stride=(1, 1), pad=(0, 0)),
+        flatten,
+        Dense(1280, 50, relu),
+        Dense(50, 6),
+    ) |> dev
 
-"Classifies images transformed by localization_net"
-classifier = Chain(
-    Conv((3, 3), 1 => 32, relu), MaxPool((2, 2)),
-    Conv((3, 3), 32 => 32, relu), MaxPool((2, 2)),
-    flatten,
-    Dense(800, 256, relu),
-    Dense(256, 10),
-    softmax
-) |> dev
+# Classifies images transformed by localization_net
+classifier =
+    Chain(
+        Conv((3, 3), 1 => 32, relu),
+        MaxPool((2, 2)),
+        Conv((3, 3), 32 => 32, relu),
+        MaxPool((2, 2)),
+        flatten,
+        Dense(800, 256, relu),
+        Dense(256, 10),
+        softmax,
+    ) |> dev
 
 ps = Flux.params(localization_net, classifier)
 ## ====
@@ -181,19 +177,16 @@ ps = Flux.params(localization_net, classifier)
 const sampling_grid = get_sampling_grid(args[:img_size]...) |> dev
 ## ====
 
-# get data
-xs_train, xs_test, ys_train, ys_test = get_mnist_data() |> dev
-
 opt = ADAM(1e-4)
 
-for epoch in 1:args[:n_epochs]
-    ls = train_model(opt, ps, zip(xs_train, ys_train); epoch=epoch)
+for epoch = 1:args[:n_epochs]
+    ls = train_model(opt, ps, train_loader; epoch=epoch)
 
-    # visualize transformations for a random test set batch
-    p = plot_stn(rand(xs_test))
+    # visualize transformations on the first test batch
+    p = plot_stn(first(test_loader)[1])
     display(p)
 
-    Ltest, test_acc = test_model(zip(xs_test, ys_test))
+    Ltest, test_acc = test_model(test_loader)
     @info "Test loss: $Ltest, test accuracy: $test_acc%"
 
 end
