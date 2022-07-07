@@ -1,21 +1,23 @@
 # Spatial Transformer Network
 
-#=
-In this tutorial we'll build a spatial transformer network that will transform MNIST
-digits for classification by a convolutional network
 
-* [Spatial Transformer Networks](https://proceedings.neurips.cc/paper/2015/hash/33ceb07bf4eeb3da587e268d663aba1a-Abstract.html)
+# In this tutorial we'll build a spatial transformer network that will transform MNIST
+# digits for classification by a convolutional network
 
-=#
+# * [Spatial Transformer Networks](https://proceedings.neurips.cc/paper/2015/hash/33ceb07bf4eeb3da587e268d663aba1a-Abstract.html)
+
 
 using LinearAlgebra, Statistics
 using Flux, Zygote, CUDA
 using Flux: batch, onehotbatch, flatten, unsqueeze
+using Flux.Data: DataLoader
 using MLDatasets
-using IterTools: partition
+using Base.Iterators: partition
 using Plots
 using ProgressMeter
 using ProgressMeter: Progress
+
+CUDA.allowscalar(false)
 ## =====
 
 args = Dict(
@@ -30,11 +32,12 @@ dev = has_cuda() ? gpu : cpu
 ## ==== Data 
 train_digits, train_labels = MNIST(split=:train)[:]
 test_digits, test_labels = MNIST(split=:test)[:]
+
 train_labels = Float32.(Flux.onehotbatch(train_labels, 0:9))
 test_labels = Float32.(Flux.onehotbatch(test_labels, 0:9))
 
-train_loader = Flux.Data.DataLoader((train_digits |> dev, train_labels |> dev), batchsize=args[:bsz], shuffle=true, partial=false)
-test_loader = Flux.Data.DataLoader((test_digits |> dev, test_labels |> dev), batchsize=args[:bsz], shuffle=true, partial=false)
+train_loader = DataLoader((train_digits |> dev, train_labels |> dev), batchsize=args[:bsz], shuffle=true, partial=false)
+test_loader = DataLoader((test_digits |> dev, test_labels |> dev), batchsize=args[:bsz], shuffle=true, partial=false)
 
 ## ==== interpolation functions
 
@@ -84,14 +87,15 @@ function model_loss(x, y)
     # transform x with localization net
     xnew = transform_image(x)
     ŷ = classifier(xnew)
-    Flux.crossentropy(ŷ, y)
+    Flux.logitcrossentropy(ŷ, y)
 end
 
-"train_data should be a tuple of (images, labels)"
+accuracy(ŷ, y) = mean(Flux.onecold(ŷ) .== Flux.onecold(y))
+
 function train_model(opt, ps, train_loader; epoch=1)
     progress_tracker = Progress(length(train_loader), 1, "Training epoch $epoch :)")
     losses = zeros(length(train_loader))
-    @inbounds for (i, (x, y)) in enumerate(train_loader)
+    for (i, (x, y)) in enumerate(train_loader)
         loss, grad = withgradient(ps) do
             model_loss(x, y)
         end
@@ -102,12 +106,9 @@ function train_model(opt, ps, train_loader; epoch=1)
     return losses
 end
 
-accuracy(ŷ, y) = mean(Flux.onecold(ŷ) .== Flux.onecold(y))
-
-"test_data should be a tuple of (images, labels)"
 function test_model(test_loader)
     L, acc = 0.0f0, 0
-    @inbounds for (x, y) in test_loader
+    for (x, y) in test_loader
         L += model_loss(x, y)
 
         xnew = transform_image(x)
@@ -136,10 +137,10 @@ transformation by localization net
 """
 function plot_stn(x; ncols=6)
     n_samples = ncols^2
-    x̄ = transform_image(x) |> cpu
+    xnew = transform_image(x) |> cpu
     p1 = plot_batch(cpu(x)[:, :, 1:n_samples])
     title!("Original")
-    p2 = plot_batch(x̄[:, :, 1, 1:n_samples])
+    p2 = plot_batch(xnew[:, :, 1, 1:n_samples])
     title!("Transformed")
     plot(p1, p2)
 end
@@ -149,7 +150,7 @@ end
 # Generates alignment parameters from image
 localization_net =
     Chain(
-        x -> reshape(x, size(x)[1:2]..., 1, size(x)[end]), # reshape for Conv layer
+        x -> unsqueeze(x, 3), # add channel dimension for Conv layer
         Conv((5, 5), 1 => 20, stride=(1, 1), pad=(0, 0)),
         MaxPool((2, 2)),
         Conv((5, 5), 20 => 20, stride=(1, 1), pad=(0, 0)),
@@ -168,7 +169,6 @@ classifier =
         flatten,
         Dense(800, 256, relu),
         Dense(256, 10),
-        softmax,
     ) |> dev
 
 ps = Flux.params(localization_net, classifier)
@@ -177,7 +177,7 @@ ps = Flux.params(localization_net, classifier)
 const sampling_grid = get_sampling_grid(args[:img_size]...) |> dev
 ## ====
 
-opt = ADAM(1e-4)
+opt = Adam(1e-4)
 
 for epoch = 1:args[:n_epochs]
     ls = train_model(opt, ps, train_loader; epoch=epoch)
@@ -188,6 +188,5 @@ for epoch = 1:args[:n_epochs]
 
     Ltest, test_acc = test_model(test_loader)
     @info "Test loss: $Ltest, test accuracy: $test_acc%"
-
 end
 

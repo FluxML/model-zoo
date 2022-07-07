@@ -3,7 +3,6 @@ CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
-IterTools = "c8e1da08-722c-5040-9ed9-7db0dc04731e"
 MLDatasets = "eb30cadb-4394-5ae3-aed4-317e484a6458"
 NNlib = "872c559c-99b0-510c-b3b7-b6c96a88d5cd"
 NNlibCUDA = "a00861dc-f156-4864-bf3c-e6376f28a68d"
@@ -15,3 +14,4 @@ ZygoteRules = "700de1a5-db45-46bc-99cf-38207098b444"
 [compat]
 DrWatson = "2.7.6"
 julia = "1.7.0"
+
