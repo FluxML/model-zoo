@@ -158,6 +158,7 @@ function train(; kws...)
 
     ## DATA
     train_loader, test_loader = get_data(args)
+    @info "Dataset MNIST: $(size(train_loader.data[1],4)) train and $(size(test_loader.data[1],4)) test examples"
     @info "Dataset MNIST: $(train_loader.nobs) train and $(test_loader.nobs) test examples"
 
     ## MODEL AND OPTIMIZER
