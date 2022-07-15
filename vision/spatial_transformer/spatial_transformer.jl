@@ -34,8 +34,13 @@ dev = has_cuda() ? gpu : cpu
 train_digits, train_labels = MNIST(split=:train)[:]
 test_digits, test_labels = MNIST(split=:test)[:]
 
+<<<<<<< HEAD
 train_labels_onehot = Flux.onehotbatch(train_labels, 0:9)
 test_labels_onehot = Flux.onehotbatch(test_labels, 0:9)
+=======
+train_labels = Flux.onehotbatch(train_labels, 0:9)
+test_labels = Flux.onehotbatch(test_labels, 0:9)
+>>>>>>> 71579bdcf53944b2de0efb8b06c32bf949a43435
 
 train_loader = DataLoader((train_digits |> dev, train_labels_onehot |> dev), batchsize=args[:bsz], shuffle=true, partial=false)
 test_loader = DataLoader((test_digits |> dev, test_labels_onehot |> dev), batchsize=args[:bsz], shuffle=true, partial=false)
