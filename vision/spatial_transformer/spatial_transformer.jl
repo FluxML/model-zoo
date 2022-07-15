@@ -2,11 +2,12 @@
 
 
 # In this tutorial we'll build a spatial transformer network that will transform MNIST
-# digits for classification by a convolutional network
+# digits for classification by a CNN
 
 # * [Spatial Transformer Networks](https://proceedings.neurips.cc/paper/2015/hash/33ceb07bf4eeb3da587e268d663aba1a-Abstract.html)
 
-
+using DrWatson
+@quickactivate "spatial_transformer"
 using LinearAlgebra, Statistics
 using Flux, Zygote, CUDA
 using Flux: batch, onehotbatch, flatten, unsqueeze
@@ -33,11 +34,11 @@ dev = has_cuda() ? gpu : cpu
 train_digits, train_labels = MNIST(split=:train)[:]
 test_digits, test_labels = MNIST(split=:test)[:]
 
-train_labels = Float32.(Flux.onehotbatch(train_labels, 0:9))
-test_labels = Float32.(Flux.onehotbatch(test_labels, 0:9))
+train_labels_onehot = Flux.onehotbatch(train_labels, 0:9)
+test_labels_onehot = Flux.onehotbatch(test_labels, 0:9)
 
-train_loader = DataLoader((train_digits |> dev, train_labels |> dev), batchsize=args[:bsz], shuffle=true, partial=false)
-test_loader = DataLoader((test_digits |> dev, test_labels |> dev), batchsize=args[:bsz], shuffle=true, partial=false)
+train_loader = DataLoader((train_digits |> dev, train_labels_onehot |> dev), batchsize=args[:bsz], shuffle=true, partial=false)
+test_loader = DataLoader((test_digits |> dev, test_labels_onehot |> dev), batchsize=args[:bsz], shuffle=true, partial=false)
 
 ## ==== interpolation functions
 
@@ -108,12 +109,13 @@ end
 
 function test_model(test_loader)
     L, acc = 0.0f0, 0
-    for (x, y) in test_loader
-        L += model_loss(x, y)
+    for (i, (x, y)) in enumerate(test_loader)
 
+        L += model_loss(x, y)
         xnew = transform_image(x)
         ŷ = classifier(xnew)
         acc += accuracy(ŷ, y)
+
     end
     return L / length(test_loader), round(acc * 100 / length(test_loader), digits=3)
 end
@@ -158,6 +160,7 @@ localization_net =
         Dense(1280, 50, relu),
         Dense(50, 6),
     ) |> dev
+
 
 # Classifies images transformed by localization_net
 classifier =
