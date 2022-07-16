@@ -10,4 +10,4 @@ Spatial transformer networks perform differentiable affine transformations on im
 ![spatial_transformer](https://pytorch.org/tutorials/_images/stn-arch.png)
 
 
-![stn_visualization]("/images/stn_example.png")
+![stn_visualization](images/stn_example.png)
