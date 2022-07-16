@@ -1,6 +1,5 @@
 # Spatial Transformer Network
 
-#
 In this tutorial we'll build a spatial transformer network that will transform MNIST
 digits for classification by a CNN:
 
