@@ -48,6 +48,7 @@ using ProgressMeter: @showprogress
 import MLDatasets
 import BSON
 using CUDA
+using MLUtils
 
 # We set default values for the arguments for the function `train`:
 
@@ -158,7 +159,7 @@ function train(; kws...)
 
     ## DATA
     train_loader, test_loader = get_data(args)
-    @info "Dataset MNIST: $(train_loader.nobs) train and $(test_loader.nobs) test examples"
+    @info "Dataset MNIST: $(MLUtils.numobs(train_loader.data)) train and $(MLUtils.numobs(test_loader.data)) test examples"
 
     ## MODEL AND OPTIMIZER
     model = LeNet5() |> device
