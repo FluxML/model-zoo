@@ -18,7 +18,7 @@
 # To run this example, we need the following packages:
 
 using Flux
-using Flux: logitcrossentropy, normalise, onecold, onehotbatch
+using Flux: logitcrossentropy, normalise, onecold, onehotbatch, params
 using Statistics: mean
 using Parameters: @with_kw
 
@@ -37,8 +37,8 @@ end
 
 
 function get_processed_data(args)
-    labels = Flux.Data.Iris.labels()
-    features = Flux.Data.Iris.features()
+    labels = Flux.load_iris()[2]
+    features = Flux.load_iris()[1]
 
     ## Subract mean, divide by std dev for normed mean of 0 and std dev of 1.
     normed_features = normalise(features, dims=2)
@@ -102,7 +102,7 @@ function train(; kws...)
 	
     ## Define loss function to be used in training
     ## For numerical stability, we use here logitcrossentropy
-    loss(x, y) = logitcrossentropy(model(x), y)
+    loss(x, y) = Flux.Losses.logitcrossentropy(model(x), y)
 	
     ## Training
     ## Gradient descent optimiser with learning rate `args.lr`
