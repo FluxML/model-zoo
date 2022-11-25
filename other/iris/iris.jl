@@ -44,9 +44,9 @@ end
 
 function get_processed_data(args)
 
-    iris = Iris()
-    labels = iris.targets |> Matrix |> vec
-    features = iris.features |> Matrix |> permutedims
+    iris = Iris(as_df=false)
+    labels = iris.targets |> vec
+    features = iris.features 
 
     ## Subract mean, divide by std dev for normed mean of 0 and std dev of 1.
     normed_features = normalise(features, dims=2)
