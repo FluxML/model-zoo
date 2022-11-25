@@ -17,8 +17,14 @@
 
 # To run this example, we need the following packages:
 
+# Suggested in the documentation readme, but uncomment if installation of packages is needed
+# import Pkg 
+# Pkg.activate(".") # activate in the folder of iris
+# Pkg.instantiate() # installs required packages for the example
+
 using Flux
-using Flux: logitcrossentropy, normalise, onecold, onehotbatch
+using Flux: logitcrossentropy, normalise, onecold, onehotbatch, params
+using MLDatasets, DataFrames
 using Statistics: mean
 using Parameters: @with_kw
 
@@ -37,8 +43,10 @@ end
 
 
 function get_processed_data(args)
-    labels = Flux.Data.Iris.labels()
-    features = Flux.Data.Iris.features()
+
+    iris = Iris()
+    labels = iris.targets |> Matrix |> vec
+    features = iris.features |> Matrix |> permutedims
 
     ## Subract mean, divide by std dev for normed mean of 0 and std dev of 1.
     normed_features = normalise(features, dims=2)
