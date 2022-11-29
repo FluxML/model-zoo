@@ -8,7 +8,9 @@ ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 TensorBoardLogger = "899adc3e-224a-11e9-021f-63837185c80f"
 
 [compat]
-MLDatasets = "0.6"
-julia = "1.5"
-CUDA = "3.0"
+MLDatasets = "0.7"
+julia = "1.6"
+CUDA = "3"
+ProgressMeter = "1"
+TensorBoardLogger = "0.1"
 Flux = "0.13"
