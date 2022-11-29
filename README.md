@@ -1,3 +1,5 @@
+<img align="right" width="200px" src="https://github.com/FluxML/Optimisers.jl/raw/master/docs/src/assets/logo.png">
+
 # Flux Model Zoo
 
 This repository contains various demonstrations of the [Flux](http://fluxml.github.io/) machine learning library. Any of these may freely be used as a starting point for your own models.
@@ -48,32 +50,49 @@ You can contribute in one of the following ways
   * Mention the technique that is being demonstrated. Briefly describe the learning technique being demonstrated (Computer vision, regression, NLP, time series, etc.).
 * Write in-depth tutorials for a model: You can further extend the documentation of a model and create a tutorial to explain in more detail the architecture, the training routine, use your own data, and so forth. After you write a tutorial, create a PR with it for the [Tutorials](https://fluxml.ai/tutorials.html) section on the [FluxML](https://fluxml.ai/) website.
 
+### Update a model
+
+Each example lists the version of Flux for which it was most recently updated.
+Bringing them up to the latest is a great way to learn!
+Flux has a [NEWS page](https://github.com/FluxML/Flux.jl/blob/master/NEWS.md) listing important changes.
+(For other packages, see their releses page: [MLUtils](https://github.com/JuliaML/MLUtils.jl/releases), [MLDatasets](https://github.com/JuliaML/MLDatasets.jl/releases), etc.)
+
+To run the old examples, Flux v0.11 can be installed and run on [Julia 1.6, the LTS version](https://julialang.org/downloads/#long_term_support_release).
+Flux v0.12 works on Julia 1.8.
+Flux 0.13 is the latest right now, marked with ☀️.
 
 ## Examples Listing
 
-* Vision
-  * MNIST
-    * [Simple multi-layer perceptron](vision/mlp_mnist)
-    * [Simple ConvNet (LeNet)](vision/conv_mnist)
-    * [Variational Auto-Encoder](vision/vae_mnist)
-    * [Deep Convolutional Generative Adversarial Networks](vision/dcgan_mnist)
-    * [Conditional Deep Convolutional Generative Adversarial Networks](vision/cdcgan_mnist)
-    * [Score-Based Generative Modeling (Diffusion Model)](vision/diffusion_mnist)
-  * [VGG 16/19 on CIFAR10](vision/vgg_cifar10)
-* Text
-  * [CharRNN](text/char-rnn)
-  * [Character-level language detection](text/lang-detection)
-  * [Seq2Seq phoneme detection on CMUDict](text/phonemes)
-  * [Recursive net on IMDB sentiment treebank](text/treebank)
-* Other & contributed models
-  * [Differential Equations](https://diffeqflux.sciml.ai/dev)
-  * [BitString Parity Challenge](other/bitstring-parity)
-  * [MLP on housing data](other/housing/housing.jl) (low level API)
-  * [FizzBuzz](other/fizzbuzz/fizzbuzz.jl)
-  * [Meta-Learning](contrib/meta-learning/MetaLearning.jl)
-  * [Logistic Regression Iris](other/iris/iris.jl)
-  * [Speech recognition](contrib/audio/speech-blstm)
-* Tutorials
-  * [A 60 Minute Blitz](tutorials/60-minute-blitz/60-minute-blitz.jl)
-  * [DataLoader example with image data](tutorials/dataloader)
-  * [Transfer Learning](tutorials/transfer_learning/transfer_learning.jl)
+**Vision**
+* MNIST
+  * [Simple multi-layer perceptron](vision/mlp_mnist) ☀️ v0.13
+  * [Simple ConvNet (LeNet)](vision/conv_mnist) ☀️ v0.13
+  * [Variational Auto-Encoder](vision/vae_mnist) 🌤 v0.12
+  * [Deep Convolutional Generative Adversarial Networks](vision/dcgan_mnist) ☀️ v0.13
+  * [Conditional Deep Convolutional Generative Adversarial Networks](vision/cdcgan_mnist) ☀️ v0.13
+  * [Score-Based Generative Modeling (Diffusion Model)](vision/diffusion_mnist) ☀️ v0.13
+  * [Spatial Transformer](vision/spatial_transformer) ☀️ v0.13
+* CIFAR10
+  * [VGG 16/19](vision/vgg_cifar10) ☀️ v0.13
+  * [ConvMixer "Patches are all you need?"](vision/convmixer_cifar10/) ☀️ v0.13
+
+**Text**
+* [CharRNN](text/char-rnn) ⛅️ v0.11
+* [Character-level language detection](text/lang-detection) ⛅️ v0.11
+* [Seq2Seq phoneme detection on CMUDict](text/phonemes) ⛅️ v0.11
+* [Recursive net on IMDB sentiment treebank](text/treebank) ⛅️ v0.11
+
+**Other** & contributed models
+* [Logistic Regression Iris](other/iris/iris.jl) ☀️ v0.13
+* [Autoregressive Model](other/autoregressive-process/) ☀️ v0.13
+* [BitString Parity Challenge](other/bitstring-parity) ⛅️ v0.11
+* [MLP on housing data](other/housing/) (low level API) ⛅️ v0.11
+* [FizzBuzz](other/fizzbuzz/fizzbuzz.jl) ⛅️ v0.11
+* [Meta-Learning](contrib/meta-learning/MetaLearning.jl) ❄️ v0.7
+* [Speech recognition](contrib/audio/speech-blstm) ❄️ v0.6
+
+**Tutorials**
+* [A 60 Minute Blitz](tutorials/60-minute-blitz/60-minute-blitz.jl) ⛅️ v0.11
+* [DataLoader example with image data](tutorials/dataloader) ⛅️ v0.11
+* [Transfer Learning](tutorials/transfer_learning/transfer_learning.jl) ⛅️ v0.11
+
