@@ -70,7 +70,10 @@ To run the old examples, Flux v0.11 can be installed and run on [Julia 1.6, the 
   * [Deep Convolutional Generative Adversarial Networks](vision/dcgan_mnist) ☀️ v0.13
   * [Conditional Deep Convolutional Generative Adversarial Networks](vision/cdcgan_mnist) ☀️ v0.13
   * [Score-Based Generative Modeling (Diffusion Model)](vision/diffusion_mnist) ☀️ v0.13
-* [VGG 16/19 on CIFAR10](vision/vgg_cifar10) ☀️ v0.13
+  * [Spatial Transformer](vision/spatial_transformer) ☀️ v0.13
+* CIFAR10
+  * [VGG 16/19](vision/vgg_cifar10) ☀️ v0.13
+  * [ConvMixer "Patches are all you need?"](vision/convmixer_cifar10/) ☀️ v0.13
 
 **Text**
 * [CharRNN](text/char-rnn) ⛅️ v0.11
@@ -79,11 +82,12 @@ To run the old examples, Flux v0.11 can be installed and run on [Julia 1.6, the 
 * [Recursive net on IMDB sentiment treebank](text/treebank) ⛅️ v0.11
 
 **Other** & contributed models
+* [Logistic Regression Iris](other/iris/iris.jl) ☀️ v0.13
+* [Autoregressive Model](other/autoregressive-process/) ☀️ v0.13
 * [BitString Parity Challenge](other/bitstring-parity) ⛅️ v0.11
 * [MLP on housing data](other/housing/) (low level API) ⛅️ v0.11
 * [FizzBuzz](other/fizzbuzz/fizzbuzz.jl) ⛅️ v0.11
 * [Meta-Learning](contrib/meta-learning/MetaLearning.jl) ❄️ v0.7
-* [Logistic Regression Iris](other/iris/iris.jl) ☀️ v0.13
 * [Speech recognition](contrib/audio/speech-blstm) ❄️ v0.6
 
 **Tutorials**
