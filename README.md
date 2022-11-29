@@ -53,12 +53,13 @@ You can contribute in one of the following ways
 ### Update a model
 
 Each example lists the version of Flux for which it was most recently updated.
-Moving them to the latest is a great way to learn!
-
+Bringing them up to the latest is a great way to learn!
 Flux has a [NEWS page](https://github.com/FluxML/Flux.jl/blob/master/NEWS.md) listing important changes.
+(For other packages, see their releses page: [MLUtils](https://github.com/JuliaML/MLUtils.jl/releases), [MLDatasets](https://github.com/JuliaML/MLDatasets.jl/releases), etc.)
 
-To run the old examples, Flux v0.11 can be installed and run on [Julia 1.6, the LTS version](https://julialang.org/downloads/#long_term_support_release). Flux v0.12 and later work on Julia 1.8.
-
+To run the old examples, Flux v0.11 can be installed and run on [Julia 1.6, the LTS version](https://julialang.org/downloads/#long_term_support_release).
+Flux v0.12 works on Julia 1.8.
+Flux 0.13 is the latest right now, marked with ☀️.
 
 ## Examples Listing
 
