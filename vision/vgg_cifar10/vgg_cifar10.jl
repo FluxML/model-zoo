@@ -1,7 +1,6 @@
 using Flux
 using Flux: onehotbatch, onecold, flatten
 using Flux.Losses: logitcrossentropy
-using Parameters: @with_kw
 using Statistics: mean
 using CUDA
 using MLDatasets: CIFAR10
@@ -77,7 +76,7 @@ function vgg16()
     ])
 end
 
-@with_kw mutable struct Args
+Base.@kwdef mutable struct Args
     batchsize::Int = 128
     lr::Float32 = 3f-4
     epochs::Int = 50
