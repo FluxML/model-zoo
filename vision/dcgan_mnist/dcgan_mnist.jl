@@ -96,7 +96,7 @@ function train(; kws...)
     if CUDA.has_cuda()
         @info "Training on GPU"
     else
-        @warn "Training on CPU, this will be very slow!"
+        @warn "Training on CPU, this will be very slow!"  # 20 mins/epoch
     end
 
     # Load MNIST dataset
