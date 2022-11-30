@@ -94,11 +94,9 @@ function train(; kws...)
     hparams = HyperParams(; kws...)
 
     if CUDA.has_cuda()
-        device = gpu
         @info "Training on GPU"
     else
-        device = cpu
-        @info "Training on CPU"
+        @warn "Training on CPU, this will be very slow!"
     end
 
     # Load MNIST dataset
@@ -106,15 +104,15 @@ function train(; kws...)
     # Normalize to [-1, 1]
     image_tensor = reshape(@.(2f0 * images - 1f0), 28, 28, 1, :)
     # Partition into batches
-    data = [image_tensor[:, :, :, r] |> device for r in partition(1:60000, hparams.batch_size)]
+    data = [image_tensor[:, :, :, r] |> gpu for r in partition(1:60000, hparams.batch_size)]
 
-    fixed_noise = [randn(Float32, hparams.latent_dim, 1) |> device for _=1:hparams.output_x*hparams.output_y]
+    fixed_noise = [randn(Float32, hparams.latent_dim, 1) |> gpu for _=1:hparams.output_x*hparams.output_y]
 
     # Discriminator
-    dscr = Discriminator() |> device
+    dscr = Discriminator() |> gpu
 
     # Generator
-    gen =  Generator(hparams.latent_dim) |> device
+    gen =  Generator(hparams.latent_dim) |> gpu
 
     # Optimizers
     opt_dscr = Flux.setup(Adam(hparams.lr_dscr), dscr)
