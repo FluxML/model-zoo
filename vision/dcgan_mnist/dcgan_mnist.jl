@@ -72,25 +72,21 @@ generator_loss(fake_output) = logitbinarycrossentropy(fake_output, 1)
 function train_discriminator!(gen, dscr, x, opt_dscr, hparams)
     noise = randn!(similar(x, (hparams.latent_dim, hparams.batch_size))) 
     fake_input = gen(noise)
-    ps = Flux.params(dscr)
     # Taking gradient
-    loss, back = Flux.pullback(ps) do
+    loss, grads = Flux.withgradient(dscr) do dscr
         discriminator_loss(dscr(x), dscr(fake_input))
     end
-    grad = back(1f0)
-    update!(opt_dscr, ps, grad)
+    update!(opt_dscr, dscr, grads[1])
     return loss
 end
 
 function train_generator!(gen, dscr, x, opt_gen, hparams)
     noise = randn!(similar(x, (hparams.latent_dim, hparams.batch_size))) 
-    ps = Flux.params(gen)
     # Taking gradient
-    loss, back = Flux.pullback(ps) do
+    loss, grads = Flux.withgradient(gen) do gen
         generator_loss(dscr(gen(noise)))
     end
-    grad = back(1f0)
-    update!(opt_gen, ps, grad)
+    update!(opt_gen, gen, grads[1])
     return loss
 end
 
@@ -122,8 +118,8 @@ function train(; kws...)
     gen =  Generator(hparams.latent_dim) |> device
 
     # Optimizers
-    opt_dscr = ADAM(hparams.lr_dscr)
-    opt_gen = ADAM(hparams.lr_gen)
+    opt_dscr = Flux.setup(Adam(hparams.lr_dscr), dscr)
+    opt_gen = Flux.setup(Adam(hparams.lr_gen), gen)
 
     # Training
     train_steps = 0
