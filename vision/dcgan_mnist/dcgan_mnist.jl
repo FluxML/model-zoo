@@ -5,21 +5,20 @@ using Flux.Losses: logitbinarycrossentropy
 using Images
 using MLDatasets
 using Statistics
-using Parameters: @with_kw
 using Printf
 using Random
 using CUDA
 CUDA.allowscalar(false)
 
-@with_kw struct HyperParams
+Base.@kwdef struct HyperParams
     batch_size::Int = 128
     latent_dim::Int = 100
     epochs::Int = 20
     verbose_freq::Int = 1000
     output_x::Int = 6
     output_y::Int = 6
-    lr_dscr::Float64 = 0.0002
-    lr_gen::Float64 = 0.0002
+    lr_dscr::Float32 = 0.0002
+    lr_gen::Float32 = 0.0002
 end
 
 function create_output_image(gen, fixed_noise, hparams)
