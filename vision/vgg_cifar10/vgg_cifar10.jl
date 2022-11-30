@@ -1,12 +1,11 @@
 using Flux
 using Flux: onehotbatch, onecold, flatten
 using Flux.Losses: logitcrossentropy
-using Flux.Data: DataLoader
 using Parameters: @with_kw
 using Statistics: mean
 using CUDA
 using MLDatasets: CIFAR10
-using MLUtils: splitobs
+using MLUtils: splitobs, DataLoader
 
 if CUDA.has_cuda()
     @info "CUDA is on"
@@ -80,7 +79,7 @@ end
 
 @with_kw mutable struct Args
     batchsize::Int = 128
-    lr::Float64 = 3e-4
+    lr::Float32 = 3f-4
     epochs::Int = 50
     valsplit::Float64 = 0.1
 end
@@ -98,12 +97,11 @@ function train(; kws...)
     @info("Constructing Model")	
     m = vgg16() |> gpu
 
-    loss(x, y) = logitcrossentropy(m(x), y)
+    loss(m, x, y) = logitcrossentropy(m(x), y)
 
     ## Training
     # Defining the optimizer
-    opt = ADAM(args.lr)
-    ps = Flux.params(m)
+    opt = Flux.setup(Adam(args.lr), m)
 
     @info("Training....")
     # Starting to train models
@@ -112,14 +110,14 @@ function train(; kws...)
 
         for (x, y) in train_loader
             x, y = x |> gpu, y |> gpu
-            gs = Flux.gradient(() -> loss(x,y), ps)
-            Flux.update!(opt, ps, gs)
+            gs = Flux.gradient(m -> loss(m,x,y), m)
+            Flux.update!(opt, m, gs[1])
         end
 
         validation_loss = 0f0
         for (x, y) in val_loader
             x, y = x |> gpu, y |> gpu
-            validation_loss += loss(x, y)
+            validation_loss += loss(m,x, y)
         end
         validation_loss /= length(val_loader)
         @show validation_loss

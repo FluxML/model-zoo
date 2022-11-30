@@ -9,6 +9,6 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
 CUDA = "3"
-Flux = "0.13"
 MLDatasets = "0.6"
+Flux = "0.13.9"
 julia = "1.6"
