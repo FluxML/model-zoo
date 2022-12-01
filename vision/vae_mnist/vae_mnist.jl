@@ -14,7 +14,6 @@ using Flux.Data: DataLoader
 using Images
 using Logging: with_logger
 using MLDatasets
-using Parameters: @with_kw
 using ProgressMeter: Progress, next!
 using TensorBoardLogger: TBLogger, tb_overwrite
 using Random
@@ -73,8 +72,8 @@ function convert_to_image(x, y_size)
 end
 
 # arguments for the `train` function 
-@with_kw mutable struct Args
-    η = 1e-3                # learning rate
+Base.@kwdef mutable struct Args
+    η = 1f-3                # learning rate
     λ = 0.01f0              # regularization paramater
     batch_size = 128        # batch size
     sample_size = 10        # sampling size for output    
