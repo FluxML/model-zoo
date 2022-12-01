@@ -8,9 +8,8 @@ using BSON
 using CUDA
 using DrWatson: struct2dict
 using Flux
-using Flux: @functor, chunk
+using Flux: @functor, chunk, DataLoader
 using Flux.Losses: logitbinarycrossentropy
-using Flux.Data: DataLoader
 using Images
 using Logging: with_logger
 using MLDatasets
@@ -20,7 +19,7 @@ using Random
 
 # load MNIST images and return loader
 function get_data(batch_size)
-    xtrain, ytrain = MLDatasets.MNIST(:train)[:]
+    xtrain, ytrain = MLDatasets.MNIST(split=:train)[:]
     xtrain = reshape(xtrain, 28^2, :)
     DataLoader((xtrain, ytrain), batchsize=batch_size, shuffle=true)
 end
@@ -61,7 +60,7 @@ function model_loss(encoder, decoder, λ, x, device)
     kl_q_p = 0.5f0 * sum(@. (exp(2f0 * logσ) + μ^2 -1f0 - 2f0 * logσ)) / len
 
     logp_x_z = -logitbinarycrossentropy(decoder_z, x, agg=sum) / len
-    # regularization
+    # L2 regularization
     reg = λ * sum(x->sum(x.^2), Flux.params(decoder))
     
     -logp_x_z + kl_q_p + reg
