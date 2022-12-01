@@ -111,10 +111,8 @@ function train(; kws...)
     decoder = Decoder(args.input_dim, args.latent_dim, args.hidden_dim) |> device
 
     # ADAM optimizer
-    opt = ADAM(args.η)
-    
-    # parameters
-    ps = Flux.params(encoder.linear, encoder.μ, encoder.logσ, decoder)
+    opt_enc = Flux.setup(Adam(args.η), encoder)
+    opt_dec = Flux.setup(Adam(args.η), decoder)
 
     !ispath(args.save_path) && mkpath(args.save_path)
 
@@ -138,11 +136,13 @@ function train(; kws...)
         progress = Progress(length(loader))
 
         for (x, _) in loader 
-            loss, back = Flux.pullback(ps) do
-                model_loss(encoder, decoder, args.λ, x |> device, device)
+            x_dev = x |> device
+            loss, back = Flux.pullback(encoder, decoder) do enc, dec
+                model_loss(enc, dec, args.λ, x_dev, device)
             end
-            grad = back(1f0)
-            Flux.Optimise.update!(opt, ps, grad)
+            grad_enc, grad_dec = back(1f0)
+            Flux.Optimise.update!(opt_enc, encoder, grad_enc)
+            Flux.Optimise.update!(opt_dec, decoder, grad_dec)
             # progress meter
             next!(progress; showvalues=[(:loss, loss)]) 
 
