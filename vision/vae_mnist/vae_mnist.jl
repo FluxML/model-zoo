@@ -139,8 +139,8 @@ function train(; kws...)
                 model_loss(enc, dec, args.λ, x_dev, device)
             end
             grad_enc, grad_dec = back(1f0)
-            Flux.Optimise.update!(opt_enc, encoder, grad_enc)
-            Flux.Optimise.update!(opt_dec, decoder, grad_dec)
+            Flux.update!(opt_enc, encoder, grad_enc)
+            Flux.update!(opt_dec, decoder, grad_dec)
             # progress meter
             next!(progress; showvalues=[(:loss, loss)]) 
 

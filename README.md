@@ -67,7 +67,7 @@ Flux 0.13 is the latest right now, marked with ☀️.
 * MNIST
   * [Simple multi-layer perceptron](vision/mlp_mnist) ☀️ v0.13
   * [Simple ConvNet (LeNet)](vision/conv_mnist) ☀️ v0.13
-  * [Variational Auto-Encoder](vision/vae_mnist) 🌤 v0.12
+  * [Variational Auto-Encoder](vision/vae_mnist) ☀️ v0.13 +
   * [Deep Convolutional Generative Adversarial Networks](vision/dcgan_mnist) ☀️ v0.13
   * [Conditional Deep Convolutional Generative Adversarial Networks](vision/cdcgan_mnist) ☀️ v0.13
   * [Score-Based Generative Modeling (Diffusion Model)](vision/diffusion_mnist) ☀️ v0.13
