@@ -1,0 +1,9 @@
+[deps]
+BSON = "fbb218c0-5317-5bc6-957e-2ee96dd4b1f0"
+Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
+MLDatasets = "eb30cadb-4394-5ae3-aed4-317e484a6458"
+
+[compat]
+Flux = "0.13.9"
+MLDatasets = "0.7.6"
+julia = "1.6"
