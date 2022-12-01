@@ -1,6 +1,7 @@
 using Flux, MLDatasets
-using Flux: onehotbatch, onecold, DataLoader, Optimiser
+using Flux: onehotbatch, onecold, DataLoader, flatten, OptimiserChain
 using BSON:@save,@load
+Flux._old_to_new(rule::ClipNorm) = Flux.Optimisers.ClipNorm(rule.thresh)  # wrong in Flux 0.13.9
 
 
 function ConvMixer(in_channels, kernel_size, patch_size, dim, depth, N_classes)
@@ -77,7 +78,7 @@ function train(n_epochs=100)
 
     #params: warning, the training can be long with these params
     train_loader, test_loader = get_data(128)
-    η = 3e-4
+    η = 3f-4
     in_channel = 3
     patch_size = 2
     kernel_size = 7
@@ -103,18 +104,18 @@ function train(n_epochs=100)
 
     model = ConvMixer(in_channel, kernel_size, patch_size, dim, depth, 10) |> device
 
-    ps = params(model)
-    opt = Optimiser(
+    opt = OptimiserChain(
             WeightDecay(1f-3), 
-            ClipNorm(1.0),
-            ADAM(η)
+            ClipNorm(1f0),
+            Adam(η),
             )
+    state = Flux.setup(opt, model)
 
     for epoch in 1:n_epochs
         for (x,y) in train_loader
             x,y = x|>device, y|>device
-            gr = gradient(()->Flux.logitcrossentropy(model(x), y, agg=sum), ps)
-            Flux.Optimise.update!(opt, ps, gr)
+            grads = gradient(m->Flux.logitcrossentropy(m(x), y, agg=sum), model)
+            Flux.Optimise.update!(state, model, grads[1])
         end
 
         #logging
