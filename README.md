@@ -59,7 +59,7 @@ Flux has a [NEWS page](https://github.com/FluxML/Flux.jl/blob/master/NEWS.md) li
 
 To run the old examples, Flux v0.11 can be installed and run on [Julia 1.6, the LTS version](https://julialang.org/downloads/#long_term_support_release).
 Flux v0.12 works on Julia 1.8.
-Flux v0.13 is the latest right now, marked with ☀️; models upgraded to explicit parameters have a +.
+Flux v0.13 is the latest right now, marked with ☀️; models upgraded touse  explicitgradients have a +.
 
 ## Examples Listing
 
