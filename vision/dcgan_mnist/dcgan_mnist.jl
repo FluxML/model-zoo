@@ -5,21 +5,20 @@ using Flux.Losses: logitbinarycrossentropy
 using Images
 using MLDatasets
 using Statistics
-using Parameters: @with_kw
 using Printf
 using Random
 using CUDA
 CUDA.allowscalar(false)
 
-@with_kw struct HyperParams
+Base.@kwdef struct HyperParams
     batch_size::Int = 128
     latent_dim::Int = 100
     epochs::Int = 20
     verbose_freq::Int = 1000
     output_x::Int = 6
     output_y::Int = 6
-    lr_dscr::Float64 = 0.0002
-    lr_gen::Float64 = 0.0002
+    lr_dscr::Float32 = 0.0002
+    lr_gen::Float32 = 0.0002
 end
 
 function create_output_image(gen, fixed_noise, hparams)
@@ -72,25 +71,21 @@ generator_loss(fake_output) = logitbinarycrossentropy(fake_output, 1)
 function train_discriminator!(gen, dscr, x, opt_dscr, hparams)
     noise = randn!(similar(x, (hparams.latent_dim, hparams.batch_size))) 
     fake_input = gen(noise)
-    ps = Flux.params(dscr)
     # Taking gradient
-    loss, back = Flux.pullback(ps) do
+    loss, grads = Flux.withgradient(dscr) do dscr
         discriminator_loss(dscr(x), dscr(fake_input))
     end
-    grad = back(1f0)
-    update!(opt_dscr, ps, grad)
+    update!(opt_dscr, dscr, grads[1])
     return loss
 end
 
 function train_generator!(gen, dscr, x, opt_gen, hparams)
     noise = randn!(similar(x, (hparams.latent_dim, hparams.batch_size))) 
-    ps = Flux.params(gen)
     # Taking gradient
-    loss, back = Flux.pullback(ps) do
+    loss, grads = Flux.withgradient(gen) do gen
         generator_loss(dscr(gen(noise)))
     end
-    grad = back(1f0)
-    update!(opt_gen, ps, grad)
+    update!(opt_gen, gen, grads[1])
     return loss
 end
 
@@ -98,12 +93,10 @@ function train(; kws...)
     # Model Parameters
     hparams = HyperParams(; kws...)
 
-    if CUDA.has_cuda()
-        device = gpu
+    if CUDA.functional()
         @info "Training on GPU"
     else
-        device = cpu
-        @info "Training on CPU"
+        @warn "Training on CPU, this will be very slow!"  # 20 mins/epoch
     end
 
     # Load MNIST dataset
@@ -111,19 +104,19 @@ function train(; kws...)
     # Normalize to [-1, 1]
     image_tensor = reshape(@.(2f0 * images - 1f0), 28, 28, 1, :)
     # Partition into batches
-    data = [image_tensor[:, :, :, r] |> device for r in partition(1:60000, hparams.batch_size)]
+    data = [image_tensor[:, :, :, r] |> gpu for r in partition(1:60000, hparams.batch_size)]
 
-    fixed_noise = [randn(Float32, hparams.latent_dim, 1) |> device for _=1:hparams.output_x*hparams.output_y]
+    fixed_noise = [randn(Float32, hparams.latent_dim, 1) |> gpu for _=1:hparams.output_x*hparams.output_y]
 
     # Discriminator
-    dscr = Discriminator() |> device
+    dscr = Discriminator() |> gpu
 
     # Generator
-    gen =  Generator(hparams.latent_dim) |> device
+    gen =  Generator(hparams.latent_dim) |> gpu
 
     # Optimizers
-    opt_dscr = ADAM(hparams.lr_dscr)
-    opt_gen = ADAM(hparams.lr_gen)
+    opt_dscr = Flux.setup(Adam(hparams.lr_dscr), dscr)
+    opt_gen = Flux.setup(Adam(hparams.lr_gen), gen)
 
     # Training
     train_steps = 0
