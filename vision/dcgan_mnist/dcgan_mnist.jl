@@ -93,7 +93,7 @@ function train(; kws...)
     # Model Parameters
     hparams = HyperParams(; kws...)
 
-    if CUDA.has_cuda()
+    if CUDA.functional()
         @info "Training on GPU"
     else
         @warn "Training on CPU, this will be very slow!"  # 20 mins/epoch
