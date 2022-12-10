@@ -100,6 +100,8 @@ function train_model(opt, localization_net, classifier, train_loader; epoch=1)
         loss, grads = withgradient(localization_net, classifier) do ln, cl
             model_loss(localization_net, classifier, x, y)
         end
+        # Both the optimiser state `opt` and the gradients match a
+        # tuple of the two networks, so we can `update!` all at once: 
         Flux.update!(opt, (localization_net, classifier), grads)
         losses[i] = loss
         ProgressMeter.next!(progress_tracker; showvalues=[(:loss, loss)])
@@ -174,7 +176,6 @@ classifier =
         Dense(256, 10),
     ) |> dev
 
-# ps = Flux.params(localization_net, classifier)
 ## ====
 # create sampling grid
 const sampling_grid = get_sampling_grid(args[:img_size]...) |> dev
