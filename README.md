@@ -59,16 +59,16 @@ Flux has a [NEWS page](https://github.com/FluxML/Flux.jl/blob/master/NEWS.md) li
 
 To run the old examples, Flux v0.11 can be installed and run on [Julia 1.6, the LTS version](https://julialang.org/downloads/#long_term_support_release).
 Flux v0.12 works on Julia 1.8.
-Flux 0.13 is the latest right now, marked with ☀️.
+Flux v0.13 is the latest right now, marked with ☀️; models upgraded to use  explicit gradients (v0.13.9+) have a `+`.
 
-## Examples Listing
+## Examples in the Model Zoo
 
 **Vision**
 * MNIST
   * [Simple multi-layer perceptron](vision/mlp_mnist) ☀️ v0.13
   * [Simple ConvNet (LeNet)](vision/conv_mnist) ☀️ v0.13
   * [Variational Auto-Encoder](vision/vae_mnist) ☀️ v0.13 +
-  * [Deep Convolutional Generative Adversarial Networks](vision/dcgan_mnist) ☀️ v0.13
+  * [Deep Convolutional Generative Adversarial Networks](vision/dcgan_mnist) ☀️ v0.13 +
   * [Conditional Deep Convolutional Generative Adversarial Networks](vision/cdcgan_mnist) ☀️ v0.13
   * [Score-Based Generative Modeling (Diffusion Model)](vision/diffusion_mnist) ☀️ v0.13
   * [Spatial Transformer](vision/spatial_transformer) ☀️ v0.13
@@ -96,3 +96,10 @@ Flux 0.13 is the latest right now, marked with ☀️.
 * [DataLoader example with image data](tutorials/dataloader) ⛅️ v0.11
 * [Transfer Learning](tutorials/transfer_learning/transfer_learning.jl) ⛅️ v0.11
 
+## Examples Elsewhere
+
+**MLJFlux** is a bridge to [MLJ.jl](https://github.com/alan-turing-institute/MLJ.jl), a package for mostly non-neural-network machine learning. They have some examples of interest, which like the model zoo's examples, each include a local Project & Manifest file:
+
+* [Iris](https://github.com/FluxML/MLJFlux.jl/tree/dev/examples/iris) ⛅️ v0.11
+* [Boston](https://github.com/FluxML/MLJFlux.jl/tree/dev/examples/boston) ⛅️ v0.11
+* [MNIST](https://github.com/FluxML/MLJFlux.jl/tree/dev/examples/mnist) ⛅️ v0.11
