@@ -8,20 +8,18 @@ using BSON
 using CUDA
 using DrWatson: struct2dict
 using Flux
-using Flux: @functor, chunk
+using Flux: @functor, chunk, DataLoader
 using Flux.Losses: logitbinarycrossentropy
-using Flux.Data: DataLoader
 using Images
 using Logging: with_logger
 using MLDatasets
-using Parameters: @with_kw
 using ProgressMeter: Progress, next!
 using TensorBoardLogger: TBLogger, tb_overwrite
 using Random
 
 # load MNIST images and return loader
 function get_data(batch_size)
-    xtrain, ytrain = MLDatasets.MNIST(:train)[:]
+    xtrain, ytrain = MLDatasets.MNIST(split=:train)[:]
     xtrain = reshape(xtrain, 28^2, :)
     DataLoader((xtrain, ytrain), batchsize=batch_size, shuffle=true)
 end
@@ -62,7 +60,7 @@ function model_loss(encoder, decoder, λ, x, device)
     kl_q_p = 0.5f0 * sum(@. (exp(2f0 * logσ) + μ^2 -1f0 - 2f0 * logσ)) / len
 
     logp_x_z = -logitbinarycrossentropy(decoder_z, x, agg=sum) / len
-    # regularization
+    # L2 regularization
     reg = λ * sum(x->sum(x.^2), Flux.params(decoder))
     
     -logp_x_z + kl_q_p + reg
@@ -73,8 +71,8 @@ function convert_to_image(x, y_size)
 end
 
 # arguments for the `train` function 
-@with_kw mutable struct Args
-    η = 1e-3                # learning rate
+Base.@kwdef mutable struct Args
+    η = 1f-3                # learning rate
     λ = 0.01f0              # regularization paramater
     batch_size = 128        # batch size
     sample_size = 10        # sampling size for output    
@@ -111,10 +109,8 @@ function train(; kws...)
     decoder = Decoder(args.input_dim, args.latent_dim, args.hidden_dim) |> device
 
     # ADAM optimizer
-    opt = ADAM(args.η)
-    
-    # parameters
-    ps = Flux.params(encoder.linear, encoder.μ, encoder.logσ, decoder)
+    opt_enc = Flux.setup(Adam(args.η), encoder)
+    opt_dec = Flux.setup(Adam(args.η), decoder)
 
     !ispath(args.save_path) && mkpath(args.save_path)
 
@@ -138,11 +134,13 @@ function train(; kws...)
         progress = Progress(length(loader))
 
         for (x, _) in loader 
-            loss, back = Flux.pullback(ps) do
-                model_loss(encoder, decoder, args.λ, x |> device, device)
+            x_dev = x |> device
+            loss, back = Flux.pullback(encoder, decoder) do enc, dec
+                model_loss(enc, dec, args.λ, x_dev, device)
             end
-            grad = back(1f0)
-            Flux.Optimise.update!(opt, ps, grad)
+            grad_enc, grad_dec = back(1f0)
+            Flux.update!(opt_enc, encoder, grad_enc)
+            Flux.update!(opt_dec, decoder, grad_dec)
             # progress meter
             next!(progress; showvalues=[(:loss, loss)]) 
 
