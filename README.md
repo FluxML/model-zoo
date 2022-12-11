@@ -1,4 +1,4 @@
-<img align="right" width="200px" src="https://github.com/FluxML/Optimisers.jl/raw/master/docs/src/assets/logo.png">
+<img align="right" width="200px" src="https://fluxml.ai/assets/logo-small.png">
 
 # Flux Model Zoo
 
@@ -8,13 +8,13 @@ The models are broadly categorised into the folders [vision](/vision) (e.g. larg
 
 ## Usage
 
-The zoo comes with its own [Julia project](https://pkgdocs.julialang.org/v1/environments/#Using-someone-else's-project), which lists the packages you need to run the models. You can run the models by opening Julia in the project folder and running
+Each model comes with its own [Julia project](https://pkgdocs.julialang.org/v1/environments/#Using-someone-else's-project). To use this, open Julia in the project folder, and enter
 
 ```julia
 using Pkg; Pkg.activate("."); Pkg.instantiate()
 ```
 
-to install all needed packages. Then you can run the model code with `include("<model-to-run>.jl")` or by running the model script line-by-line.
+This will install all needed packages, at the exact versions when the model was last updated. Then you can run the model code with `include("<model-to-run>.jl")`, or by running the model script line-by-line.
 
 Models may also be run with NVIDIA GPU support, if you have a CUDA installed. Most models will have this capability by default, pointed at by calls to `gpu` in the model code.
 
