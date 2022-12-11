@@ -13,5 +13,6 @@ ZygoteRules = "700de1a5-db45-46bc-99cf-38207098b444"
 
 [compat]
 DrWatson = "2.7.6"
+Flux = "0.13.9"
+MLDatasets = "0.7.6"
 julia = "1.7.0"
-

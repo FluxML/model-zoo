@@ -71,7 +71,7 @@ Flux v0.13 is the latest right now, marked with ☀️; models upgraded to use  
   * [Deep Convolutional Generative Adversarial Networks](vision/dcgan_mnist) ☀️ v0.13 +
   * [Conditional Deep Convolutional Generative Adversarial Networks](vision/cdcgan_mnist) ☀️ v0.13
   * [Score-Based Generative Modeling (Diffusion Model)](vision/diffusion_mnist) ☀️ v0.13
-  * [Spatial Transformer](vision/spatial_transformer) ☀️ v0.13
+  * [Spatial Transformer](vision/spatial_transformer) ☀️ v0.13 +
 * CIFAR10
   * [VGG 16/19](vision/vgg_cifar10) ☀️ v0.13
   * [ConvMixer "Patches are all you need?"](vision/convmixer_cifar10/) ☀️ v0.13

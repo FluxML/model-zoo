@@ -11,7 +11,7 @@ using DrWatson
 using LinearAlgebra, Statistics
 using Flux, Zygote, CUDA
 using Flux: batch, onehotbatch, flatten, unsqueeze
-using Flux.Data: DataLoader
+using Flux: DataLoader
 using MLDatasets
 using Base.Iterators: partition
 using Plots
@@ -79,28 +79,30 @@ end
 
 ## ==== model functions
 "transform image with localization net"
-function transform_image(x)
+function transform_image(localization_net, x)
     thetas = localization_net(x)
     return sample_patch(x, thetas, sampling_grid)
 end
 
-function model_loss(x, y)
+function model_loss(localization_net, classifier, x, y)
     # transform x with localization net
-    xnew = transform_image(x)
+    xnew = transform_image(localization_net, x)
     ŷ = classifier(xnew)
     Flux.logitcrossentropy(ŷ, y)
 end
 
 accuracy(ŷ, y) = mean(Flux.onecold(ŷ) .== Flux.onecold(y))
 
-function train_model(opt, ps, train_loader; epoch=1)
+function train_model(opt, localization_net, classifier, train_loader; epoch=1)
     progress_tracker = Progress(length(train_loader), 1, "Training epoch $epoch :)")
     losses = zeros(length(train_loader))
     for (i, (x, y)) in enumerate(train_loader)
-        loss, grad = withgradient(ps) do
-            model_loss(x, y)
+        loss, grads = withgradient(localization_net, classifier) do ln, cl
+            model_loss(localization_net, classifier, x, y)
         end
-        Flux.update!(opt, ps, grad)
+        # Both the optimiser state `opt` and the gradients match a
+        # tuple of the two networks, so we can `update!` all at once: 
+        Flux.update!(opt, (localization_net, classifier), grads)
         losses[i] = loss
         ProgressMeter.next!(progress_tracker; showvalues=[(:loss, loss)])
     end
@@ -111,8 +113,8 @@ function test_model(test_loader)
     L, acc = 0.0f0, 0
     for (i, (x, y)) in enumerate(test_loader)
 
-        L += model_loss(x, y)
-        xnew = transform_image(x)
+        L += model_loss(localization_net, classifier, x, y)
+        xnew = transform_image(localization_net, x)
         ŷ = classifier(xnew)
         acc += accuracy(ŷ, y)
 
@@ -174,16 +176,15 @@ classifier =
         Dense(256, 10),
     ) |> dev
 
-ps = Flux.params(localization_net, classifier)
 ## ====
 # create sampling grid
 const sampling_grid = get_sampling_grid(args[:img_size]...) |> dev
 ## ====
 
-opt = Adam(1e-4)
+opt = Flux.setup(Adam(1f-4), (localization_net, classifier))
 
 for epoch = 1:args[:n_epochs]
-    ls = train_model(opt, ps, train_loader; epoch=epoch)
+    ls = train_model(opt, localization_net, classifier, train_loader; epoch=epoch)
 
     # visualize transformations on the first test batch
     p = plot_stn(first(test_loader)[1])
