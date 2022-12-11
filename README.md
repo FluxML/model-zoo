@@ -61,7 +61,7 @@ To run the old examples, Flux v0.11 can be installed and run on [Julia 1.6, the 
 Flux v0.12 works on Julia 1.8.
 Flux v0.13 is the latest right now, marked with ☀️; models upgraded to use  explicit gradients (v0.13.9+) have a `+`.
 
-## [Examples in the Model Zoo](#list)
+## Examples in the Model Zoo <a name="list"></a>
 
 **Vision**
 * MNIST
