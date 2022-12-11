@@ -22,16 +22,14 @@
 # Pkg.activate(".") # activate in the folder of iris
 # Pkg.instantiate() # installs required packages for the example
 
-using Flux
-using Flux: logitcrossentropy, normalise, onecold, onehotbatch, params
-using MLDatasets, DataFrames
+using Flux, MLDatasets, DataFrames
+using Flux: logitcrossentropy, normalise, onecold, onehotbatch
 using Statistics: mean
-using Parameters: @with_kw
 
 # We set default values for the learning rate *lr* (for the training routine) and the number of
 # times that we repeat the train data (more information below):
 
-@with_kw mutable struct Args
+Base.@kwdef mutable struct Args
     lr::Float64 = 0.5
     repeat::Int = 110
 end
@@ -42,7 +40,7 @@ end
 # it (normalize and One-Hot encode the class labels), and split it into train and test datasets.
 
 
-function get_processed_data(args)
+function get_processed_data(args::Args)
 
     iris = Iris(as_df=false)
     labels = iris.targets |> vec
@@ -85,10 +83,10 @@ end
 # is a table that summarises how good the model is for predicting data. 
 
 
-accuracy(x, y, model) = mean(onecold(model(x)) .== onecold(y))
+accuracy(model, x, y) = mean(onecold(model(x)) .== onecold(y))
 
 
-function confusion_matrix(X, y, model)
+function confusion_matrix(model, X, y)
     ŷ = onehotbatch(onecold(model(X)), 1:3)
     y * transpose(ŷ)
 end
@@ -110,14 +108,16 @@ function train(; kws...)
 	
     ## Define loss function to be used in training
     ## For numerical stability, we use here logitcrossentropy
-    loss(x, y) = logitcrossentropy(model(x), y)
+    loss(m, x, y) = logitcrossentropy(m(x), y)
 	
     ## Training
     ## Gradient descent optimiser with learning rate `args.lr`
     optimiser = Descent(args.lr)
+    ## For any other optimiser, we would need e.g. 
+    ## opt_state = Flux.setup(Momentum(args.lr), model)
 
     println("Starting training.")
-    Flux.train!(loss, params(model), train_data, optimiser)
+    Flux.train!(loss, model, train_data, optimiser)
 	
     return model, test_data
 end
@@ -143,7 +143,7 @@ end
 function test(model, test)
     ## Testing model performance on test data 
     X_test, y_test = test
-    accuracy_score = accuracy(X_test, y_test, model)
+    accuracy_score = accuracy(model, X_test, y_test)
 
     println("\nAccuracy: $accuracy_score")
 
@@ -153,7 +153,7 @@ function test(model, test)
     ## To avoid confusion, here is the definition of a 
     ## Confusion Matrix: https://en.wikipedia.org/wiki/Confusion_matrix
     println("\nConfusion Matrix:\n")
-    display(confusion_matrix(X_test, y_test, model))
+    display(confusion_matrix(model, X_test, y_test))
 end
 
 # ## Run the example

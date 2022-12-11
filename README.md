@@ -83,7 +83,7 @@ Flux v0.13 is the latest right now, marked with ☀️; models upgraded to use  
 * [Recursive net on IMDB sentiment treebank](text/treebank) ⛅️ v0.11
 
 **Other** & contributed models
-* [Logistic Regression Iris](other/iris/iris.jl) ☀️ v0.13
+* [Logistic Regression Iris](other/iris/iris.jl) ☀️ v0.13 +
 * [Autoregressive Model](other/autoregressive-process/) ☀️ v0.13 +
 * [BitString Parity Challenge](other/bitstring-parity) ⛅️ v0.11
 * [MLP on housing data](other/housing/) (low level API) ⛅️ v0.11
