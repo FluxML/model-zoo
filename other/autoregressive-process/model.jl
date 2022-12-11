@@ -47,40 +47,40 @@ function generate_train_test_data(args)
         (Xtrain, Xtest, ytrain, ytest))
 end
 
+function mse_loss(model, x, y)
+    # Warm up recurrent model on first observation
+    model(x[1])
+    # Compute mean squared error loss on the rest of the sequence
+    mean(Flux.Losses.mse.([model(xᵢ) for xᵢ ∈ x[2:end]], y[2:end]))
+end
+
 # Trains and outputs the model according to the chosen hyperparameters `args`
 function train_model(args)
     Random.seed!(args.seed)
     # Create recurrent model
-    m = build_model(args)
+    model = build_model(args)
     # Get data
     Xtrain, Xtest, ytrain, ytest = generate_train_test_data(args)
 
-    opt = args.opt(args.η)
-    θ = Flux.params(m) # Keep track of model parameters
-    function loss(x, y)
-        # Warm up recurrent model on first observation
-        m(x[1])
-        # Compute mean squared error loss on the rest of the sequence
-        mean(Flux.Losses.mse.([m(xᵢ) for xᵢ ∈ x[2:end]], y[2:end]))
-    end
+    opt = Flux.setup(args.opt(args.η), model)
     # Training loop
     for i ∈ 1:args.epochs
-        Flux.reset!(m) # Reset hidden state of the recurrent model
+        Flux.reset!(model) # Reset hidden state of the recurrent model
         # Compute the gradients of the loss function
-        ∇ = gradient(θ) do
-            loss(Xtrain, ytrain)
+        (∇m,) = gradient(model) do m
+            mse_loss(m, Xtrain, ytrain)
         end
-        Flux.update!(opt, θ, ∇) # Update model parameters
+        Flux.update!(opt, model, ∇m) # Update model parameters
         if args.verbose && i % 10 == 0 # Log results every 10 epochs
             # Compute loss on train and test set for logging (important: the model must be reset!)
-            Flux.reset!(m)
-            train_loss = loss(Xtrain, ytrain)
-            Flux.reset!(m)
-            test_loss = loss(Xtest, ytest)
+            Flux.reset!(model)
+            train_loss = mse_loss(model, Xtrain, ytrain)
+            Flux.reset!(model)
+            test_loss = mse_loss(model, Xtest, ytest)
             @info "Epoch $i / $(args.epochs), train loss: $(round(train_loss, digits=3)) | test loss: $(round(test_loss, digits=3))"
         end
     end
-    return m
+    return model
 end
 
 cd(@__DIR__)
