@@ -60,11 +60,6 @@ function getdata(args)
 
     ## an array of all unique characters
     alphabet = [unique(text)..., '_']
-
-    
-    # text = map(ch -> onehot(ch, alphabet), text)
-    # println(typeof(text))
-    # stop = onehot('_', alphabet)
     stop = '_'
 
     N = length(alphabet)
