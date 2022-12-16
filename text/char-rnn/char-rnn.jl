@@ -30,15 +30,17 @@ using Flux: onehot, chunk, batchseq, throttle, logitcrossentropy
 using StatsBase: wsample
 using Base.Iterators: partition
 using Parameters: @with_kw
+using Random: shuffle
 
 # We set default values for the hyperparameters:
 
 @with_kw mutable struct Args
-    lr::Float64 = 1e-2	# Learning rate
-    seqlen::Int = 50	# Length of batch sequences
-    nbatch::Int = 50	# Number of batches text is divided into
-    throttle::Int = 30	# Throttle timeout
-    epochs::Int = 2     # Number of Epochs
+    lr::Float64 = 1e-2	       # Learning rate
+    seqlen::Int = 50	       # Length of batch sequences
+    batchsz::Int = 50	       # Number of sequences in each batch
+    epochs::Int = 3            # Number of Epochs
+    usegpu::Bool = true        # Whether or not to use the GPU
+    testpercent::Float64 = .05 # percent of corpus examples to use for testing
 end
 
 # ## Data
@@ -49,22 +51,30 @@ end
 
 function getdata(args)
     ## Download the data if not downloaded as 'input.txt'
-    isfile("input.txt") ||
-        download("https://cs.stanford.edu/people/karpathy/char-rnn/shakespeare_input.txt","input.txt")
+    isfile("input.txt") || download(
+        "https://cs.stanford.edu/people/karpathy/char-rnn/shakespeare_input.txt",
+        "input.txt",
+    )
 
-    text = collect(String(read("input.txt")))
-    
+    text = String(read("input.txt"))
+
     ## an array of all unique characters
     alphabet = [unique(text)..., '_']
+
     
-    text = map(ch -> onehot(ch, alphabet), text)
-    stop = onehot('_', alphabet)
+    # text = map(ch -> onehot(ch, alphabet), text)
+    # println(typeof(text))
+    # stop = onehot('_', alphabet)
+    stop = '_'
 
     N = length(alphabet)
     
-    ## Partitioning the data as sequence of batches, which are then collected as array of batches
-    Xs = collect(partition(batchseq(chunk(text, args.nbatch), stop), args.seqlen))
-    Ys = collect(partition(batchseq(chunk(text[2:end], args.nbatch), stop), args.seqlen))
+    ## Partitioning the data as sequence of batches, which are then collected 
+    ## as array of batches
+    Xs = partition(batchseq(chunk(text, args.batchsz), stop), args.seqlen)
+    Ys = partition(batchseq(chunk(text[2:end], args.batchsz), stop), args.seqlen)
+    Xs = [Flux.onehotbatch.(bs, (alphabet,)) for bs in Xs]
+    Ys = [Flux.onehotbatch.(bs, (alphabet,)) for bs in Ys]
 
     return Xs, Ys, N, alphabet
 end
@@ -100,12 +110,26 @@ end
 function train(; kws...)
     ## Initialize the parameters
     args = Args(; kws...)
+
+    ## Select the correct device
+    device = args.usegpu ? gpu : cpu
     
     ## Get Data
     Xs, Ys, N, alphabet = getdata(args)
 
+    ## Shuffle and create a train/test split
+    L = length(Xs)
+    perm = shuffle(1:length(Xs))
+    split = floor(Int, (1-args.testpercent) * L)
+
+    trainX, trainY = Xs[perm[1:split]],       Ys[perm[1:split]]
+    testX,  testY =  Xs[perm[(split+1):end]], Ys[perm[(split+1):end]]
+
+    ## Move all data to the correct device
+    trainX, trainY, testX, testY = device.((trainX, trainY, testX, testY))
+
     ## Constructing Model
-    m = build_model(N)
+    m = build_model(N) |> device
 
     function loss(xs, ys)
         Flux.reset!(m)
@@ -114,13 +138,19 @@ function train(; kws...)
     
     ## Training
     opt = ADAM(args.lr)
-    tx, ty = (Xs[5], Ys[5])
-    evalcb = () -> @show loss(tx, ty)
 
     @info "Start Training, total $(args.epochs) epochs"
     for epoch = 1:args.epochs
         @info "Epoch $(epoch) / $(args.epochs)"
-        Flux.train!(loss, params(m), zip(Xs, Ys), opt, cb = throttle(evalcb, args.throttle))
+        Flux.train!(
+            loss,
+            Flux.params(m),
+            zip(trainX, trainY),
+            opt
+        )
+        
+        ## Show loss-per-character over the test set
+        @show sum(loss.(testX, testY)) / (args.batchsz * args.seqlen * length(testX))
     end
     return m, alphabet
 end
@@ -146,7 +176,7 @@ end
 # [softmax function](https://fluxml.ai/Flux.jl/stable/models/nnlib/#Softmax) 
 # to get the probability distribution of the output and then it chooses randomly the prediction.
 
-function sample_data(m, alphabet, len; seed="")
+function sample_data(m, alphabet, len; seed = "")
     m = cpu(m)
     Flux.reset!(m)
     buf = IOBuffer()
