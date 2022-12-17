@@ -4,5 +4,5 @@ Parameters = "d96e819e-fc66-5662-9728-84c9c7592b0a"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
-Flux = "0.11.4"
-julia = "1.5"
+Flux = "0.13.9"
+julia = "1.6"

@@ -3,8 +3,8 @@
 # In this example, we create a character-level recurrent neural network. 
 # A recurrent neural network (RNN) outputs a prediction and a hidden state at each step 
 # of the computation. The hidden state captures historical information of a sequence 
-# (i.e. the neural network has memory) and the output is the final prediction of the model. 
-# We use this type of neural network to model sequences such as text or time series. 
+# (i.e., the neural network has memory) and the output is the final prediction of the model.
+# We use this type of neural network to model sequences such as text or time series.
 
 
 # ![char-rnn](../char-rnn/docs/rnn-train.png)
@@ -38,9 +38,9 @@ using Random: shuffle
     lr::Float64 = 1e-2	       # Learning rate
     seqlen::Int = 50	       # Length of batch sequences
     batchsz::Int = 50	       # Number of sequences in each batch
-    epochs::Int = 3            # Number of Epochs
-    usegpu::Bool = true        # Whether or not to use the GPU
-    testpercent::Float64 = .05 # percent of corpus examples to use for testing
+    epochs::Int = 3            # Number of epochs
+    usegpu::Bool = false       # Whether or not to use the GPU
+    testpercent::Float64 = .05 # Percent of corpus examples to use for testing
 end
 
 # ## Data
