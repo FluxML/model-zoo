@@ -3,7 +3,7 @@
 # Hence the order of the generated process is equal to the length of `ϕ`.
 # `s` indicates the total length of the series to be generated.
 function generate_process(ϕ::AbstractVector{Float32}, s::Int)
-    @assert s > 0 "s must be positive"
+    s > 0 || error("s must be positive")
     # Generate white noise
     ϵ = randn(Float32, s)
     # Initialize time series
@@ -27,13 +27,13 @@ end
 # sequences of length `s`. Each new sequence is shifted by `r` steps.
 # When s == r,  the series is split into non-overlapping batches.
 function batch_timeseries(X, s::Int, r::Int)
-    @assert r > 0 "r must be positive"
+    r > 0 || error("r must be positive")
     # If X is passed in format T×1, reshape it
     if isa(X, AbstractVector)       
         X = permutedims(X)
     end
     T = size(X, 2)
-    @assert s ≤ T "s cannot be longer than the total series"
+    s ≤ T || error("s cannot be longer than the total series")
     # Ensure uniform sequence lengths by dropping the first observations until
     # the total sequence length matches a multiple of the batchsize
     X = X[:, ((T - s) % r)+1:end]   
