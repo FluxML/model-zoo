@@ -1,12 +1,12 @@
-# RNN Character level
+# Character-Level RNN
 
 ![char-rnn](../char-rnn/docs/rnn-train.png)
 
 [Source](https://d2l.ai/chapter_recurrent-neural-networks/rnn.html#rnn-based-character-level-language-models)
 
-## Model information
+## Model Information
 
- A recurrent neural network (RNN) outputs a prediction and a hidden state at each step of the computation. The hidden state captures historical information of a sequence (i.e. the neural network has memory) and the output is the final prediction of the model. We use this type of neural network to model sequences such as text or time series. 
+ A recurrent neural network (RNN) outputs a prediction and a hidden state at each step of the computation. The hidden state captures historical information of a sequence (i.e., the neural network has memory) and the output is the final prediction of the model. We use this type of neural network to model sequences such as text or time series.
 
 
 ## Training
