@@ -77,7 +77,7 @@ Flux v0.13 is the latest right now, marked with ☀️; models upgraded to use  
   * [ConvMixer "Patches are all you need?"](vision/convmixer_cifar10/) ☀️ v0.13
 
 **Text**
-* [CharRNN](text/char-rnn) ☀️ v0.13.9
+* [CharRNN](text/char-rnn) ☀️ v0.13 +
 * [Character-level language detection](text/lang-detection) ⛅️ v0.11
 * [Seq2Seq phoneme detection on CMUDict](text/phonemes) ⛅️ v0.11
 * [Recursive net on IMDB sentiment treebank](text/treebank) ⛅️ v0.11
