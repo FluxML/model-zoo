@@ -109,14 +109,14 @@ function train(; kws...)
 
         for (x, y) in train_loader
             x, y = x |> gpu, y |> gpu
-            gs = Flux.gradient(m -> loss(m,x,y), m)
+            gs = Flux.gradient(m -> loss(m, x, y), m)
             Flux.update!(opt, m, gs[1])
         end
 
         validation_loss = 0f0
         for (x, y) in val_loader
             x, y = x |> gpu, y |> gpu
-            validation_loss += loss(m,x, y)
+            validation_loss += loss(m, x, y)
         end
         validation_loss /= length(val_loader)
         @show validation_loss
