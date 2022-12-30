@@ -42,7 +42,9 @@ end
 function getdata(args)
     ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"
 
-    ## Load dataset	
+    @info "Getting and transforming data"
+
+    ## Load dataset
     xtrain, ytrain = MLDatasets.MNIST(:train)[:]
     xtest, ytest = MLDatasets.MNIST(:test)[:]
 
@@ -131,6 +133,7 @@ function train(; kws...)
     ## Create test and train dataloaders
     train_loader, test_loader = getdata(args)
 
+    @info "Constructing model and starting training"
     ## Construct model
     model = build_model() |> device
     ps = Flux.params(model) ## model's trainable parameters
