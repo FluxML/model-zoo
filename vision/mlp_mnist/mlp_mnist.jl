@@ -103,7 +103,7 @@ function loss_and_accuracy(data_loader, model, device)
     for (x, y) in data_loader
         x, y = device(x), device(y)
         ŷ = model(x)
-        ls += logitcrossentropy(ŷ, y, agg=sum)
+        ls += loss(model, x, y)
         acc += sum(onecold(ŷ) .== onecold(y)) ## Decode the output of the model
         num +=  size(x)[end]
     end
