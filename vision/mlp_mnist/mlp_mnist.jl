@@ -139,7 +139,7 @@ function train(; kws...)
     model = build_model() |> device
 
     ## Optimizer
-    opt = Flux.setup(ADAM(args.η), model)
+    opt = Flux.setup(Adam(args.η), model)
 
     ## Training
     for epoch in 1:args.epochs
