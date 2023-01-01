@@ -89,7 +89,7 @@ end
 # Note that we use the functions [Dense](https://fluxml.ai/Flux.jl/stable/models/layers/#Flux.Dense) so that our model is *densely* (or fully) connected and [Chain](https://fluxml.ai/Flux.jl/stable/models/layers/#Flux.Chain) to chain the computation of the three layers.
 
 # ## Loss function
-loss(model, x, y) = logitcrossentropy(model(x), y)
+const loss = logitcrossentropy
 
 # Now, we define the loss function `loss_and_accuracy`. It expects the following arguments:
 # * ADataLoader object.
@@ -103,7 +103,7 @@ function loss_and_accuracy(data_loader, model, device)
     for (x, y) in data_loader
         x, y = device(x), device(y)
         ŷ = model(x)
-        ls += loss(model, x, y)
+        ls += loss(ŷ, y, agg=sum)
         acc += sum(onecold(ŷ) .== onecold(y)) ## Decode the output of the model
         num +=  size(x)[end]
     end
@@ -145,7 +145,7 @@ function train(; kws...)
     for epoch in 1:args.epochs
         for (x, y) in train_loader
             x, y = device(x), device(y) ## transfer data to device
-            gs = gradient(model -> loss(model, x, y), model) ## compute gradient
+            gs = gradient(m -> loss(m(x), y), model) ## compute gradient of the loss
             Flux.Optimise.update!(opt, model, gs[1]) ## update parameters
         end
 
