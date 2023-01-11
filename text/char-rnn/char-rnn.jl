@@ -26,14 +26,11 @@
 # To run this example, we need the following packages:
 
 using Flux
-using Flux: onehot, chunk, batchseq, logitcrossentropy
+using Flux: chunk, batchseq, logitcrossentropy
+using OneHotArrays
 using StatsBase: wsample
 using Base.Iterators: partition
 using Random: shuffle
-
-# Until this is merged: https://github.com/JuliaDiff/ChainRules.jl/pull/687
-using ChainRulesCore
-ChainRulesCore.@non_differentiable foreach(::Any, ::Tuple{})
 
 # We set default values for the hyperparameters:
 
