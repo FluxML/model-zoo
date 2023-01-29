@@ -1,6 +1,6 @@
 [deps]
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
-Parameters = "d96e819e-fc66-5662-9728-84c9c7592b0a"
+OneHotArrays = "0b1bfda6-eb8a-41d2-88d8-f5af5cad476f"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]

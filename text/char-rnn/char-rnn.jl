@@ -26,15 +26,15 @@
 # To run this example, we need the following packages:
 
 using Flux
-using Flux: onehot, chunk, batchseq, throttle, logitcrossentropy
+using Flux: chunk, batchseq, logitcrossentropy
+using OneHotArrays
 using StatsBase: wsample
 using Base.Iterators: partition
-using Parameters: @with_kw
 using Random: shuffle
 
 # We set default values for the hyperparameters:
 
-@with_kw mutable struct Args
+Base.@kwdef mutable struct Args
     lr::Float64 = 1e-2	       # Learning rate
     seqlen::Int = 50	       # Length of batch sequences
     batchsz::Int = 50	       # Number of sequences in each batch
@@ -49,7 +49,7 @@ end
 # for training the model:
 
 
-function getdata(args)
+function getdata(args::Args)
     ## Download the data if not downloaded as 'input.txt'
     isfile("input.txt") || download(
         "https://cs.stanford.edu/people/karpathy/char-rnn/shakespeare_input.txt",
@@ -87,11 +87,11 @@ end
 
 # We create the RNN with two Flux’s LSTM layers and an output layer of the size of the alphabet:
 
-function build_model(N)
+function build_model(N::Int)
     return Chain(
-            LSTM(N, 128),
-            LSTM(128, 128),
-            Dense(128, N))
+            LSTM(N => 128),
+            LSTM(128 => 128),
+            Dense(128 => N))
 end 
 
 # The size of the input and output layers is the same as the size of the alphabet. 
@@ -124,30 +124,29 @@ function train(; kws...)
     trainX, trainY, testX, testY = device.((trainX, trainY, testX, testY))
 
     ## Constructing Model
-    m = build_model(N) |> device
+    model = build_model(N) |> device
 
-    function loss(xs, ys)
+    function loss(m, xs, ys)
         Flux.reset!(m)
         return sum(logitcrossentropy.([m(x) for x in xs], ys))
     end
     
     ## Training
-    opt = ADAM(args.lr)
+    opt_state = Flux.setup(Adam(args.lr), model)
 
-    @info "Start Training, total $(args.epochs) epochs"
     for epoch = 1:args.epochs
-        @info "Epoch $(epoch) / $(args.epochs)"
+        @info "Training, epoch $(epoch) / $(args.epochs)"
         Flux.train!(
             loss,
-            Flux.params(m),
+            model,
             zip(trainX, trainY),
-            opt
+            opt_state
         )
         
         ## Show loss-per-character over the test set
-        @show sum(loss.(testX, testY)) / (args.batchsz * args.seqlen * length(testX))
+        @show sum(loss.(Ref(model), testX, testY)) / (args.batchsz * args.seqlen * length(testX))
     end
-    return m, alphabet
+    return model, alphabet
 end
 
 # The function `train` performs the following tasks:
@@ -160,8 +159,6 @@ end
 # * Sets the [ADAM optimiser](https://fluxml.ai/Flux.jl/stable/training/optimisers/#Flux.Optimise.RADAM) with the learning rate *lr* we defined above.
 # * Creates a [callback](https://fluxml.ai/Flux.jl/stable/training/training/#Callbacks) *evalcb* so that you can observe the training process (print the loss value).
 # * Runs the training loop using [Flux’s train!](https://fluxml.ai/Flux.jl/stable/training/training/#Flux.Optimise.train!). 
-# It uses the function [throttle](https://fluxml.ai/Flux.jl/stable/utilities/#Flux.throttle) so that the callback *evalcb* 
-# can only be triggered at most once during timeout seconds (as defined above).
 
 # ## Test the model
 
