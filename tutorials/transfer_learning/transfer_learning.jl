@@ -24,14 +24,14 @@
 
 using Flux, Metalhead
 using Flux: @epochs
-resnet = ResNet().layers
+resnet = ResNet(pretrain=true).layers
 
 # If we intended to add a new class of objects in there, we need only `reshape` the output from the previous layers accordingly.
 # Our model would look something like so:
 
 # ```julia
 # model = Chain(
-#   resnet[1:end-2],               # We only need to pull out the dense layer in here
+#   resnet[1],               # We only need to pull out the dense layer in here
 #   x -> reshape(x, size_we_want), # / global_avg_pooling layer
 #   Dense(reshaped_input_features, n_classes)
 # )
@@ -48,13 +48,15 @@ include("dataloader.jl")
 # Finally, the model looks something like:
 
 model = Chain(
-  resnet[1:end-2],
+  resnet[1],
+  AdaptiveMeanPool((1, 1)),
+  Flux.flatten,
   Dense(2048, 1000),  
   Dense(1000, 256),
   Dense(256, 2),        # we get 2048 features out, and we have 2 classes
 )
 
-# To speed up training, let’s move everything over to the GPU
+# To speed up training, let's move everything over to the GPU
 
 model = model |> gpu
 dataset = [gpu.(load_batch(10)) for i in 1:10]
@@ -65,7 +67,7 @@ opt = ADAM()
 loss(x,y) = Flux.Losses.logitcrossentropy(model(x), y)
 
 # Now to train
-# As discussed earlier, we don’t need to pass all the parameters to our training loop. Only the ones we need to
+# As discussed earlier, we don't need to pass all the parameters to our training loop. Only the ones we need to
 # fine-tune. Note that we could have picked and chosen the layers we want to train individually as well, but this
 # is sufficient for our use as of now.
 
