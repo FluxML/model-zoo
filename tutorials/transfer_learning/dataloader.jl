@@ -16,7 +16,7 @@ const CATS = filter(x -> occursin("cat", x), FILES)
 # Takes in the number of requested images per batch ("n") and image size
 # Returns a 4D array with images and an array of labels
 function load_batch(n = 10, nsize = (224,224); path = PATH)
-  if ((n % 2) != 0)
+  if isodd(n)
       print("Batch size must be an even number")
   end
   # Sample N dog images and N cat images, shuffle, and then combine them into a batch
