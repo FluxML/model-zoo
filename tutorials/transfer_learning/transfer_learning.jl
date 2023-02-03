@@ -23,7 +23,6 @@
 # We'll tune a pretrained ResNet from Metalhead as a proxy. We will tune the `Dense` layers in there on a new set of images.
 
 using Flux, Metalhead
-using Flux: @epochs
 resnet = ResNet(pretrain=true).layers
 
 # If we intended to add a new class of objects in there, we need only `reshape` the output from the previous layers accordingly.
@@ -51,8 +50,8 @@ model = Chain(
   resnet[1],
   AdaptiveMeanPool((1, 1)),
   Flux.flatten,
-  Dense(2048, 1000),  
-  Dense(1000, 256),
+  Dense(2048, 1000, relu),  
+  Dense(1000, 256, relu),
   Dense(256, 2),        # we get 2048 features out, and we have 2 classes
 )
 
@@ -75,8 +74,9 @@ ps = Flux.params(model[2:end])  # ignore the already trained layers of the ResNe
 
 # And now, let's train!
 
-@epochs 2 Flux.train!(loss, ps, dataset, opt)
-
+for epoch in 1:2
+  Flux.train!(loss, ps, dataset, opt)
+end
 # And there you have it, a pretrained model, fine tuned to tell the the dogs from the cats.
 
 # We can verify this too.
