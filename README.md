@@ -94,7 +94,7 @@ Flux v0.13 is the latest right now, marked with ☀️; models upgraded to use  
 **Tutorials**
 * [A 60 Minute Blitz](tutorials/60-minute-blitz/60-minute-blitz.jl) ⛅️ v0.11
 * [DataLoader example with image data](tutorials/dataloader) ⛅️ v0.11
-* [Transfer Learning](tutorials/transfer_learning/transfer_learning.jl) ⛅️ v0.13
+* [Transfer Learning](tutorials/transfer_learning/transfer_learning.jl) ☀️ v0.13
 
 ## Examples Elsewhere
 
