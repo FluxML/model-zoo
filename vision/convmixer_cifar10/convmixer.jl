@@ -1,34 +1,35 @@
-using Flux, MLDatasets
-using Flux: onehotbatch, onecold, DataLoader, flatten, OptimiserChain
+using Flux, CUDA, MLDatasets
+using Flux: onehotbatch, onecold, logitcrossentropy, DataLoader, flatten, OptimiserChain
 using BSON:@save,@load
+
+# This will silence questions from MLDatasets about whether to download new data:
 ENV["DATADEPS_ALWAYS_ACCEPT"] = "true" 
 
-# wrong in Flux 0.13.9
-Flux._old_to_new(rule::ClipNorm) = Flux.Optimisers.ClipNorm(rule.thresh) 
-
-# Also, quick test of train(epochs=10, images=128) shows increasing loss, not sure why.
-
 function ConvMixer(in_channels, kernel_size, patch_size, dim, depth, N_classes)
-    f = Chain(
-            Conv((patch_size, patch_size), in_channels=>dim, gelu; stride=patch_size),
-            BatchNorm(dim),
-            [
-                Chain(
-                    SkipConnection(Chain(Conv((kernel_size,kernel_size), dim=>dim, gelu; pad=SamePad(), groups=dim), BatchNorm(dim)), +),
-                    Chain(Conv((1,1), dim=>dim, gelu), BatchNorm(dim))
-                ) 
-                for i in 1:depth
-            ]...,
-            AdaptiveMeanPool((1,1)),
-            flatten,
-            Dense(dim,N_classes)
-        )
-    return f
+    Chain(
+        Conv((patch_size, patch_size), in_channels => dim, gelu; stride=patch_size),
+        BatchNorm(dim),
+        [
+            Chain(
+                SkipConnection(Chain(
+                    Conv((kernel_size,kernel_size), dim=>dim, gelu; pad=SamePad(), 
+groups=dim),
+                    BatchNorm(dim)
+                ), +),
+                Conv((1,1), dim=>dim, gelu),
+                BatchNorm(dim),
+            ) 
+            for i in 1:depth
+        ]...,
+        AdaptiveMeanPool((1,1)),
+        flatten,
+        Dense(dim => N_classes)
+    )
 end
 
 """
 By default gives the full dataset, keyword images gives (for testing purposes) 
-only the 1:images elements of the train set.
+only the 1:images elements of the training set.
 """
 function get_data(batchsize; dataset = MLDatasets.CIFAR10, images = :)
 
@@ -36,12 +37,13 @@ function get_data(batchsize; dataset = MLDatasets.CIFAR10, images = :)
     if images === (:)
         xtrain, ytrain = dataset(:train)[:]
         xtest, ytest = dataset(:test)[:]
-	else
+    else
         xtrain, ytrain = dataset(:train)[1:images]
         xtest, ytest = dataset(:test)[1:(images÷10)]
     end
 
-    # Reshape Data to comply to Julia's (width, height, channels, batch_size) convention in case there are only 1 channel (eg MNIST)
+    # Reshape data to comply to Julia's (width, height, channels, batch_size) convention in 
+case there are only 1 channel (eg MNIST)
     if ndims(xtrain)==3
         w = size(xtrain)[1]
         xtrain = reshape(xtrain, (w,w,1,:))
@@ -56,57 +58,41 @@ function get_data(batchsize; dataset = MLDatasets.CIFAR10, images = :)
     return train_loader, test_loader
 end
 
-function create_loss_function(dataloader, device)
+"""
+This function is used only for logging, with either train_loader or test_loader.
+"""
+function loss_and_accuracy(model, dataloader)
+    n = 0      # count images seen
+    l = 0.0f0  # total loss
+    c = 0      # count correct classifications
 
-    function loss(model)
-        n = 0
-        l = 0.0f0
-        acc = 0.0f0
-
-        for (x,y) in dataloader
-            x,y = x |> device, y |> device
-            z = model(x)        
-            l += Flux.logitcrossentropy(z, y, agg=sum)
-            acc += sum(onecold(z).==onecold(y))
-            n += size(x)[end]
-        end
-        l / n, acc / n
+    for (x1, y1) in dataloader
+        x, y = gpu(x1), gpu(y1)
+        z = model(x)
+        l += logitcrossentropy(z, y, agg=sum)
+        c += sum(onecold(z).==onecold(y))
+        n += size(x)[end]
     end
-
-    return loss
-   
+    return l/n, c/n  # mean loss, and accuracy
 end
 
-
+"""
+Main function: loads data, creates model, trains it, then saves trained model in "model.bson"
+Keyword `images=99` will use only the first 99 images of the training set (to check that it 
+runs).
+"""
 function train(; epochs=100, images=:)
-
-    #params: warning, the training can be long with these params
     train_loader, test_loader = get_data(128; images)
-    η = 3f-4
+
+    # hyper-parameters. Note that training can be long with these!
     in_channel = 3
     patch_size = 2
     kernel_size = 7
     dim = 128
-    dimPL = 2
     depth = 18
-    use_cuda = true
+    η = 3f-4  # learning rate
 
-    #logging the losses
-    train_save = zeros(epochs, 2)
-    test_save = zeros(epochs, 2)
-
-    if use_cuda
-        device = gpu
-        @info "Training on GPU"
-    else
-        device = cpu
-        @info "Training on CPU"
-    end
-
-    train_loss_fn = create_loss_function(train_loader, device)
-    test_loss_fn = create_loss_function(test_loader, device)
-
-    model = ConvMixer(in_channel, kernel_size, patch_size, dim, depth, 10) |> device
+    model = ConvMixer(in_channel, kernel_size, patch_size, dim, depth, 10) |> gpu
 
     opt = OptimiserChain(
             WeightDecay(1f-3), 
@@ -115,27 +101,29 @@ function train(; epochs=100, images=:)
             )
     state = Flux.setup(opt, model)
 
+    # arrays for logging:
+    train_save = zeros(epochs, 2)
+    test_save = zeros(epochs, 2)
+
     for epoch in 1:epochs
-        for (x,y) in train_loader
-            x,y = x|>device, y|>device
-            grads = gradient(m->Flux.logitcrossentropy(m(x), y, agg=sum), model)
+        for (x1, y1) in train_loader
+            x, y = gpu(x1), gpu(y1)
+            grads = gradient(m -> logitcrossentropy(m(x), y, agg=sum), model)
             Flux.update!(state, model, grads[1])
         end
 
-        #logging
-        train_loss, train_acc = train_loss_fn(model) |> cpu
-        test_loss, test_acc = test_loss_fn(model) |> cpu
+        # logging
+        train_loss, train_acc = loss_and_accuracy(model, train_loader, device)
+        test_loss, test_acc = loss_and_accuracy(model, test_loader, device)
         train_save[epoch,:] = [train_loss, train_acc]
         test_save[epoch,:] = [test_loss, test_acc]
 
         if epoch%5==0
-            @info "Epoch $epoch : Train loss = $train_loss || Validation accuracy = $test_acc."
+            @info "Epoch $epoch" train_loss test_acc
         end
-
     end
 
-    model = model |> cpu
-    @save "model.bson" model 
+    @save "model.bson" cpu(model)
     @save "losses.bson" train_save test_save
 end
 
