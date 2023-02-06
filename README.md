@@ -48,7 +48,7 @@ You can contribute in one of the following ways
   * Describe the Flux API that the model demonstrates (high-level API, AD, custom operations, custom layers, etc.).
   * Add literature background for the model. More specifically, add articles, blog posts, videos, and any other resource that is helpful to better understand the model.
   * Mention the technique that is being demonstrated. Briefly describe the learning technique being demonstrated (Computer vision, regression, NLP, time series, etc.).
-* Write in-depth tutorials for a model: You can further extend the documentation of a model and create a tutorial to explain in more detail the architecture, the training routine, use your own data, and so forth. After you write a tutorial, create a PR with it for the [Tutorials](https://fluxml.ai/tutorials.html) section on the [FluxML](https://fluxml.ai/) website.
+* Write in-depth tutorials for a model: You can further extend the documentation of a model and create a tutorial to explain in more detail the architecture, the training routine, use your own data, and so forth. After you write a tutorial, create a PR with it for the [Tutorials](https://fluxml.ai/tutorials/) section on the [FluxML](https://fluxml.ai/) website.
 
 ### Update a model
 
