@@ -14,7 +14,7 @@
 # To run this example, we need the following packages:
 
 using Flux
-using Flux: onehot, onehotbatch, logitcrossentropy, reset!, throttle
+using Flux: onehot, onecold, onehotbatch, logitcrossentropy, reset!
 using Statistics: mean
 using Random
 using Unicode
@@ -61,38 +61,48 @@ function get_processed_data(args)
     args.alphabet_len = length(alphabet)
 
     ## See which chars will be represented as "unknown"
-    unique(filter(x -> x ∉ alphabet, join(vcat(values(corpora)...))))
-
+    unkChars = unique(filter(x -> x ∉ alphabet, join(vcat(values(corpora)...))))
+    
     dataset = [(onehotbatch(s, alphabet, '_'), onehot(l, langs)) for l in langs for s in corpora[l]] |> shuffle
 
     train, test = dataset[1:end-args.test_len], dataset[end-args.test_len+1:end]
-    return train, test
+    (testX, testY) = unzip(test)
+    return train, testX, testY, langs
 end
+
+# https://stackoverflow.com/questions/36367482/unzip-an-array-of-tuples-in-julia
+unzip(a) = (getfield.(a, x) for x in fieldnames(eltype(a)))
 
 # ## Create the model
 
-# The model consists of a **scanner** and an **encoder**. The **scanner** reads the sentence one character 
+# The model consists of an **encoder** and a **classifier**. The **encoder** reads the sentence one character 
 # at a time using one [dense](https://fluxml.ai/Flux.jl/stable/models/layers/#Flux.Dense) 
-# and one [LSTM](https://fluxml.ai/Flux.jl/stable/models/layers/#Flux.LSTM) layers. 
-# Once all of the text has been scanned, the **encoder** outputs the predicted language for the sentence.
+# and one [LSTM](https://fluxml.ai/Flux.jl/stable/models/layers/#Flux.LSTM) layers, and encodes it through 
+# the state of its last character.
+# The **classifier** inputs this encoding and outputs the predicted language for the sentence.
+# The model is defined as a [Custom model](https://fluxml.ai/Flux.jl/stable/models/advanced/)
 
-
+struct EncoderClassifier
+    encoder
+    classifier
+end
 
 function build_model(args)
-    scanner = Chain(Dense(args.alphabet_len, args.N, σ), LSTM(args.N, args.N))
-    encoder = Dense(args.N, args.langs_len)
-    return scanner, encoder
+    encoder = Chain(Dense(args.alphabet_len, args.N, σ), LSTM(args.N, args.N))
+    classifier = Dense(args.N, args.langs_len)
+    return EncoderClassifier(encoder, classifier)
 end
  
 # Notice that we use the function [reset!](https://fluxml.ai/Flux.jl/stable/models/layers/#Flux.reset!) 
 # when computing the model's prediction to reset the hidden state of an LSTM layer back to its original value.
 
-
-function model(x, scanner, encoder)
-    state = scanner.(x.data)[end]
-    reset!(scanner)
-    encoder(state)
+function (m::EncoderClassifier)(x)
+    state = m.encoder(x)[:,end]
+    Flux.reset!(m.encoder)
+    m.classifier(state)
 end
+
+Flux.@functor EncoderClassifier
 
 # ## Train the model
 
@@ -101,27 +111,27 @@ end
 # It uses the loss function 
 # [logitcrossentropy](https://fluxml.ai/Flux.jl/stable/models/losses/#Flux.Losses.logitcrossentropy) 
 # and the [ADAM](https://fluxml.ai/Flux.jl/stable/training/optimisers/#Flux.Optimise.ADAM) optimizer. 
-# Also, it creates a callback function to output the test loss as defined in the args object.   
-
 
 function train(; kws...)
     ## Initialize Hyperparameters
     args = Args(; kws...)
     
     ## Load Data
-    train_data, test_data = get_processed_data(args)
+    trainData, testX, testY, langs = get_processed_data(args)
 
     @info("Constructing Model...")
-    scanner, encoder = build_model(args)
+    model = build_model(args)
+    loss(model, x, y) = logitcrossentropy(model(x), y)
+    opt = Flux.setup(ADAM(args.lr), model)
 
-    loss(x, y) = logitcrossentropy(model(x, scanner, encoder), y)
-    testloss() = mean(loss(t...) for t in test_data)
-    
-    opt = ADAM(args.lr)
-    ps = params(scanner, encoder)
-    evalcb = () -> @show testloss()
-    @info("Training...")
-    Flux.train!(loss, ps, train_data, opt, cb = throttle(evalcb, args.throttle))
+    @info("Training...") 
+    Flux.train!(loss, model, trainData, opt)
+    test_loss = sum(loss(model, x, y) / length(testX) for (x, y) in zip(testX, testY))
+    @show test_loss
+
+    testPredictions = [onecold(model(x), langs) for x in testX]
+    accuracy = sum(testPredictions .== [onecold(y, langs) for y in testY]) / length(testX)
+    @show accuracy
 end
 
 cd(@__DIR__)
