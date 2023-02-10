@@ -18,13 +18,13 @@ using Flux: onehot, onecold, onehotbatch, logitcrossentropy, reset!
 using Statistics: mean
 using Random
 using Unicode
-using Parameters: @with_kw
 
 # We set default values for hyperparameters:
 
-@with_kw mutable struct Args
+Base.@kwdef mutable struct Args
     lr::Float64 = 1e-3     ## Learning rate
     N::Int = 15            ## Number of perceptrons in hidden layer
+    epochs::Int = 3        ## Number of epochs
     test_len::Int = 100    ## length of test data
     langs_len::Int = 0     ## Number of different languages in Corpora
     alphabet_len::Int = 0  ## Total number of characters possible, in corpora
@@ -125,9 +125,11 @@ function train(; kws...)
     opt = Flux.setup(ADAM(args.lr), model)
 
     @info("Training...") 
-    Flux.train!(loss, model, trainData, opt)
-    test_loss = sum(loss(model, x, y) / length(testX) for (x, y) in zip(testX, testY))
-    @show test_loss
+    for epoch in 1:args.epochs
+        Flux.train!(loss, model, trainData, opt)
+        test_loss = sum(loss(model, x, y) / length(testX) for (x, y) in zip(testX, testY))
+        @show epoch, test_loss
+    end
 
     testPredictions = [onecold(model(x), langs) for x in testX]
     accuracy = sum(testPredictions .== [onecold(y, langs) for y in testY]) / length(testX)
