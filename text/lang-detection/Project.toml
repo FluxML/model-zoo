@@ -8,8 +8,8 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 Unicode = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 
 [compat]
-Cascadia = "1.0.2"
+Cascadia = "1"
 Flux = "0.13.9"
-Gumbo = "0.8.2"
-HTTP = "1.7.4"
+Gumbo = "0.8"
+HTTP = "1.7"
 julia = "1.6"

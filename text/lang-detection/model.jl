@@ -66,12 +66,9 @@ function get_processed_data(args)
     dataset = [(onehotbatch(s, alphabet, '_'), onehot(l, langs)) for l in langs for s in corpora[l]] |> shuffle
 
     train, test = dataset[1:end-args.test_len], dataset[end-args.test_len+1:end]
-    (testX, testY) = unzip(test)
+    testX, testY = first.(test), last.(test)
     return train, testX, testY, langs
 end
-
-# https://stackoverflow.com/questions/36367482/unzip-an-array-of-tuples-in-julia
-unzip(a) = (getfield.(a, x) for x in fieldnames(eltype(a)))
 
 # ## Create the model
 
@@ -127,12 +124,12 @@ function train(; kws...)
     @info("Training...") 
     for epoch in 1:args.epochs
         Flux.train!(loss, model, trainData, opt)
-        test_loss = sum(loss(model, x, y) / length(testX) for (x, y) in zip(testX, testY))
+        test_loss = mean(loss(model, x, y) for (x, y) in zip(testX, testY))
         @show epoch, test_loss
     end
 
     testPredictions = [onecold(model(x), langs) for x in testX]
-    accuracy = sum(testPredictions .== [onecold(y, langs) for y in testY]) / length(testX)
+    accuracy = mean(testPredictions .== [onecold(y, langs) for y in testY])
     @show accuracy
 end
 
