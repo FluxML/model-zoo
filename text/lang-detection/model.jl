@@ -93,7 +93,7 @@ end
 # when computing the model's prediction to reset the hidden state of an LSTM layer back to its original value.
 
 function (m::EncoderClassifier)(x)
-    state = m.encoder(x)[:,end]
+    state = m.encoder(x)[:, end]
     Flux.reset!(m.encoder)
     m.classifier(state)
 end
