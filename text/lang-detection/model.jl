@@ -78,9 +78,9 @@ end
 # The **classifier** inputs this encoding and outputs the predicted language for the sentence.
 # The model is defined as a [Custom model](https://fluxml.ai/Flux.jl/stable/models/advanced/)
 
-struct EncoderClassifier
-    encoder
-    classifier
+struct EncoderClassifier{E, C}
+    encoder::E
+    classifier::C
 end
 
 function build_model(args)
