@@ -113,7 +113,7 @@ function train(; kws...)
     args = Args(; kws...)
     
     ## Load Data
-    trainData, testX, testY, langs = get_processed_data(args)
+    train_data, test_X, test_Y, langs = get_processed_data(args)
 
     @info("Constructing Model...")
     model = build_model(args)
