@@ -127,8 +127,8 @@ function train(; kws...)
         @show epoch, test_loss
     end
 
-    testPredictions = [onecold(model(x), langs) for x in testX]
-    accuracy = mean(testPredictions .== [onecold(y, langs) for y in testY])
+    test_predictions = [onecold(model(x), langs) for x in test_X]
+    accuracy = mean(test_predictions .== [onecold(y, langs) for y in test_Y])
     @show accuracy
 end
 
