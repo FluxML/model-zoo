@@ -122,8 +122,8 @@ function train(; kws...)
 
     @info("Training...") 
     for epoch in 1:args.epochs
-        Flux.train!(loss, model, trainData, opt)
-        test_loss = mean(loss(model, x, y) for (x, y) in zip(testX, testY))
+        Flux.train!(loss, model, train_data, opt)
+        test_loss = mean(loss(model, x, y) for (x, y) in zip(test_X, test_Y))
         @show epoch, test_loss
     end
 
