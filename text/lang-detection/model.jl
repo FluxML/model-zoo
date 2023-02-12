@@ -61,8 +61,7 @@ function get_processed_data(args)
     args.alphabet_len = length(alphabet)
 
     ## See which chars will be represented as "unknown"
-    unkChars = unique(filter(x -> x ∉ alphabet, join(vcat(values(corpora)...))))
-    
+    unk_chars = unique(filter(∉(alphabet), join(vcat(values(corpora)...))))
     dataset = [(onehotbatch(s, alphabet, '_'), onehot(l, langs)) for l in langs for s in corpora[l]] |> shuffle
 
     train, test = dataset[1:end-args.test_len], dataset[end-args.test_len+1:end]
