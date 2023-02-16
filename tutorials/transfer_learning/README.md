@@ -191,11 +191,11 @@ end
 
 ## Fine-tune | 🐇 mode
 
-In the previous fine-tuning, despite having only specified the last `Dense` layer as a trainable parameter, we nonetheless ended computed the gradients over the entire model. 
+In the previous fine-tuning, despite having only specified the last `Dense` layer as trainable parameters, we nonetheless ended computing the gradients over the entire model. 
 
 To avoid these unnecessary computations, we can split our model in two: 
 - The original pre-trained core, for which we don't want to compute gradients
-- The new finale layers, for which gradients are needed. 
+- The new final layers, for which gradients are needed. 
 
 ```julia
 m_infer = deepcopy(m[1]) |> device
