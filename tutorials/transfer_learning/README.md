@@ -2,9 +2,9 @@
 
 ## Context
 
-This tutorial shows how to perform transfer learning using a pre-trained vision model. In the process, we will also how to use a custom data container, a useful feature when dealing with large datasets that cannot fit into memory.
+This tutorial shows how to perform transfer learning using a pre-trained vision model. In the process, we will also learn how to use a custom data container, a useful feature when dealing with large datasets that cannot fit into memory.
 
-Transfer learning is an common way in which large, compute intensive models can be used in practice. Following their training to perform well on their general trask, they can be subsequently used as a basis to fine-tune only some of their components on smaller, specialized dataset for the specific task at hand.
+Transfer learning is an common way in which large, compute intensive models can be used in practice. Following their training to perform well on their general trask, they can be subsequently used as a basis to fine-tune only some of their components on smaller, specialized datasets adapted to a specific task.
 
 Self contained Julia code presented in this tutorial is found in ["transfer_learning.jl"](transfer_learning.jl) and can be launched with: 
 
@@ -119,7 +119,7 @@ deval = Flux.DataLoader(
 device == gpu ? deval = Flux.CuIterator(deval) : nothing
 ```
 
-The `collate` is set to `true` in order for all of the images to be concatenated into a 4D Array, where the batch dimension is last. Is set to false, it will return a vector of length `batchsize`, in which each element is a single 3D Array (width, height, channels).
+The `collate` option is set to `true` in order for all of the images to be concatenated into a 4D Array, where the batch dimension is last. Is set to false, it will return a vector of length `batchsize`, in which each element is a single 3D Array (width, height, channels).
 
 Setting `parallel` to `true` is an important performance enhancement as the GPU would otherwise spent significant time on idle waiting for the CPU data loading to complete. 
 
