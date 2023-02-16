@@ -35,10 +35,9 @@ using Metalhead
 
 ## Custom DataLoader
 
-When dealing with large datsets, it's unrealistic to use a vanilla `DataLoader` and passing. A handy appoach is to rely on custom data containers, which allows to only pull data into memory as needed. 
+When dealing with large datsets, it's unrealistic to use a vanilla `DataLoader` contructor using the entire dataset as input. A handy approach is to rely on custom data containers, which allows to only pull data into memory as needed. 
 
-Our custom data container will be very simple, it's a struct container the paths to each of our image. 
-
+Our custom data container is very simple. It's a `struct` containing the paths to each of our images: 
 ```julia
 const CATS = readdir(abspath(joinpath("data", "cats")), join = true)
 const DOGS = readdir(abspath(joinpath("data", "dogs")), join = true)
@@ -78,7 +77,7 @@ end
 We can now define our train and eval data iterators: 
 
 ```julia
-const batchsize = 8
+const batchsize = 16
 
 dtrain = Flux.DataLoader(
     ImageContainer(imgs[1:2700]);
