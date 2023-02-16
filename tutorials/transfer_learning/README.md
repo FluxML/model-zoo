@@ -2,52 +2,68 @@
 
 ## Context
 
-This tutorial shows how to perform transfer learning using a pre-trained vision model. In the process, we will also how to use custom `DataLoader`, a useful feature when dealing with large datasets that cannot fit into memory.
+This tutorial shows how to perform transfer learning using a pre-trained vision model. In the process, we will also how to use a custom data container, a useful feature when dealing with large datasets that cannot fit into memory.
 
-Machine Learning today has evolved to use many highly trained models in a general task, where they are tuned to perform especially well on a subset of the problem. 
-This is one of the key ways in which larger (or smaller) models are used in practice. They are trained on a general problem, achieving good results on the test set, and then subsequently fine tuned on specialised datasets.
+Transfer learning is an common way in which large, compute intensive models can be used in practice. Following their training to perform well on their general trask, they can be subsequently used as a basis to fine-tune only some of their components on smaller, specialized dataset for the specific task at hand.
+
+Self contained Julia code presented in this tutorial is found in ["transfer_learning.jl"](transfer_learning.jl) and can be launched with: 
+
+```
+julia project=@. --threads=8 transfer_learning.jl
+```
+
+## Getting started
 
 In this tutorial, we'll used a pre-trained ResNet18 model to solve a 3-class classification problem: 🐱, 🐶, 🐼.
 
 Data can be accessed from [Kaggle](https://www.kaggle.com/datasets/ashishsaxena2209/animal-image-datasetdog-cat-and-panda).
 
-Following download, data is expected to live under the following structure: 
+Following download and unzip, data is expected to live under the following structure: 
 
 ```
 - data
-    - cats
-    - dogs
-    - pandas
+    - animals
+        - cats
+        - dogs
+        - panda
 ```
 
-In julia, the following packages are needed:
- 
+In Julia, the following packages are needed:
+
 ```julia
 using Random: shuffle!
 import Base: length, getindex
 using Images
 using Flux
 using Flux: update!
-using CUDA
 using DataAugmentation
 using Metalhead
 ```
 
+We also define a utility to help manage cpu-gpu conversion:
+
+```julia
+device = Flux.CUDA.functional() ? gpu : cpu
+```
+
+A CUDA enabled GPU is recommended. A modest one with 6GB RAM is sufficient and should run the tutorial in just 5-6 mins. If running on CPU, it may take over 40 mins. 
+
 ## Custom DataLoader
 
-When dealing with large datsets, it's unrealistic to use a vanilla `DataLoader` contructor using the entire dataset as input. A handy approach is to rely on custom data containers, which allows to only pull data into memory as needed. 
+When dealing with large datasets, it's unrealistic to use a vanilla `DataLoader` constructor using the entire dataset as input. A handy approach is to rely on custom data containers, which allows to only pull data into memory as needed. 
 
 Our custom data container is very simple. It's a `struct` containing the paths to each of our images: 
+
 ```julia
-const CATS = readdir(abspath(joinpath("data", "cats")), join = true)
-const DOGS = readdir(abspath(joinpath("data", "dogs")), join = true)
-const PANDAS = readdir(abspath(joinpath("data", "pandas")), join = true)
+const CATS = readdir(abspath(joinpath("data", "animals", "cats")), join = true)
+const DOGS = readdir(abspath(joinpath("data", "animals", "dogs")), join = true)
+const PANDA = readdir(abspath(joinpath("data", "animals", "panda")), join = true)
 
 struct ImageContainer{T<:Vector}
     img::T
 end
 
-imgs = [CATS..., DOGS..., PANDAS...]
+imgs = [CATS..., DOGS..., PANDA...]
 shuffle!(imgs)
 data = ImageContainer(imgs)
 ```
@@ -59,20 +75,25 @@ In order to be compatible with `DataLoader`, 2 functions must minimally be defin
 ```julia
 length(data::ImageContainer) = length(data.img)
 
+const im_size = (224, 224)
 tfm = DataAugmentation.compose(ScaleKeepAspect(im_size), CenterCrop(im_size))
-name_to_idx = Dict{String,Int32}("cats" => 1, "dogs" => 2, "pandas" => 3)
+name_to_idx = Dict{String,Int32}("cats" => 1, "dogs" => 2, "panda" => 3)
 
 function getindex(data::ImageContainer, idx::Int)
     path = data.img[idx]
-    name = replace(path, r"(.+)\\(.+)\\(.+_\d+)\.jpg" => s"\2")    
     img = Images.load(path)
     img = apply(tfm, Image(img))
     img = permutedims(channelview(RGB.(itemdata(img))), (3, 2, 1))
     img = Float32.(img)
+    name = replace(path, r"(.+)\\(.+)\\(.+_\d+)\.jpg" => s"\2")    
     y = name_to_idx[name]
     return img, Flux.onehotbatch(y, 1:3)
 end
 ```
+
+In the above, the class label `y` is obtained by first using a regexp to extract the parent folder name of the image, which can be one of `cats`, `dogs` or `panda`. Then, this name can be mapped into an integer index using the `name_to_idx` dictionary. 
+
+Data augmentation is performed through the `tfm` pipeline powered by [DataAugmentation.jl]https://github.com/lorenzoh/DataAugmentation.jl. Random crops, flips and color augmentation techniques are also supported.  
 
 We can now define our train and eval data iterators: 
 
@@ -81,24 +102,26 @@ const batchsize = 16
 
 dtrain = Flux.DataLoader(
     ImageContainer(imgs[1:2700]);
-    batchsize = batchsize,
+    batchsize,
     collate = true,
-    parallel = true,
-    partial = true,
-    shuffle = true,
-) |> CuIterator
+    parallel = true
+)
+device == gpu ? dtrain = Flux.CuIterator(dtrain) : nothing
 ```
 
 ```julia
 deval = Flux.DataLoader(
-    ImageContainer(imgs[2701:3000]),
-    batchsize = batchsize,
+    ImageContainer(imgs[2701:3000]);
+    batchsize,
     collate = true,
-    parallel = true,
-    partial = true,
-    shuffle = false,
-) |> CuIterator
+    parallel = true
+)
+device == gpu ? deval = Flux.CuIterator(deval) : nothing
 ```
+
+The `collate` is set to `true` in order for all of the images to be concatenated into a 4D Array, where the batch dimension is last. Is set to false, it will return a vector of length `batchsize`, in which each element is a single 3D Array (width, height, channels).
+
+Setting `parallel` to `true` is an important performance enhancement as the GPU would otherwise spent significant time on idle waiting for the CPU data loading to complete. 
 
 ## Fine-tune | 🐢 mode
 
@@ -109,12 +132,13 @@ m = Metalhead.ResNet(18, pretrain = true).layers
 ```
 
 Substitute the latest layers with ones adapted to the fine-tuning task:
+
 ```julia
-m_tot = Chain(m[1], AdaptiveMeanPool((1, 1)), Flux.flatten, Dense(512 => 3))
-m_tot = m_tot |> gpu
+m_tot = Chain(m[1], AdaptiveMeanPool((1, 1)), Flux.flatten, Dense(512 => 3)) |> device
 ```
 
 Define an accuracy evaluation function:
+
 ```julia
 function eval_f(m, deval)
     good = 0
@@ -129,6 +153,7 @@ end
 ```
 
 Define a training loop for 1 epoch: 
+
 ```julia
 function train_epoch!(m; ps, opt, dtrain)
     for (x, y) in dtrain
@@ -141,14 +166,16 @@ end
 ```
 
 Set learnable parameters and optimiser:
+
 ```julia
 ps = Flux.params(m_tot[2:end]);
-opt = ADAM(1e-3)
+opt = Adam(3e-4)
 ```
 
 Train for a few epochs:
+
 ```julia
-for iter = 1:5
+for iter = 1:8
     @time train_epoch!(m_tot; ps, opt, dtrain)
     metric_train = eval_f(m_tot, dtrain)
     metric_eval = eval_f(m_tot, deval)
@@ -161,7 +188,6 @@ end
 ┌ Info: eval
 └   metric = 0.9467
 ```
-
 
 ## Fine-tune | 🐇 mode
 
@@ -205,11 +231,11 @@ end
 
 ```julia
 ps = Flux.params(m_tune);
-opt = NADAM(3e-4)
+opt = Adam(3e-4)
 ```
 
 ```julia
-for iter = 1:10
+for iter = 1:8
     @time train_epoch!(m_infer, m_tune; ps, opt, dtrain)
     metric_train = eval_f(m_infer, m_tune, dtrain)
     metric_eval = eval_f(m_infer, m_tune, deval)

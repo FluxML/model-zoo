@@ -1,88 +1,134 @@
-# # Transfer Learning with Flux
+# load packages
+using Random: shuffle!
+import Base: length, getindex
+using Images
+using Flux
+using Flux: update!
+using DataAugmentation
+using Metalhead
 
-# This article is intended to be a general guide to how transfer learning works in the Flux ecosystem.
-# We assume a certain familiarity of the reader with the concept of transfer learning. Having said that,
-# we will start off with a basic definition of the setup and what we are trying to achieve. There are many
-# resources online that go in depth as to why transfer learning is an effective tool to solve many ML
-# problems, and we recommend checking some of those out.
+device = Flux.CUDA.functional() ? gpu : cpu
+# device = cpu
 
-# Machine Learning today has evolved to use many highly trained models in a general task,
-# where they are tuned to perform especially well on a subset of the problem.
+## Custom DataLoader
+const CATS = readdir(abspath(joinpath("data", "animals", "cats")), join = true)
+const DOGS = readdir(abspath(joinpath("data", "animals", "dogs")), join = true)
+const PANDA = readdir(abspath(joinpath("data", "animals", "panda")), join = true)
 
-# This is one of the key ways in which larger (or smaller) models are used in practice. They are trained on
-# a general problem, achieving good results on the test set, and then subsequently tuned on specialised datasets.
-
-# In this process, our model is already pretty well trained on the problem, so we don't need to train it
-# all over again as if from scratch. In fact, as it so happens, we don't need to do that at all! We only
-# need to tune the last couple of layers to get the most performance from our models. The exact last number of layers
-# is dependant on the problem setup and the expected outcome, but a common tip is to train the last few `Dense`
-# layers in a more complicated model.
-
-# So let's try to simulate the problem in Flux.
-
-# We'll tune a pretrained ResNet from Metalhead as a proxy. We will tune the `Dense` layers in there on a new set of images.
-
-using Flux, Metalhead
-resnet = ResNet(pretrain=true).layers
-
-# If we intended to add a new class of objects in there, we need only `reshape` the output from the previous layers accordingly.
-# Our model would look something like so:
-
-# ```julia
-# model = Chain(
-#   resnet[1],               # We only need to pull out the dense layer in here
-#   x -> reshape(x, size_we_want), # / global_avg_pooling layer
-#   Dense(reshaped_input_features, n_classes)
-# )
-# ```
-
-# We will use the [Dogs vs. Cats](https://www.kaggle.com/c/dogs-vs-cats/data) dataset from Kaggle for our use here.
-# Make sure to extract the images in a `train` folder.
-
-# The `dataloader.jl` script contains some functions that will help us load batches of images, shuffled between
-# dogs and cats along with their correct labels.
-
-include("dataloader.jl")
-
-# Finally, the model looks something like:
-
-model = Chain(
-  resnet[1],
-  AdaptiveMeanPool((1, 1)),
-  Flux.flatten,
-  Dense(2048, 1000, relu),  
-  Dense(1000, 256, relu),
-  Dense(256, 2),        # we get 2048 features out, and we have 2 classes
-)
-
-# To speed up training, let's move everything over to the GPU
-
-model = model |> gpu
-dataset = [gpu.(load_batch(10)) for i in 1:10]
-
-# After this, we only need to define the other parts of the training pipeline like we usually do.
-
-opt = ADAM()
-loss(x,y) = Flux.Losses.logitcrossentropy(model(x), y)
-
-# Now to train
-# As discussed earlier, we don't need to pass all the parameters to our training loop. Only the ones we need to
-# fine-tune. Note that we could have picked and chosen the layers we want to train individually as well, but this
-# is sufficient for our use as of now.
-
-ps = Flux.params(model[2:end])  # ignore the already trained layers of the ResNet
-
-# And now, let's train!
-
-for epoch in 1:2
-  Flux.train!(loss, ps, dataset, opt)
+struct ImageContainer{T<:Vector}
+    img::T
 end
-# And there you have it, a pretrained model, fine tuned to tell the the dogs from the cats.
 
-# We can verify this too.
+imgs = [CATS..., DOGS..., PANDA...]
+shuffle!(imgs)
+data = ImageContainer(imgs)
 
-imgs, labels = gpu.(load_batch(10))
-display(model(imgs))
+length(data::ImageContainer) = length(data.img)
 
-labels
+const im_size = (224, 224)
+tfm = DataAugmentation.compose(ScaleKeepAspect(im_size), CenterCrop(im_size))
+name_to_idx = Dict{String,Int32}("cats" => 1, "dogs" => 2, "panda" => 3)
 
+function getindex(data::ImageContainer, idx::Int)
+    path = data.img[idx]
+    name = replace(path, r"(.+)\\(.+)\\(.+_\d+)\.jpg" => s"\2")    
+    img = Images.load(path)
+    img = apply(tfm, Image(img))
+    img = permutedims(channelview(RGB.(itemdata(img))), (3, 2, 1))
+    img = Float32.(img)
+    y = name_to_idx[name]
+    return img, Flux.onehotbatch(y, 1:3)
+end
+
+# define DataLoaders
+const batchsize = 16
+
+dtrain = Flux.DataLoader(
+    ImageContainer(imgs[1:2700]);
+    batchsize,
+    collate = true,
+    parallel = true
+)
+device == gpu ? dtrain = Flux.CuIterator(dtrain) : nothing
+
+deval = Flux.DataLoader(
+    ImageContainer(imgs[2701:3000]);
+    batchsize,
+    collate = true,
+    parallel = true
+)
+device == gpu ? deval = Flux.CuIterator(deval) : nothing
+
+# Fine-tune | 🐢 mode
+# Load a pre-trained model: 
+m = Metalhead.ResNet(18, pretrain = true).layers
+m_tot = Chain(m[1], AdaptiveMeanPool((1, 1)), Flux.flatten, Dense(512 => 3)) |> device
+
+function eval_f(m, deval)
+    good = 0
+    count = 0
+    for (x, y) in deval
+        good += sum(Flux.onecold(m(x)) .== Flux.onecold(y))
+        count += size(y, 2)
+    end
+    acc = round(good / count, digits = 4)
+    return acc
+end
+
+function train_epoch!(m; ps, opt, dtrain)
+    for (x, y) in dtrain
+        grads = gradient(ps) do
+            Flux.Losses.logitcrossentropy(m(x), y)
+        end
+        update!(opt, ps, grads)
+    end
+end
+
+ps = Flux.params(m_tot[2:end]);
+opt = Adam(3e-4)
+
+for iter = 1:8
+    @time train_epoch!(m_tot; ps, opt, dtrain)
+    metric_train = eval_f(m_tot, dtrain)
+    metric_eval = eval_f(m_tot, deval)
+    @info "train" metric = metric_train
+    @info "eval" metric = metric_eval
+end
+
+# Fine-tune | 🐇 mode
+# define models 
+m_infer = deepcopy(m[1]) |> device
+m_tune = Chain(AdaptiveMeanPool((1, 1)), Flux.flatten, Dense(512 => 3)) |> device
+
+function eval_f(m_infer, m_tune, deval)
+    good = 0
+    count = 0
+    for (x, y) in deval
+        good += sum(Flux.onecold(m_tune(m_infer(x))) .== Flux.onecold(y))
+        count += size(y, 2)
+    end
+    acc = round(good / count, digits = 4)
+    return acc
+end
+
+function train_epoch!(m_infer, m_tune; ps, opt, dtrain)
+    for (x, y) in dtrain
+        infer = m_infer(x)
+        grads = gradient(ps) do
+            Flux.Losses.logitcrossentropy(m_tune(infer), y)
+        end
+        update!(opt, ps, grads)
+    end
+end
+
+ps = Flux.params(m_tune);
+opt = Adam(3e-4)
+
+# training loop
+for iter = 1:8
+    @time train_epoch!(m_infer, m_tune; ps, opt, dtrain)
+    metric_train = eval_f(m_infer, m_tune, dtrain)
+    metric_eval = eval_f(m_infer, m_tune, deval)
+    @info "train" metric = metric_train
+    @info "eval" metric = metric_eval
+end

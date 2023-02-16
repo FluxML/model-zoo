@@ -1,5 +1,4 @@
 [deps]
-CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 DataAugmentation = "88a5189c-e7ff-4f85-ac6b-e6158070f02e"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
