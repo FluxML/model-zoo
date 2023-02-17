@@ -31,11 +31,11 @@ name_to_idx = Dict{String,Int32}("cats" => 1, "dogs" => 2, "panda" => 3)
 
 function getindex(data::ImageContainer, idx::Int)
     path = data.img[idx]
-    name = replace(path, r"(.+)\\(.+)\\(.+_\d+)\.jpg" => s"\2")    
     img = Images.load(path)
     img = apply(tfm, Image(img))
     img = permutedims(channelview(RGB.(itemdata(img))), (3, 2, 1))
     img = Float32.(img)
+    name = replace(path, r"(.+)\\(.+)\\(.+_\d+)\.jpg" => s"\2")    
     y = name_to_idx[name]
     return img, Flux.onehotbatch(y, 1:3)
 end

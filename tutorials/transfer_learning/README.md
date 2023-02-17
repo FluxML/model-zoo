@@ -48,7 +48,7 @@ device = Flux.CUDA.functional() ? gpu : cpu
 
 A CUDA enabled GPU is recommended. A modest one with 6GB RAM is sufficient and should run the tutorial in just 5-6 mins. If running on CPU, it may take over 40 mins. 
 
-## Custom DataLoader
+## Data preparation and loader
 
 When dealing with large datasets, it's unrealistic to use a vanilla `DataLoader` constructor using the entire dataset as input. A handy approach is to rely on custom data containers, which allows to only pull data into memory as needed. 
 
