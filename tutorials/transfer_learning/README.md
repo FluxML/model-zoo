@@ -4,7 +4,7 @@
 
 This tutorial shows how to perform transfer learning using a pre-trained vision model. In the process, we will also learn how to use a custom data container, a useful feature when dealing with large datasets that cannot fit into memory.
 
-Transfer learning is an common way in which large, compute intensive models can be used in practice. Following their training to perform well on their general trask, they can be subsequently used as a basis to fine-tune only some of their components on smaller, specialized datasets adapted to a specific task.
+Transfer learning is a common way in which large, compute intensive models can be used in practice. Following their training to perform well on their general trask, they can be subsequently used as a basis to fine-tune only some of their components on smaller, specialized datasets adapted to a specific task.
 
 Self contained Julia code presented in this tutorial is found in ["transfer_learning.jl"](transfer_learning.jl) and can be launched with: 
 
