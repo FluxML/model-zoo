@@ -10,6 +10,7 @@ using Flux, MLDatasets, Statistics
 model = Chain(Dense(28 * 28 => 32, sigmoid), Dense(32 => 10), softmax)
 
 p1 = model(rand(Float32, 28^2))  # run model on one fake image
+
 sum(p1) ≈ 1
 
 model(rand(Float32, 28^2, 3))  # ...or on a batch of 3 fake images
@@ -27,20 +28,25 @@ test_data = MLDatasets.MNIST(split=:test)
 # We need a 2D array for our model. Let's combine the reshape needed with
 # other pre-processing, in a function:
 
-function simple_loader(data::MNIST=train_data; batchsize::Int=64)
+function simple_loader(data::MNIST; batchsize::Int=64)
     x, y = data[:]
     x2dim = reshape(x, 28 * 28, :)
     yhot = Flux.onehotbatch(y, 0:9)
     Flux.DataLoader((x2dim, yhot); batchsize, shuffle=true)
 end
 
-simple_loader()  # returns a DataLoader, with first element a tuple like this:
+# train_data.targets is a 60000-element Vector{Int}, of labels from 0 to 9.
+# Flux.onehotbatch([0,1,9], 0:9) makes a matrix of 0 and 1.
 
-x1, y1 = first(simple_loader()); # (784×64 Matrix{Float32}, 10×64 OneHotMatrix)
+simple_loader(train_data)  # returns a DataLoader, with first element a tuple like this:
+
+x1, y1 = first(simple_loader(train_data)); # (784×64 Matrix{Float32}, 10×64 OneHotMatrix)
 
 model(x1)  # x1 is the right shape for our model
 
 y1  # y1 is the same shape as the model output.
+
+Flux.crossentropy(model(x1), y1)  # This will be our loss function
 
 #===== ACCURACY =====#
 
@@ -58,13 +64,13 @@ simple_accuracy(model)  # accuracy about 10%, on training data, before training!
 
 #===== TRAINING =====#
 
+# Make a dataloader using the desired batchsize:
+
+train_loader = simple_loader(train_data, batchsize = 256)
+
 # Initialise storage needed for the Adam optimiser, with our chosen learning rate:
 
 opt_state = Flux.setup(Adam(3e-4), model);
-
-# Make a dataloader using the desired batchsize:
-
-train_loader = simple_loader(batchsize = 256)
 
 # Then train for 30 epochs, printing out details as we go:
 
@@ -75,7 +81,7 @@ for epoch in 1:30
         l, gs = Flux.withgradient(m -> Flux.crossentropy(m(x), y), model)
         # Update the model parameters:
         Flux.update!(opt_state, model, gs[1])
-        # Accumulate the total loss:
+        # Accumulate the mean loss:
         loss += l / length(train_loader)
     end
 
