@@ -1,12 +1,12 @@
 [deps]
-CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
+ImageCore = "a09fc81d-aa75-5fe9-8630-4744c3626534"
+ImageInTerminal = "d8c32880-2388-543b-8c61-d9f865259254"
 MLDatasets = "eb30cadb-4394-5ae3-aed4-317e484a6458"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
-CUDA = "3"
 Flux = "0.13.9"
 MLDatasets = "0.7"
 julia = "1.6"
