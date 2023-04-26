@@ -102,8 +102,8 @@ using ImageCore, ImageInTerminal
 
 xtest, ytest = only(simple_loader(test_data, batchsize=length(test_data)));
 
-# There are many ways to look at images, you won't need ImageInTerminal if working in a notebook
-# ImageCore.Gray is a special type, whick interprets numbers between 0.0 and 1.0 as shades:
+# There are many ways to look at images, you won't need ImageInTerminal if working in a notebook.
+# ImageCore.Gray is a special type, which interprets numbers between 0.0 and 1.0 as shades:
 
 reshape(xtest[:,33], 28, 28) .|> Gray |> transpose
 
