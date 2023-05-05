@@ -7,13 +7,15 @@ using Flux, MLDatasets, Statistics
 # Each has a sigmoid nonlinearity, and is connected to every "neuron" in the output layer.
 # Finally, softmax produces probabilities, i.e. positive numbers which add up to 1:
 
-model = Chain(Dense(28 * 28 => 32, sigmoid), Dense(32 => 10), softmax)
+model = Chain(Dense(28^2 => 32, sigmoid), Dense(32 => 10), softmax)
 
 p1 = model(rand(Float32, 28^2))  # run model on random data shaped like an image
 
 sum(p1) ≈ 1
 
-model(rand(Float32, 28^2, 3))  # ...or on a batch of 3 fake, random "images"
+p3 = model(rand(Float32, 28^2, 3))  # ...or on a batch of 3 fake, random "images"
+
+sum(p3; dims=1)  # all 1. Last dim is batch dim.
 
 #===== DATA =====#
 
@@ -29,7 +31,7 @@ test_data = MLDatasets.MNIST(split=:test)
 # other pre-processing, in a function:
 
 function simple_loader(data::MNIST; batchsize::Int=64)
-    x2dim = reshape(data.features, 28 * 28, :)
+    x2dim = reshape(data.features, 28^2, :)
     yhot = Flux.onehotbatch(data.targets, 0:9)
     Flux.DataLoader((x2dim, yhot); batchsize, shuffle=true)
 end
@@ -53,7 +55,7 @@ Flux.crossentropy(model(x1), y1)  # This will be our loss function
 # calculating these on minibatches, since MNIST is small enough to do it at once.
 
 function simple_accuracy(model, data::MNIST=test_data)
-    (x,y) = only(simple_loader(data; batchsize=length(data)))  # make one big batch
+    (x, y) = only(simple_loader(data; batchsize=length(data)))  # make one big batch
     y_hat = model(x)
     iscorrect = Flux.onecold(y_hat) .== Flux.onecold(y)  # BitVector
     acc = round(100 * mean(iscorrect); digits=2)
@@ -78,9 +80,9 @@ for epoch in 1:30
     for (x, y) in train_loader
         # Compute the loss and the gradients:
         l, gs = Flux.withgradient(m -> Flux.crossentropy(m(x), y), model)
-        # Update the model parameters:
+        # Update the model parameters (and the Adam momenta):
         Flux.update!(opt_state, model, gs[1])
-        # Accumulate the mean loss:
+        # Accumulate the mean loss, just for logging:
         loss += l / length(train_loader)
     end
 
