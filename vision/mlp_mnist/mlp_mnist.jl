@@ -9,11 +9,11 @@ using Flux, MLDatasets, Statistics
 
 model = Chain(Dense(28 * 28 => 32, sigmoid), Dense(32 => 10), softmax)
 
-p1 = model(rand(Float32, 28^2))  # run model on one fake image
+p1 = model(rand(Float32, 28^2))  # run model on random data shaped like an image
 
 sum(p1) ≈ 1
 
-model(rand(Float32, 28^2, 3))  # ...or on a batch of 3 fake images
+model(rand(Float32, 28^2, 3))  # ...or on a batch of 3 fake, random "images"
 
 #===== DATA =====#
 
@@ -56,8 +56,8 @@ Flux.crossentropy(model(x1), y1)  # This will be our loss function
 function simple_accuracy(model, data::MNIST=test_data)
     (x,y) = only(simple_loader(data; batchsize=length(data)))  # make one big batch
     y_hat = model(x)
-    yesno = Flux.onecold(y_hat) .== Flux.onecold(y)  # BitVector
-    acc = round(100 * mean(yesno); digits=2)
+    iscorrect = Flux.onecold(y_hat) .== Flux.onecold(y)  # BitVector
+    acc = round(100 * mean(iscorrect); digits=2)
 end
 
 simple_accuracy(model)  # accuracy about 10%, on training data, before training!

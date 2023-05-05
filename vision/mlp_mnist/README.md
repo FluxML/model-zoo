@@ -6,7 +6,7 @@
 
 ## Model Info
 
-A [multi-layer perceptron](https://en.wikipedia.org/wiki/Multilayer_perceptron) (MLP) consists of at least three sets of of nodes: an input layer, a hidden layer and an output layer. Each node except for the input node is a neuron that uses a nonlinear activation function. The multiple layers and non-linearities allow an MLP to distinguish data that is not linearly separable once trained.
+A [multi-layer perceptron](https://en.wikipedia.org/wiki/Multilayer_perceptron) (MLP) consists of at least three sets of of nodes: an input layer, one or more hidden layer and an output layer. Each node except for the input node is a neuron that uses a nonlinear activation function. The multiple layers and non-linearities allow an MLP to distinguish data that is not linearly separable once trained.
 
 In this example, we create a MLP that classifies handwritten digits using the [MNIST dataset](http://yann.lecun.com/exdb/mnist/).
 Our model uses the simplest [Flux layers](http://fluxml.ai/Flux.jl/stable/models/layers/), namely `Dense` and `Chain`.
