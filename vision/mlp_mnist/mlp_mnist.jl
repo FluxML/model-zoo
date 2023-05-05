@@ -29,9 +29,8 @@ test_data = MLDatasets.MNIST(split=:test)
 # other pre-processing, in a function:
 
 function simple_loader(data::MNIST; batchsize::Int=64)
-    x, y = data[:]
-    x2dim = reshape(x, 28 * 28, :)
-    yhot = Flux.onehotbatch(y, 0:9)
+    x2dim = reshape(data.features, 28 * 28, :)
+    yhot = Flux.onehotbatch(data.targets, 0:9)
     Flux.DataLoader((x2dim, yhot); batchsize, shuffle=true)
 end
 
