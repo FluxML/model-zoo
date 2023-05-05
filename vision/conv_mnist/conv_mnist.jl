@@ -1,7 +1,10 @@
 # Classification of MNIST dataset using a convolutional network,
 # which is a variant of the original LeNet from 1998.
 
-using MLDatasets, Flux, BSON, CUDA  # this will install everything if necc.
+# This example uses a GPU if you have one.
+# And demonstrates how to save model state.
+
+using MLDatasets, Flux, JLD2, CUDA  # this will install everything if necc.
 
 #===== DATA =====#
 
@@ -109,8 +112,9 @@ for epoch in 1:settings.epochs
         push!(train_log, nt)
     end
     if epoch % 5 == 0
-        name = joinpath("runs", "lenet.bson")
-        BSON.@save name lenet epoch
+        filename = joinpath("runs", "lenet.jld2")
+        JLD2.jldsave(filename; lenet_state = Flux.state(lenet |> cpu))
+        println("saved to ", filename, " after ", epoch, " epochs")
     end
 end
 
@@ -180,5 +184,32 @@ julia> lenet[1:5](x1) |> size  # after Flux.flatten
 
 # Flux.flatten is just reshape, preserving the batch dimesion (64) while combining others (4*4*16).
 # This 256 must match the Dense(256 => 120). (See Flux.outputsize for ways to automate this.)
+
+#===== LOADING =====#
+
+# During training, the code above saves the model state to disk.
+# To load this state, first we should re-create the model:
+# here's another one, with the same layers, on the CPU:
+
+lenet2 = Flux.@autosize (28, 28, 1, 1) Chain(
+    Conv((5, 5), 1=>6, relu),
+    MaxPool((2, 2)),
+    Conv((5, 5), _=>16, relu),
+    MaxPool((2, 2)),
+    Flux.flatten,
+    Dense(_ => 120, relu),
+    Dense(_ => 84, relu), 
+    Dense(_ => 10),
+)
+
+# Now read the file, and copy parameters into the model:
+
+loaded_state = JLD2.load(joinpath("runs", "lenet.jld2"), "lenet_state")
+Flux.loadmodel!(lenet2, loaded_state)
+
+# Check that it now agrees with the earlier, trained, model:
+
+lenet2(cpu(x1)) ≈ cpu(lenet(x1))
+
 
 #===== THE END =====#
