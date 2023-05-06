@@ -6,6 +6,10 @@
 
 using MLDatasets, Flux, JLD2, CUDA  # this will install everything if necc.
 
+folder = "runs"  # sub-directory in which to save
+isdir(folder) || mkdir(folder)
+filename = joinpath(folder, "lenet.jld2")
+
 #===== DATA =====#
 
 # Calling MLDatasets.MNIST() will dowload the dataset if necessary,
@@ -112,8 +116,7 @@ for epoch in 1:settings.epochs
         push!(train_log, nt)
     end
     if epoch % 5 == 0
-        filename = joinpath("runs", "lenet.jld2")
-        JLD2.jldsave(filename; lenet_state = Flux.state(lenet |> cpu))
+        JLD2.jldsave(filename; lenet_state = Flux.state(lenet) |> cpu)
         println("saved to ", filename, " after ", epoch, " epochs")
     end
 end
@@ -183,13 +186,7 @@ julia> lenet[1:5](x1) |> size  # after Flux.flatten
 =#
 
 # Flux.flatten is just reshape, preserving the batch dimesion (64) while combining others (4*4*16).
-# This 256 must match the Dense(256 => 120). (See Flux.outputsize for ways to automate this.)
-
-#===== LOADING =====#
-
-# During training, the code above saves the model state to disk.
-# To load this state, first we should re-create the model:
-# here's another one, with the same layers, on the CPU:
+# This 256 must match the Dense(256 => 120). Here is how to automate this, with Flux.outputsize:
 
 lenet2 = Flux.@autosize (28, 28, 1, 1) Chain(
     Conv((5, 5), 1=>6, relu),
@@ -202,9 +199,15 @@ lenet2 = Flux.@autosize (28, 28, 1, 1) Chain(
     Dense(_ => 10),
 )
 
-# Now read the file, and copy parameters into the model:
+#===== LOADING =====#
 
-loaded_state = JLD2.load(joinpath("runs", "lenet.jld2"), "lenet_state")
+# During training, the code above saves the model state to disk. Load the last version:
+
+loaded_state = JLD2.load(filename, "lenet_state");
+
+# Now you would normally re-create the model, and copy all parameters into that.
+# We can use lenet2 from just above:
+
 Flux.loadmodel!(lenet2, loaded_state)
 
 # Check that it now agrees with the earlier, trained, model:
