@@ -56,14 +56,14 @@ lenet = Chain(
 
 y1hat = lenet(x1)  # try it out
 
-softmax(y1hat)
+sum(softmax(y1hat); dims=1)
 
 # Each column of softmax(y1hat) may be thought of as the network's probabilities
 # that an input image is in each of 10 classes. To find its most likely answer, 
 # we can look for the largest output in each column, without needing softmax first. 
 # At the moment, these don't resemble the true values at all:
 
-hcat(Flux.onecold(y1hat, 0:9), Flux.onecold(y1, 0:9))
+@show hcat(Flux.onecold(y1hat, 0:9), Flux.onecold(y1, 0:9))
 
 #===== METRICS =====#
 
@@ -80,7 +80,7 @@ function loss_and_accuracy(model, data::MNIST=test_data)
     (; loss, acc, split=data.split)  # return a NamedTuple
 end
 
-loss_and_accuracy(lenet)  # accuracy about 10%
+@show loss_and_accuracy(lenet);  # accuracy about 10%, before training
 
 #===== TRAINING =====#
 
@@ -121,11 +121,11 @@ for epoch in 1:settings.epochs
     end
 end
 
-train_log
+@show train_log;
 
 # We can re-run the quick sanity-check of predictions:
 y1hat = lenet(x1)
-hcat(Flux.onecold(y1hat, 0:9), Flux.onecold(y1, 0:9))
+@show hcat(Flux.onecold(y1hat, 0:9), Flux.onecold(y1, 0:9))
 
 #===== INSPECTION =====#
 
@@ -133,7 +133,7 @@ using ImageCore, ImageInTerminal
 
 xtest, ytest = only(loader(test_data, batchsize=length(test_data)));
 
-# There are many ways to look at images, you won't need ImageInTerminal if working in a notebook
+# There are many ways to look at images, you won't need ImageInTerminal if working in a notebook.
 # ImageCore.Gray is a special type, whick interprets numbers between 0.0 and 1.0 as shades:
 
 xtest[:,:,1,5] .|> Gray |> transpose |> cpu
@@ -199,6 +199,10 @@ lenet2 = Flux.@autosize (28, 28, 1, 1) Chain(
     Dense(_ => 10),
 )
 
+# Check that this indeed accepts input the same size as above:
+
+@show lenet2(cpu(x1)) |> size;
+
 #===== LOADING =====#
 
 # During training, the code above saves the model state to disk. Load the last version:
@@ -212,7 +216,7 @@ Flux.loadmodel!(lenet2, loaded_state)
 
 # Check that it now agrees with the earlier, trained, model:
 
-lenet2(cpu(x1)) ≈ cpu(lenet(x1))
+@show lenet2(cpu(x1)) ≈ cpu(lenet(x1);
 
 
 #===== THE END =====#
