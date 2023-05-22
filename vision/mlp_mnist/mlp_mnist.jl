@@ -1,174 +1,117 @@
-# # Simple multi-layer perceptron
+# Simple multi-layer perceptron, for the MNIST hand-written digits.
+# This example does not use a GPU, it's small enough not to need one.
 
+using Flux, MLDatasets, Statistics
 
-# In this example, we create a simple [multi-layer perceptron](https://en.wikipedia.org/wiki/Multilayer_perceptron) (MLP) that classifies handwritten digits
-# using the [MNIST dataset](http://yann.lecun.com/exdb/mnist/). A MLP consists of at least *three layers* of stacked perceptrons: Input, hidden, and output. Each neuron of an MLP has parameters
-# (weights and bias) and uses an [activation function](https://en.wikipedia.org/wiki/Activation_function) to compute its output.
+# Our model is very simple: Its one "hidden layer" has 32 "neurons" each connected to every input pixel.
+# Each has a sigmoid nonlinearity, and is connected to every "neuron" in the output layer.
+# Finally, softmax produces probabilities, i.e. positive numbers which add up to 1:
 
+model = Chain(Dense(28^2 => 32, sigmoid), Dense(32 => 10), softmax)
 
-# ![mlp](../mlp_mnist/docs/mlp.svg)
+p1 = model(rand(Float32, 28^2))  # run model on random data shaped like an image
 
-# Source: http://d2l.ai/chapter_multilayer-perceptrons/mlp.html
+@show sum(p1) ≈1;
 
+p3 = model(rand(Float32, 28^2, 3))  # ...or on a batch of 3 fake, random "images"
 
+@show sum(p3; dims=1);  # all approx 1. Last dim is batch dim.
 
-# To run this example, we need the following packages:
+#===== DATA =====#
 
+# Calling MLDatasets.MNIST() will dowload the dataset if necessary,
+# and return a struct containing it.
+# It takes a few seconds to read from disk each time, so do this once:
 
-using Flux, Statistics
-using Flux.Data: DataLoader
-using Flux: onehotbatch, onecold, @epochs
-using Flux.Losses: logitcrossentropy
-using Base: @kwdef
-using CUDA
-using MLDatasets
+train_data = MLDatasets.MNIST()  # i.e. split=:train
+test_data = MLDatasets.MNIST(split=:test)
 
-# We set default values for learning rate, batch size, epochs, and the usage of a GPU (if available) for the model:
+# train_data.features is a 28×28×60000 Array{Float32, 3} of the images.
+# We need a 2D array for our model. Let's combine the reshape needed with
+# other pre-processing, in a function:
 
-@kwdef mutable struct Args
-    η::Float64 = 3e-4       ## learning rate
-    batchsize::Int = 256    ## batch size
-    epochs::Int = 10        ## number of epochs
-    use_cuda::Bool = true   ## use gpu (if cuda available)
+function simple_loader(data::MNIST; batchsize::Int=64)
+    x2dim = reshape(data.features, 28^2, :)
+    yhot = Flux.onehotbatch(data.targets, 0:9)
+    Flux.DataLoader((x2dim, yhot); batchsize, shuffle=true)
 end
 
-# If a GPU is available on our local system, then Flux uses it for computing the loss and updating the weights and biases when training our model.
+# train_data.targets is a 60000-element Vector{Int}, of labels from 0 to 9.
+# Flux.onehotbatch([0,1,9], 0:9) makes a matrix of 0 and 1.
 
+simple_loader(train_data)  # returns a DataLoader, with first element a tuple like this:
 
-# ## Data
+x1, y1 = first(simple_loader(train_data)); # (784×64 Matrix{Float32}, 10×64 OneHotMatrix)
 
-# We create the function `getdata` to load the MNIST train and test data from [MLDatasets](https://github.com/JuliaML/MLDatasets.jl) and reshape them so that they are in the shape that Flux expects.
+model(x1)  # x1 is the right shape for our model
 
-function getdata(args)
-    ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"
+y1  # y1 is the same shape as the model output.
 
-    @info "Getting and transforming data"
+@show Flux.crossentropy(model(x1), y1);  # This will be our loss function
 
-    ## Load dataset
-    xtrain, ytrain = MLDatasets.MNIST(:train)[:]
-    xtest, ytest = MLDatasets.MNIST(:test)[:]
+#===== ACCURACY =====#
 
-    ## Reshape input data to flatten each image into a linear array
-    xtrain = Flux.flatten(xtrain)
-    xtest = Flux.flatten(xtest)
+# We're going to log accuracy and loss during training. There's no advantage to
+# calculating these on minibatches, since MNIST is small enough to do it at once.
 
-    ## One-hot-encode the labels
-    ytrain, ytest = onehotbatch(ytrain, 0:9), onehotbatch(ytest, 0:9)
-
-    ## Create two DataLoader objects (mini-batch iterators)
-    train_loader = DataLoader((xtrain, ytrain), batchsize=args.batchsize, shuffle=true)
-    test_loader = DataLoader((xtest, ytest), batchsize=args.batchsize)
-
-    return train_loader, test_loader
+function simple_accuracy(model, data::MNIST=test_data)
+    (x, y) = only(simple_loader(data; batchsize=length(data)))  # make one big batch
+    y_hat = model(x)
+    iscorrect = Flux.onecold(y_hat) .== Flux.onecold(y)  # BitVector
+    acc = round(100 * mean(iscorrect); digits=2)
 end
 
-# The function `getdata` performs the following tasks:
+@show simple_accuracy(model);  # accuracy about 10%, on training data, before training!
 
-# * **Loads MNIST dataset:** Loads the train and test set tensors. The shape of train data is `28x28x60000` and test data is `28X28X10000`.
-# * **Reshapes the train and test data:**  Uses the [flatten](https://fluxml.ai/Flux.jl/stable/models/layers/#Flux.flatten) function to reshape the train data set into a `784x60000` array and test data set into a `784x10000`. Notice that we reshape the data so that we can pass these as arguments for the input layer of our model (a simple MLP expects a vector as an input).
-# * **One-hot encodes the train and test labels:** Creates a batch of one-hot vectors so we can pass the labels of the data as arguments for the loss function. For this example, we use the [logitcrossentropy](https://fluxml.ai/Flux.jl/stable/models/losses/#Flux.Losses.logitcrossentropy) function and it expects data to be one-hot encoded.
-# * **Creates mini-batches of data:** Creates two DataLoader objects (train and test) that handle data mini-batches of size `1024 ` (as defined above). We create these two objects so that we can pass the entire data set through the loss function at once when training our model. Also, it shuffles the data points during each iteration (`shuffle=true`).
+#===== TRAINING =====#
 
-# ## Model
+# Make a dataloader using the desired batchsize:
 
-# As we mentioned above, a MLP consist of *three* layers that are fully connected. For this example, we define our model with the following layers and dimensions:
+train_loader = simple_loader(train_data, batchsize = 256)
 
-# * **Input:** It has `784` perceptrons (the MNIST image size is `28x28`). We flatten the train and test data so that we can pass them as arguments to this layer.
-# * **Hidden:** It has `32` perceptrons that use the [relu](https://fluxml.ai/Flux.jl/stable/models/nnlib/#NNlib.relu) activation function.
-# * **Output:** It has `10` perceptrons that output the model's prediction or probability that a digit is 0 to 9.
+# Initialise storage needed for the Adam optimiser, with our chosen learning rate:
 
+opt_state = Flux.setup(Adam(3e-4), model);
 
-# We define the model with the `build_model` function:
+# Then train for 30 epochs, printing out details as we go:
 
-
-function build_model(; imgsize=(28,28,1), nclasses=10)
-    return Chain( Dense(prod(imgsize), 32, relu),
-                  Dense(32, nclasses))
-end
-
-# Note that we use the functions [Dense](https://fluxml.ai/Flux.jl/stable/models/layers/#Flux.Dense) so that our model is *densely* (or fully) connected and [Chain](https://fluxml.ai/Flux.jl/stable/models/layers/#Flux.Chain) to chain the computation of the three layers.
-
-# ## Loss function
-const loss = logitcrossentropy
-
-# Now, we define the loss function `loss_and_accuracy`. It expects the following arguments:
-# * ADataLoader object.
-# * The `build_model` function we defined above.
-# * A device object (in case we have a GPU available).
-
-function loss_and_accuracy(data_loader, model, device)
-    acc = 0
-    ls = 0.0f0
-    num = 0
-    for (x, y) in data_loader
-        x, y = device(x), device(y)
-        ŷ = model(x)
-        ls += loss(ŷ, y, agg=sum)
-        acc += sum(onecold(ŷ) .== onecold(y)) ## Decode the output of the model
-        num +=  size(x)[end]
-    end
-    return ls / num, acc / num
-end
-
-# This function iterates through the `dataloader` object in mini-batches and uses the function
-# [logitcrossentropy](https://fluxml.ai/Flux.jl/stable/models/losses/#Flux.Losses.logitcrossentropy) to compute the difference between
-# the predicted and actual values (loss) and the accuracy.
-
-
-# ## Train function
-
-# Now, we define the `train` function that calls the functions defined above and trains the model.
-
-function train(; kws...)
-    args = Args(; kws...) ## Collect options in a struct for convenience
-
-    if CUDA.functional() && args.use_cuda
-        @info "Training on CUDA GPU"
-        CUDA.allowscalar(false)
-        device = gpu
-    else
-        @info "Training on CPU"
-        device = cpu
+for epoch in 1:30
+    loss = 0.0
+    for (x, y) in train_loader
+        # Compute the loss and the gradients:
+        l, gs = Flux.withgradient(m -> Flux.crossentropy(m(x), y), model)
+        # Update the model parameters (and the Adam momenta):
+        Flux.update!(opt_state, model, gs[1])
+        # Accumulate the mean loss, just for logging:
+        loss += l / length(train_loader)
     end
 
-    ## Create test and train dataloaders
-    train_loader, test_loader = getdata(args)
-
-    @info "Constructing model and starting training"
-    ## Construct model
-    model = build_model() |> device
-
-    ## Optimizer
-    opt = Flux.setup(Adam(args.η), model)
-
-    ## Training
-    for epoch in 1:args.epochs
-        for (x, y) in train_loader
-            x, y = device(x), device(y) ## transfer data to device
-            gs = gradient(m -> loss(m(x), y), model) ## compute gradient of the loss
-            Flux.Optimise.update!(opt, model, gs[1]) ## update parameters
-        end
-
-        ## Report on train and test
-        train_loss, train_acc = loss_and_accuracy(train_loader, model, device)
-        test_loss, test_acc = loss_and_accuracy(test_loader, model, device)
-        println("Epoch=$epoch")
-        println("  train_loss = $train_loss, train_accuracy = $train_acc")
-        println("  test_loss = $test_loss, test_accuracy = $test_acc")
+    if mod(epoch, 2) == 1
+        # Report on train and test, only every 2nd epoch:
+        train_acc = simple_accuracy(model, train_data)
+        test_acc = simple_accuracy(model, test_data)
+        @info "After epoch = $epoch" loss train_acc test_acc
     end
 end
 
-# ## Run the example
+# This should get to about 94% accuracy.
+# To do better, try using Dense(784 => 64, relu) instead.
 
-# We call the `train` function:
+#===== INSPECTION =====#
 
-if abspath(PROGRAM_FILE) == @__FILE__
-    train()
-end
+using ImageCore, ImageInTerminal
 
-# >**Note:** We can change hyperparameters by modifying train(η=0.01).
+xtest, ytest = only(simple_loader(test_data, batchsize=length(test_data)));
 
-# ## Resources
+# There are many ways to look at images, you won't need ImageInTerminal if working in a notebook.
+# ImageCore.Gray is a special type, which interprets numbers between 0.0 and 1.0 as shades:
 
-# * [3Blue1Brown Neural networks videos](https://www.youtube.com/watch?v=aircAruvnKk&list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi)
-# * [Neural Networks and Deep Learning](http://neuralnetworksanddeeplearning.com/)
+reshape(xtest[:,33], 28, 28) .|> Gray |> transpose
+
+@show Flux.onecold(ytest, 0:9)[33];  # true label, should match!
+
+# Now we can compare the model's probabilities, for the same input.
+# This should be highest at the same number:
+
+p10 = (0:9) .=> model(xtest[:, 33]);
+display(p10)
