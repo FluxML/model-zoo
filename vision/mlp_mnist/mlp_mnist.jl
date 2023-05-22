@@ -11,11 +11,11 @@ model = Chain(Dense(28^2 => 32, sigmoid), Dense(32 => 10), softmax)
 
 p1 = model(rand(Float32, 28^2))  # run model on random data shaped like an image
 
-sum(p1) ≈ 1
+@show sum(p1) ≈1;
 
 p3 = model(rand(Float32, 28^2, 3))  # ...or on a batch of 3 fake, random "images"
 
-sum(p3; dims=1)  # all 1. Last dim is batch dim.
+@show sum(p3; dims=1);  # all approx 1. Last dim is batch dim.
 
 #===== DATA =====#
 
@@ -47,7 +47,7 @@ model(x1)  # x1 is the right shape for our model
 
 y1  # y1 is the same shape as the model output.
 
-Flux.crossentropy(model(x1), y1)  # This will be our loss function
+@show Flux.crossentropy(model(x1), y1);  # This will be our loss function
 
 #===== ACCURACY =====#
 
@@ -61,7 +61,7 @@ function simple_accuracy(model, data::MNIST=test_data)
     acc = round(100 * mean(iscorrect); digits=2)
 end
 
-simple_accuracy(model)  # accuracy about 10%, on training data, before training!
+@show simple_accuracy(model);  # accuracy about 10%, on training data, before training!
 
 #===== TRAINING =====#
 
@@ -108,10 +108,10 @@ xtest, ytest = only(simple_loader(test_data, batchsize=length(test_data)));
 
 reshape(xtest[:,33], 28, 28) .|> Gray |> transpose
 
-Flux.onecold(ytest, 0:9)[33]  # true label, should match!
+@show Flux.onecold(ytest, 0:9)[33];  # true label, should match!
 
 # Now we can compare the model's probabilities, for the same input.
 # This should be highest at the same number:
 
-(0:9) .=> model(xtest[:, 33])
-
+p10 = (0:9) .=> model(xtest[:, 33]);
+display(p10)
