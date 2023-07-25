@@ -7,8 +7,8 @@ MLUtils = "f1d291b0-491e-4a28-83b9-f70985020b54"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
-CUDA = "3"
-Flux = "0.13.9"
+CUDA = "3, 4"
+Flux = "0.13.9, 0.14"
 MLDatasets = "0.7"
 MLUtils = "0.3"
 julia = "1.6"

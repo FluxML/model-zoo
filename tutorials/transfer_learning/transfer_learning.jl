@@ -2,12 +2,12 @@
 using Random: shuffle!
 import Base: length, getindex
 using Images
-using Flux
+using Flux, CUDA
 using Flux: update!
 using DataAugmentation
 using Metalhead
 
-device = Flux.CUDA.functional() ? gpu : cpu
+device = CUDA.functional() ? gpu : cpu
 # device = cpu
 
 ## Custom DataLoader
