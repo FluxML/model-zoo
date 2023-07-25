@@ -59,14 +59,15 @@ Flux has a [NEWS page](https://github.com/FluxML/Flux.jl/blob/master/NEWS.md) li
 
 To run the old examples, Flux v0.11 can be installed and run on [Julia 1.6, the LTS version](https://julialang.org/downloads/#long_term_support_release).
 Flux v0.12 works on Julia 1.8.
-Flux v0.13 is the latest right now, marked with ☀️; models upgraded to use  explicit gradients (v0.13.9+) have a `+`.
+Flux v0.14 is the latest right now, this and v0.13 are marked with ☀️; models upgraded to use  
+explicit gradients (v0.13.9+ or v0.14) have a `+`.
 
 ## Examples in the Model Zoo
 
 **Vision**
 * MNIST
   * [Simple multi-layer perceptron](vision/mlp_mnist) ☀️ v0.13 +
-  * [Simple ConvNet (LeNet)](vision/conv_mnist) ☀️ v0.13 +
+  * [Simple ConvNet (LeNet)](vision/conv_mnist) ☀️ v0.43 +
   * [Variational Auto-Encoder](vision/vae_mnist) ☀️ v0.13 +
   * [Deep Convolutional Generative Adversarial Networks](vision/dcgan_mnist) ☀️ v0.13 +
   * [Conditional Deep Convolutional Generative Adversarial Networks](vision/cdcgan_mnist) ☀️ v0.13

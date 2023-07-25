@@ -216,7 +216,7 @@ Flux.loadmodel!(lenet2, loaded_state)
 
 # Check that it now agrees with the earlier, trained, model:
 
-@show lenet2(cpu(x1)) ≈ cpu(lenet(x1);
+@show lenet2(cpu(x1)) ≈ cpu(lenet(x1));
 
 
 #===== THE END =====#
