@@ -4,5 +4,5 @@ OneHotArrays = "0b1bfda6-eb8a-41d2-88d8-f5af5cad476f"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
-Flux = "0.13.9"
+Flux = "0.13.9, 0.14"
 julia = "1.6"
