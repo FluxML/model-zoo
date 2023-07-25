@@ -67,7 +67,7 @@ explicit gradients (v0.13.9+ or v0.14) have a `+`.
 **Vision**
 * MNIST
   * [Simple multi-layer perceptron](vision/mlp_mnist) ☀️ v0.13 +
-  * [Simple ConvNet (LeNet)](vision/conv_mnist) ☀️ v0.43 +
+  * [Simple ConvNet (LeNet)](vision/conv_mnist) ☀️ v0.14 +
   * [Variational Auto-Encoder](vision/vae_mnist) ☀️ v0.13 +
   * [Deep Convolutional Generative Adversarial Networks](vision/dcgan_mnist) ☀️ v0.13 +
   * [Conditional Deep Convolutional Generative Adversarial Networks](vision/cdcgan_mnist) ☀️ v0.13
