@@ -10,7 +10,7 @@ A [multi-layer perceptron](https://en.wikipedia.org/wiki/Multilayer_perceptron) 
 
 In this example, we create a MLP that classifies handwritten digits using the [MNIST dataset](http://yann.lecun.com/exdb/mnist/).
 Our model uses the simplest [Flux layers](http://fluxml.ai/Flux.jl/stable/models/layers/), namely `Dense` and `Chain`.
-Since it uses [softmax](https://en.wikipedia.org/wiki/Softmax_function) on its outputs, and [`crossentopy`](http://fluxml.ai/Flux.jl/stable/models/losses/#Flux.Losses.crossentropy) as the loss function.
+Since it uses [softmax](https://en.wikipedia.org/wiki/Softmax_function) on its outputs, and [`crossentropy`](http://fluxml.ai/Flux.jl/stable/models/losses/#Flux.Losses.crossentropy) as the loss function.
 
 For simplicity this model does not use a graphics card, since an ordinary CPU is fast enough.
 See for example the [LeNet convolutional network](https://github.com/FluxML/model-zoo/tree/master/vision/conv_mnist) for GPU usage.
