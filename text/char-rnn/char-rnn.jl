@@ -66,8 +66,10 @@ function getdata(args::Args)
     
     ## Partitioning the data as sequence of batches, which are then collected 
     ## as array of batches
-    Xs = partition(batchseq(chunk(text, args.batchsz), stop), args.seqlen)
-    Ys = partition(batchseq(chunk(text[2:end], args.batchsz), stop), args.seqlen)
+    Xtext = [collect(t) for t in chunk(text, args.batchsz)]
+    Ytext = [collect(t) for t in chunk(text[2:end], args.batchsz)]
+    Xs = partition(batchseq(Xtext, stop), args.seqlen)
+    Ys = partition(batchseq(Ytext, stop), args.seqlen)
     Xs = [Flux.onehotbatch.(bs, (alphabet,)) for bs in Xs]
     Ys = [Flux.onehotbatch.(bs, (alphabet,)) for bs in Ys]
 

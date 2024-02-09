@@ -5,4 +5,3 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
 Flux = "0.13.9, 0.14"
-julia = "1.6"
