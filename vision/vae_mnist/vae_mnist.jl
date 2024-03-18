@@ -4,12 +4,15 @@
 # Diederik P Kingma, Max Welling
 # https://arxiv.org/abs/1312.6114
 
-using BSON
-using CUDA
+using JLD2
+# using CUDA, cuDNN  # uncomment one of these if you use GPU
+# using AMDGPU
+# using Metal
 using DrWatson: struct2dict
 using Flux
-using Flux: @functor, chunk, DataLoader
-using Flux.Losses: logitbinarycrossentropy
+using Optimisers: AdamW
+using MLUtils: randn_like, chunk, DataLoader
+using Flux: logitbinarycrossentropy
 using Images
 using Logging: with_logger
 using MLDatasets
@@ -21,7 +24,7 @@ using Random
 function get_data(batch_size)
     xtrain, ytrain = MLDatasets.MNIST(split=:train)[:]
     xtrain = reshape(xtrain, 28^2, :)
-    DataLoader((xtrain, ytrain), batchsize=batch_size, shuffle=true)
+    return DataLoader((xtrain, ytrain), batchsize=batch_size, shuffle=true)
 end
 
 struct Encoder
@@ -29,8 +32,9 @@ struct Encoder
     μ
     logσ
 end
-@functor Encoder
-    
+
+Flux.@layer Encoder
+
 Encoder(input_dim::Int, latent_dim::Int, hidden_dim::Int) = Encoder(
     Dense(input_dim, hidden_dim, tanh),   # linear
     Dense(hidden_dim, latent_dim),        # μ
@@ -47,23 +51,21 @@ Decoder(input_dim::Int, latent_dim::Int, hidden_dim::Int) = Chain(
     Dense(hidden_dim, input_dim)
 )
 
-function reconstuct(encoder, decoder, x, device)
+function reconstuct(encoder, decoder, x)
     μ, logσ = encoder(x)
-    z = μ + device(randn(Float32, size(logσ))) .* exp.(logσ)
-    μ, logσ, decoder(z)
+    z = μ + randn_like(logσ) .* exp.(logσ)
+    return μ, logσ, decoder(z)
 end
 
-function model_loss(encoder, decoder, λ, x, device)
-    μ, logσ, decoder_z = reconstuct(encoder, decoder, x, device)
-    len = size(x)[end]
+function model_loss(encoder, decoder, x)
+    μ, logσ, decoder_z = reconstuct(encoder, decoder, x)
+    batch_size = size(x)[end]
     # KL-divergence
-    kl_q_p = 0.5f0 * sum(@. (exp(2f0 * logσ) + μ^2 -1f0 - 2f0 * logσ)) / len
+    kl_q_p = 0.5f0 * sum(@. (exp(2*logσ) + μ^2 - 1 - 2*logσ)) / batch_size
 
-    logp_x_z = -logitbinarycrossentropy(decoder_z, x, agg=sum) / len
-    # L2 regularization
-    reg = λ * sum(x->sum(x.^2), Flux.params(decoder))
+    logp_x_z = -logitbinarycrossentropy(decoder_z, x, agg=sum) / batch_size
     
-    -logp_x_z + kl_q_p + reg
+    return -logp_x_z + kl_q_p
 end
 
 function convert_to_image(x, y_size)
@@ -72,15 +74,15 @@ end
 
 # arguments for the `train` function 
 Base.@kwdef mutable struct Args
-    η = 1f-3                # learning rate
-    λ = 0.01f0              # regularization paramater
+    η = 1e-3                # learning rate
+    λ = 1e-4                # regularization paramater
     batch_size = 128        # batch size
     sample_size = 10        # sampling size for output    
     epochs = 20             # number of epochs
     seed = 0                # random seed
-    cuda = true             # use GPU
+    use_gpu = true              # use GPU
     input_dim = 28^2        # image size
-    latent_dim = 2          # latent dimension
+    latent_dim = 64          # latent dimension
     hidden_dim = 500        # hidden dimension
     verbose_freq = 10       # logging for every verbose_freq iterations
     tblogger = false        # log training with tensorboard
@@ -92,14 +94,13 @@ function train(; kws...)
     args = Args(; kws...)
     args.seed > 0 && Random.seed!(args.seed)
 
-    # GPU config
-    if args.cuda && CUDA.has_cuda()
-        device = gpu
-        @info "Training on GPU"
+    if args.use_gpu
+        device = Flux.get_device()
     else
-        device = cpu
-        @info "Training on CPU"
+        device = Flux.get_device("CPU")
     end
+
+    @info "Training on $device"
 
     # load MNIST images
     loader = get_data(args.batch_size)
@@ -109,8 +110,8 @@ function train(; kws...)
     decoder = Decoder(args.input_dim, args.latent_dim, args.hidden_dim) |> device
 
     # ADAM optimizer
-    opt_enc = Flux.setup(Adam(args.η), encoder)
-    opt_dec = Flux.setup(Adam(args.η), decoder)
+    opt_enc = Flux.setup(AdamW(eta=args.η, lambda=args.λ), encoder)
+    opt_dec = Flux.setup(AdamW(eta=args.η, lambda=args.λ), decoder)
 
     !ispath(args.save_path) && mkpath(args.save_path)
 
@@ -135,10 +136,10 @@ function train(; kws...)
 
         for (x, _) in loader 
             x_dev = x |> device
-            loss, back = Flux.pullback(encoder, decoder) do enc, dec
-                model_loss(enc, dec, args.λ, x_dev, device)
+            loss, (grad_enc, grad_dec) = Flux.withgradient(encoder, decoder) do enc, dec
+                model_loss(enc, dec, x_dev)
             end
-            grad_enc, grad_dec = back(1f0)
+    
             Flux.update!(opt_enc, encoder, grad_enc)
             Flux.update!(opt_dec, decoder, grad_dec)
             # progress meter
@@ -154,7 +155,7 @@ function train(; kws...)
             train_steps += 1
         end
         # save image
-        _, _, rec_original = reconstuct(encoder, decoder, original, device)
+        _, _, rec_original = reconstuct(encoder, decoder, original)
         rec_original = sigmoid.(rec_original)
         image = convert_to_image(rec_original, args.sample_size)
         image_path = joinpath(args.save_path, "epoch_$(epoch).png")
@@ -163,10 +164,12 @@ function train(; kws...)
     end
 
     # save model
-    model_path = joinpath(args.save_path, "model.bson") 
     let encoder = cpu(encoder), decoder = cpu(decoder), args=struct2dict(args)
-        BSON.@save model_path encoder decoder args
-        @info "Model saved: $(model_path)"
+        filepath = joinpath(args[:save_path], "checkpoint.jld2") 
+        JLD2.save(filepath, "encoder", Flux.state(encoder),
+                            "decoder", Flux.state(decoder),
+                            "args", args)                            
+        @info "Model saved: $(filepath)"
     end
 end
 
