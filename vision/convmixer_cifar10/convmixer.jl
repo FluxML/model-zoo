@@ -81,7 +81,7 @@ end
 
 """
 Main function: loads data, creates model, trains it, then saves trained model in "model.bson"
-Keywords `train(epochs=2, images=99)` will use only the first 99 images of the training set
+Keywords `train(epochs=5, images=99)` will use only the first 99 images of the training set
 (to check that it runs).
 """
 function train(; epochs=100, images=:)
@@ -110,14 +110,15 @@ function train(; epochs=100, images=:)
 
     for epoch in 1:epochs
         for (x1, y1) in train_loader
+            # move one batch at a time to GPU; gpu(train_loader) would be another way
             x, y = gpu(x1), gpu(y1)
             grads = gradient(m -> Flux.logitcrossentropy(m(x), y; agg=sum), model)
             Flux.update!(state, model, grads[1])
         end
 
         # logging
-        train_loss, train_acc = loss_and_accuracy(model, train_loader, device)
-        test_loss, test_acc = loss_and_accuracy(model, test_loader, device)
+        train_loss, train_acc = loss_and_accuracy(model, train_loader)
+        test_loss, test_acc = loss_and_accuracy(model, test_loader)
         train_save[epoch, :] = [train_loss, train_acc]
         test_save[epoch, :] = [test_loss, test_acc]
 
@@ -127,7 +128,8 @@ function train(; epochs=100, images=:)
     end
 
     # save the fully trained model
-    BSON.@save "model.bson" cpu(model)
+    cpu_model = cpu(model)
+    BSON.@save "model.bson" cpu_model
     BSON.@save "losses.bson" train_save test_save
     # it's generally more robust to save just the state, like this, but 
     # JLD2.jldsave("model.jld2"; state = Flux.state(model |> cpu), train_save, test_save)
@@ -137,5 +139,5 @@ end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     # This was run `julia convmixer.jl`, rather than interactively e.g. `include("convmixer.jl")`
-    train()
+    model = train()
 end
