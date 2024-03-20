@@ -2,9 +2,11 @@
 BSON = "fbb218c0-5317-5bc6-957e-2ee96dd4b1f0"
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
+JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
 MLDatasets = "eb30cadb-4394-5ae3-aed4-317e484a6458"
+cuDNN = "02a925ec-e4fe-4b08-9a7e-0d78e3d38ccd"
 
 [compat]
-Flux = "0.13.12, 0.14"
+Flux = "0.13, 0.14"
 MLDatasets = "0.7.6"
-julia = "1.6"
+julia = "1.9"
