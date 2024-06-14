@@ -1,0 +1,11 @@
+[deps]
+BSON = "fbb218c0-5317-5bc6-957e-2ee96dd4b1f0"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
+Gtk = "4c0ca9eb-093a-5379-98c5-f87ac0bbbf44"
+Gym = "56b9baea-2481-11e9-37ae-75904354ad8c"
+JLD = "4138dd39-2aa7-5051-a626-17a0bb65d9c8"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+OpenAIGym = "41d6fcb8-dd24-11e8-2536-c3dc023218b5"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+Reinforce = "0376cc21-f8a9-5fcf-8891-fde1415a4fd3"
