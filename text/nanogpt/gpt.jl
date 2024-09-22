@@ -10,9 +10,9 @@
 # sub-sequence of the input, in effect giving an extra degree of parallelism for the purposes of
 # training.
 
-# To run this example, we need the following packages:
+# For the attention mechanism, we use [Flux.MultiHeadAttention](https://fluxml.ai/Flux.jl/stable/reference/models/layers/#MultiHeadAttention).
 
-For the attention mechanism, we use [Flux.MultiHeadAttention](https://fluxml.ai/Flux.jl/stable/reference/models/layers/#MultiHeadAttention).
+# To run this example, we need the following packages:
 
 using JLD2
 using CUDA, cuDNN
