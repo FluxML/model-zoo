@@ -151,19 +151,27 @@ end
 function getdata(args::Args)
     isfile("input.txt") || download(
         "https://cs.stanford.edu/people/karpathy/char-rnn/shakespeare_input.txt",
+        #"https://cs.stanford.edu/people/karpathy/char-rnn/warpeace_input.txt",
         "input.txt",
     )
 
     text = String(read("input.txt"))
+
+    # For aesthetic reasons, replace newlines with strings.  This is not necessary, but makes
+    # strings print nicer.
+    text = replace(text, r"\r?\n" => " ")
 
     ## an array of all unique characters
     alphabet = [unique(text)..., '_']
     stop = alphabet[end]
 
     B = (length(text)-1) ÷ args.seqlen
-    Xs = reshape(collect(text[1:B*args.seqlen]), args.seqlen, B)
-    Ys = reshape(collect(text[2:B*args.seqlen+1]), args.seqlen, B)
+    # We must collect() before indexing, because String indexing does strange things with multi-byte
+    # characters and we could end up with the wrong length.
+    Xs = reshape(collect(text)[1:B*args.seqlen], args.seqlen, B)
+    Ys = reshape(collect(text)[2:B*args.seqlen+1], args.seqlen, B)
 
+    # Input string starts with stop character '_', representing zero context.
     Xs[1,:] .= stop
 
     # Xs (input) should consist of indices into `alphabet` because this is what Embedding expects.
@@ -197,6 +205,7 @@ function train(; kws...)
     # Move data to the device (CPU or GPU).
     trainX, trainY, testX, testY = device.((trainX, trainY, testX, testY))
 
+    @info "Alphabet size: $(length(alphabet))"
     @info "Training size: $(size(trainX, 2)) sequences."
     @info "Testing  size: $(size(testX,  2)) sequences."
 
