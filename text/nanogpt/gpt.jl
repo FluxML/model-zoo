@@ -72,6 +72,7 @@ function (m::GPTBlock)(x)
     y, α = m.mha(m.layernorm1(x); mask=NNlib.make_causal_mask(x))
     x += y
     x += m.mlp(x)
+    return x
 end
 
 
