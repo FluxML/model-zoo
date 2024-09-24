@@ -222,6 +222,7 @@ function train(; kws...)
     end
 
     opt_state = Flux.setup(Adam(args.lr), model)
+    #opt_state = JLD2.load("model-checkpoint.jld2", "opt_state")
 
     for epoch = 1:args.epochs
         @info "Training, epoch $(epoch) / $(args.epochs)"
@@ -238,6 +239,7 @@ function train(; kws...)
         # Save model checkpoint.
         jldsave("model-checkpoint.jld2",
             model_state=Flux.state(model |> cpu),
+            opt_state=opt_state,
             alphabet=alphabet,
             args=args)
 
