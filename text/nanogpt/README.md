@@ -20,6 +20,22 @@ cd text/gpt
 julia --project gpt.jl
 ```
 
+## Example output
+
+After one epoch:
+
+    generate(model, "_", 50) = "_me, but plept fairs, And heards, verchean my word"
+    generate(model, "_", 50) = "_ows know yought, This alce! totether him. weliest"
+    generate(model, "The", 50) = "These prurd passtion?  CINCESSIT: He eloucy I must"
+    generate(model, "The", 50) = "The bitherse dresic in to so shall with a his the "
+
+After 20 epochs:
+
+    generate(model, "_", 50) = "_ething a calling do me diseases Of, on he's to th"
+    generate(model, "_", 50) = "_ ragg Thou flatters all in wators the selfsarut o"
+    generate(model, "The", 50) = "The Mirtouggake Go: For my mischance lords his sea"
+    generate(model, "The", 50) = "The oll-gakemoremo his dead: All this man make gen"
+
 ## References
 
 * [Attention is all you need](https://proceedings.neurips.cc/paper_files/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf)

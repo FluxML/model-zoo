@@ -12,6 +12,18 @@
 
 # For the attention mechanism, we use [Flux.MultiHeadAttention](https://fluxml.ai/Flux.jl/stable/reference/models/layers/#MultiHeadAttention).
 
+# Example output after one epoch:
+#    generate(model, "_", 50) = "_me, but plept fairs, And heards, verchean my word"
+#    generate(model, "_", 50) = "_ows know yought, This alce! totether him. weliest"
+#    generate(model, "The", 50) = "These prurd passtion?  CINCESSIT: He eloucy I must"
+#    generate(model, "The", 50) = "The bitherse dresic in to so shall with a his the "
+
+# Example output after 20 epochs:
+#    generate(model, "_", 50) = "_ething a calling do me diseases Of, on he's to th"
+#    generate(model, "_", 50) = "_ ragg Thou flatters all in wators the selfsarut o"
+#    generate(model, "The", 50) = "The Mirtouggake Go: For my mischance lords his sea"
+#    generate(model, "The", 50) = "The oll-gakemoremo his dead: All this man make gen"
+
 # To run this example, we need the following packages:
 
 using JLD2
@@ -248,9 +260,10 @@ function train(; kws...)
 
         # Generate some text.  The character "_" is the stop character, and we're using it here to
         # represent that we are starting with zero context.
-        for _ in 1:5
-            @show generate(model, "_", 50)
-        end
+        @show generate(model, "_", 50)
+        @show generate(model, "_", 50)
+        @show generate(model, "The", 50)
+        @show generate(model, "The", 50)
     end
 
     return args, model
