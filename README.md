@@ -67,7 +67,7 @@ explicit gradients (v0.13.9+ or v0.14) have a `+`.
 **Vision**
 * MNIST
   * [Simple multi-layer perceptron](vision/mlp_mnist) ☀️ v0.13 +
-  * [Simple ConvNet (LeNet)](vision/conv_mnist) ☀️ v0.14 +
+  * [Simple ConvNet (LeNet)](vision/conv_mnist) ☀️ v0.14
   * [Variational Auto-Encoder](vision/vae_mnist) ☀️ v0.13 +
   * [Deep Convolutional Generative Adversarial Networks](vision/dcgan_mnist) ☀️ v0.13 +
   * [Conditional Deep Convolutional Generative Adversarial Networks](vision/cdcgan_mnist) ☀️ v0.13
@@ -79,6 +79,7 @@ explicit gradients (v0.13.9+ or v0.14) have a `+`.
 
 **Text**
 * [CharRNN](text/char-rnn) ☀️ v0.13 +
+* [NanoGPT](text/nanogpt) ☀️ v0.14
 * [Character-level language detection](text/lang-detection) ☀️ v0.13 +
 * [Seq2Seq phoneme detection on CMUDict](text/phonemes) ⛅️ v0.11
 * [Recursive net on IMDB sentiment treebank](text/treebank) ⛅️ v0.11
