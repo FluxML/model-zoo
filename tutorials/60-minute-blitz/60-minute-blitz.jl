@@ -166,7 +166,7 @@ model = (W = randn(3, 5), b = zeros(3)) # Define model as a named tuple / struct
 x = rand(5)
 
 
-grads = gradient(m -> sum(m.W * x .+ m.b), model) # take the gradient w.r.t the entire model
+grads = gradient(m -> sum(m.W * x .+ m.b), model) # take the gradient of sum(...) w.r.t the entire model
 
 W_grad = grads[1].W
 b_grad = grads[1].b
@@ -203,7 +203,7 @@ grads = gradient(m -> l(m, x), model)
 # using a learning rate and the gradients. `weights = weights - learning_rate * gradient` 
 # (note that `Flux.update!(args, x̄)` already updates with the negative of x̄`).
 
-η = 0.1  # learning rate
+η = 0.1f0  # learning rate of 0.1 in Float32
 opt = Descent(η) 
 opt_state = Flux.setup(opt, model)  # This creates the optimizer state for your model
 
@@ -217,7 +217,7 @@ Flux.update!(opt_state, model, grads[1])  # This updates m in-place
 # steps in order. Just for a quick implementation, let’s train a network that learns to predict
 # `0.5` for every input of 10 floats. `Flux` defines the `train!` function to do it for us.
 
-data, labels = rand(10, 100), fill(0.5, 2, 100)
+data, labels = rand(Float32, 10, 100), fill(0.5f0, 2, 100)
 loss(m, x, y) = Flux.Losses.crossentropy(m(x), y)
 opt_state = Flux.setup(opt, model)
 Flux.train!(loss, model, [(data, labels)], opt_state)
@@ -331,7 +331,7 @@ m = Chain(
 using Flux: crossentropy, Momentum
 
 loss(m, x, y) = sum(crossentropy(m(x), y))
-opt = Momentum(0.01)
+opt = Momentum(0.01f0)
 opt_state = Flux.setup(opt, m)
 # We can start writing our train loop where we will keep track of some basic accuracy
 # numbers about our model. We can define an `accuracy` function for it like so.
