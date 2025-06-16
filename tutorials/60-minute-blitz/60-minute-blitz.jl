@@ -192,7 +192,7 @@ x = rand(Float32, 10)
 model = Chain(Dense(10, 5, relu), Dense(5, 2), softmax)
 l(m, x) = Flux.Losses.crossentropy(m(x), [0.5, 0.5]) 
 
-grads = Flux.gradient(m -> l(m, x), model)
+grads = gradient(m -> l(m, x), model)
 
 
 # You don't have to use layers, but they can be convenient for many simple kinds
@@ -229,7 +229,7 @@ Flux.train!(loss, model, [(data, labels)], opt_state)
 # ```julia
 #   for (x, y) in training_set # assuming (x, y) looks like (data, labels)
 #       # Compute gradients
-#       grads = Flux.gradient(m -> loss(m, x, y), model)
+#       grads = gradient(m -> loss(m, x, y), model)
 #       
 #       # Update parameters
 #       Flux.update!(opt_state, model, grads[1])
