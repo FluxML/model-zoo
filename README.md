@@ -94,7 +94,7 @@ explicit gradients (v0.13.9+ or v0.14) have a `+`.
 * [Speech recognition](contrib/audio/speech-blstm) ❄️ v0.6
 
 **Tutorials**
-* [A 60 Minute Blitz](tutorials/60-minute-blitz/60-minute-blitz.jl) ⛅️ v0.11
+* [A 60 Minute Blitz](tutorials/60-minute-blitz/60-minute-blitz.jl) ☀️ v0.14
 * [DataLoader example with image data](tutorials/dataloader) ⛅️ v0.11
 * [Transfer Learning](tutorials/transfer_learning/transfer_learning.jl) ☀️ v0.13 +
 
