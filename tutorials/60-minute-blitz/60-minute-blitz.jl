@@ -126,12 +126,7 @@ df(x) = gradient(f, x)[1]
 df(5)
 
 # You can try this with a few different inputs to make sure it's really the same
-# as `6x+2`. We can even do this multiple times (but the second derivative is a
-# fairly boring `6`).
-
-ddf(x) = gradient(df, x)[1]
-
-ddf(5)
+# as `6x+2`. 
 
 # Flux's AD can handle any Julia code you throw at it, including loops,
 # recursion and custom layers, so long as the mathematical functions you call
@@ -165,22 +160,16 @@ gradient(myloss, W, b, x)
 # in handy when we want to train models.
 
 # Because ML models can contain hundreds of parameters, Flux provides a slightly
-# different way of writing `gradient`. We instead mark arrays with `param` to
-# indicate that we want their derivatives. `W` and `b` represent the weight and
-# bias respectively.
+# different way of writing `gradient`, by passing the model as a argument.
 
-using Flux: params
-
-W = randn(3, 5)
-b = zeros(3)
+model = (W = randn(3, 5), b = zeros(3)) # Define model as a named tuple / struct.
 x = rand(5)
 
-y(x) = sum(W * x .+ b)
 
-grads = gradient(()->y(x), params([W, b]))
+grads = gradient(m -> sum(m.W * x .+ m.b), model) # take the gradient w.r.t the entire model
 
-grads[W], grads[b]
-
+W_grad = grads[1].W
+b_grad = grads[1].b
 
 # We can now grab the gradients of `W` and `b` directly from those parameters.
 
@@ -190,24 +179,20 @@ grads[W], grads[b]
 
 using Flux
 
-m = Dense(10, 5)
+model = Dense(10, 5)
 
 # We can easily get the parameters of any layer or model with params with
-# `params`.
+# `Flux.trainable`.
 
-params(m)
+Flux.trainable(model)
 
 # This makes it very easy to calculate the gradient for all
 # parameters in a network, even if it has many parameters.
 x = rand(Float32, 10)
-m = Chain(Dense(10, 5, relu), Dense(5, 2), softmax)
-l(x) = Flux.Losses.crossentropy(m(x), [0.5, 0.5])
-grads = gradient(params(m)) do
-    l(x)
-end
-for p in params(m)
-    println(grads[p])
-end
+model = Chain(Dense(10, 5, relu), Dense(5, 2), softmax)
+l(m, x) = Flux.Losses.crossentropy(m(x), [0.5, 0.5]) 
+
+grads = Flux.gradient(m -> l(m, x), model)
 
 
 # You don't have to use layers, but they can be convenient for many simple kinds
@@ -216,38 +201,38 @@ end
 # The next step is to update our weights and perform optimisation. As you might be
 # familiar, *Gradient Descent* is a simple algorithm that takes the weights and steps
 # using a learning rate and the gradients. `weights = weights - learning_rate * gradient` 
-# (note that `Flux.Optimise.update!(x, x̄)` already updates with the negative of x̄`).
-using Flux.Optimise: update!, Descent
-η = 0.1
-for p in params(m)
-  update!(p, η * grads[p])
-end
+# (note that `Flux.update!(args, x̄)` already updates with the negative of x̄`).
 
-# While this is a valid way of updating our weights, it can get more complicated as the
-# algorithms we use get more involved.
+η = 0.1  # learning rate
+opt = Descent(η) 
+opt_state = Flux.setup(opt, model)  # This creates the optimizer state for your model
+
+Flux.update!(opt_state, model, grads[1])  # This updates m in-place
+
 
 # Flux comes with a bunch of pre-defined optimisers and makes writing our own really simple.
 # We just give it the learning rate η
-
-opt = Descent(0.01)
 
 # `Training` a network reduces down to iterating on a dataset multiple times, performing these
 # steps in order. Just for a quick implementation, let’s train a network that learns to predict
 # `0.5` for every input of 10 floats. `Flux` defines the `train!` function to do it for us.
 
 data, labels = rand(10, 100), fill(0.5, 2, 100)
-loss(x, y) = Flux.Losses.crossentropy(m(x), y)
-Flux.train!(loss, params(m), [(data,labels)], opt)
+loss(m, x, y) = Flux.Losses.crossentropy(m(x), y)
+opt_state = Flux.setup(opt, model)
+Flux.train!(loss, model, [(data, labels)], opt_state)
+
+
 # You don't have to use `train!`. In cases where arbitrary logic might be better suited,
 # you could open up this training loop like so:
 
 # ```julia
-#   for d in training_set # assuming d looks like (data, labels)
-#     # our super logic
-#     gs = gradient(params(m)) do #m is our model
-#       l = loss(d...)
-#     end
-#     update!(opt, params(m), gs)
+#   for (x, y) in training_set # assuming (x, y) looks like (data, labels)
+#       # Compute gradients
+#       grads = Flux.gradient(m -> loss(m, x, y), model)
+#       
+#       # Update parameters
+#       Flux.update!(opt_state, model, grads[1])
 #   end
 # ```
 
@@ -277,7 +262,7 @@ using MLDatasets: CIFAR10
 using Images.ImageCore
 using Flux: onehotbatch, onecold
 using Base.Iterators: partition
-using CUDA
+using CUDA # optional
 
 # The image will give us an idea of what we are dealing with.
 # ![title](https://pytorch.org/tutorials/_images/cifar10.png)
@@ -345,14 +330,13 @@ m = Chain(
 
 using Flux: crossentropy, Momentum
 
-loss(x, y) = sum(crossentropy(m(x), y))
+loss(m, x, y) = sum(crossentropy(m(x), y))
 opt = Momentum(0.01)
-
+opt_state = Flux.setup(opt, m)
 # We can start writing our train loop where we will keep track of some basic accuracy
 # numbers about our model. We can define an `accuracy` function for it like so.
 
-accuracy(x, y) = mean(onecold(m(x), 0:9) .== onecold(y, 0:9))
-
+accuracy(m, x, y) = mean(onecold(m(x), 0:9) .== onecold(y, 0:9))
 # ## Training
 # -----------
 
@@ -362,14 +346,17 @@ accuracy(x, y) = mean(onecold(m(x), 0:9) .== onecold(y, 0:9))
 
 epochs = 10
 
+
 for epoch = 1:epochs
-  for d in train
-    gs = gradient(params(m)) do
-      l = loss(d...)
+    for (x, y) in train  # Assuming train yields (x, y) tuples
+        # Compute gradients with respect to model
+        grads = gradient(m -> loss(m, x, y), m)
+        
+        # Update model parameters
+        Flux.update!(opt_state, m, grads[1])
     end
-    update!(opt, params(m), gs)
-  end
-  @show accuracy(valX, valY)
+    # Show accuracy
+    @show accuracy(m, valX, valY)
 end
 
 # Seeing our training routine unfold gives us an idea of how the network learnt the
@@ -399,7 +386,7 @@ end
 test_x, test_y = CIFAR10(:test)[:]
 test_labels = onehotbatch(test_y, 0:9)
 
-test = gpu.([(test_x[:,:,:,i], test_labels[:,i]) for i in partition(1:10000, 1000)])
+test = ([(test_x[:,:,:,i], test_labels[:,i]) for i in partition(1:10000, 1000)]) |> gpu
 
 # Next, display an image from the test set.
 
@@ -419,7 +406,7 @@ m(rand_test)
 # This looks similar to how we would expect the results to be. At this point, it's a good
 # idea to see how our net actually performs on new data, that we have prepared.
 
-accuracy(test[1]...)
+accuracy(m, test[1]...)
 
 # This is much better than random chance set at 10% (since we only have 10 classes), and
 # not bad at all for a small hand written network like ours.
