@@ -4,6 +4,19 @@
 
 This repository contains various demonstrations of the [Flux](http://fluxml.github.io/) machine learning library. Any of these may freely be used as a starting point for your own models.
 
+Recommended starting points, roughly in order of increasing complexity, are as follows:
+
+| Model         | Dataset     | Features  | Flux Version |
+| ------------- |-------------|-----------|--------------|
+| [Multi-layer perceptron](vision/mlp_mnist)  | Vision: MNIST | Training loop, image display | 0.14 |
+| [Convolutional LeNet](vision/conv_mnist)  | Vision: MNIST | Using a GPU, saving & loading | 0.14 |
+
+
+---
+
+
+# OLD README
+
 The models are broadly categorised into the folders [vision](/vision) (e.g. large convolutional neural networks (CNNs)), [text](/text) (e.g. various recurrent neural networks (RNNs) and natural language processing (NLP) models), [games](/contrib/games) (Reinforcement Learning / RL). See the READMEs of respective models for more information.
 
 ## Usage
